@@ -4,15 +4,16 @@
   Regenerate with: pnpm export:plugin-readme (in the docs repository root)
 -->
 
-# _Quartal **Plugins**_
-_Quartal **Plugins**_ are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
+<img src="docs/img/quartal-plugins.png" alt="Quartal Plugins">
+
+Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
 
 ![Plugins overview](docs/img/plugins-overview.svg)
-The basic idea is that you can create a _Quartal **Plugins**_ package once containing all the business logic for a specific business domain. You can then publish that package as a simple web site and other people inside or outside your organization can use that logic in different chatbots, agents, vibe tools, integrations and other software using Model Context Protocol ([MCP](https://modelcontextprotocol.io/)), [Open API](https://www.openapis.org/) (REST), [Claude plugins](https://code.claude.com/docs/en/plugins), [Agent skills](https://agentskills.io/) and more...
+The basic idea is that you can create a Quartal **Plugins** package once containing all the business logic for a specific business domain. You can then publish that package as a simple web site and other people inside or outside your organization can use that logic in different chatbots, agents, vibe tools, integrations and other software using Model Context Protocol ([MCP](https://modelcontextprotocol.io/)), [Open API](https://www.openapis.org/) (REST), [Claude plugins](https://code.claude.com/docs/en/plugins), [Agent skills](https://agentskills.io/) and more...
 
 > [!NOTE]
 > **Under construction**
-> We are currently pushing _Quartal **Plugins**_ to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version.
+> We are currently pushing Quartal **Plugins** to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version.
 
 ## Getting Started
 Requirements:
@@ -56,7 +57,7 @@ export default async function createUser(args: InferSchema<typeof schema>) {
 
 ```
 
-in a _Quartal **Plugin**_ the same is written in **plain TypeScript** classes and functions:
+in a Quartal **Plugin** the same is written in **plain TypeScript** classes and functions:
 ```ts
 // file:/src/tools/HelloWorldInput.ts
 /** Schema for the hello method */
@@ -111,9 +112,9 @@ You can easily add custom user interface to interact with any of your tools. Thi
 - User saves a lot of tokens: tokens are not used for UI rendering
 - Widget UI renders many times faster than when streamed from the model on-the-fly
 
-[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) standard is supported by the state-of-the-art chatbots, namely Anthropic Claude, OpenAI ChatGPT and M365 Copilot as well as _Quartal **Hub**_ and _Quartal **Messages**_ / _Quartal **Harness**_ embeddable user interfaces. Other chat clients not supporting Widgets fall back to rendering UI by the AI model.
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) standard is supported by the state-of-the-art chatbots, namely Anthropic Claude, OpenAI ChatGPT and M365 Copilot as well as Quartal **Hub** and Quartal **Messages** / Quartal **Harness** embeddable user interfaces. Other chat clients not supporting Widgets fall back to rendering UI by the AI model.
 
-_Quartal **Plugins**_ is based an Astro so you can use basically any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/). See our `quartal-hub/plugin-template` repository for an example in Vue: Creating a widget is as easy as creating a Vue page in Vue / Astro project. We will be providing more examples in other frameworks later.
+Quartal **Plugins** is based an Astro so you can use basically any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/). See our `quartal-hub/plugin-template` repository for an example in Vue: Creating a widget is as easy as creating a Vue page in Vue / Astro project. We will be providing more examples in other frameworks later.
 
 ## Everything the AI Agents need in one package
 For example, if you create a plugin for integrating with an invoicing SaaS software that you provide, you might build:
@@ -138,7 +139,7 @@ Basically all AI agents now consume MCP Tools, so that is all good, but support 
 
 We solve a lot of these issues by for example packaging Agents, Tools, Widgets and Skills as [Claude Plugins](https://code.claude.com/docs/en/plugins-reference), that you may optionally publish. This allows Claude users to connect to only one plugin and get all artifacts on one go. Also, this allows for automatic updates for all of these artifacts including the skills. [ChatGPT Plugins](https://openai.com/index/chatgpt-plugins/) provide a similar functionality, but at the moment without the Agents. You can however manually copy-paste the Agent definitions / prompts to ChatGPT as to basically any other agent framework. 
 
-In the picture below, all the blue components will be generated by _Quartal **Plugins**_ infra from your business logic and code so you do not need to worry about it:
+In the picture below, all the blue components will be generated by Quartal **Plugins** infra from your business logic and code so you do not need to worry about it:
 ![plugins-in-agents](docs/img/plugins-in-agents.svg)
 
 ## ... plus everything for Software devs from same source
@@ -158,18 +159,18 @@ You may provide your plugin as anonymous if your tools do not require any authen
 - Web Component
 - Test UIs: Swagger and widget tester
 
-We provide out-of-the box authentication support using our _Quartal **IAM**_ which recognizes out-of-the-box individuals and companies in Finland from authorities so that you can truly authenticate your users as companies. But you may also use any OAuth2.1 compatible authentication solution (as specified in the MCP spec).
+We provide out-of-the box authentication support using our Quartal **IAM** which recognizes out-of-the-box individuals and companies in Finland from authorities so that you can truly authenticate your users as companies. But you may also use any OAuth2.1 compatible authentication solution (as specified in the MCP spec).
 
 Note that at least in the current version, Skills, Agents, plugin source code and documentation are always anonymous: you should place any confidential data inside Tools instead of embedding it into Skills or Agents. This is also generally the best practice.
 ## Deploy your plugin
 When you have tested your plugin, you deploy it as a [dynamic Astro web site to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). From there anyone can already use the plugin. You may optionally publish your package to [NPM](https://www.npmjs.com/) or [JSR](https://jsr.io/) package registries. This allows developers to use your Tools directly in their code without the http overhead from their server to you published server.
-### Publish in _Quartal **Hub**_
-After deployment, you may register your plugin in _Quartal **Hub**_ which is a registry for plugins and an easy place for:
+### Publish in Quartal **Hub**
+After deployment, you may register your plugin in Quartal **Hub** which is a registry for plugins and an easy place for:
 - Users to discover plugins
 - Test them with authentication
 - Manage plugins and authorize them to agents and users within their organization
 ## Open Source and Zero Lock-in
-_Quartal **Plugins**_ is an open source project with MIT license. It is based on [Astro](https://astro.build) (also MIT) and can be easily [deployed to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). UI Widgets can be created using any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/).
+Quartal **Plugins** is an open source project with MIT license. It is based on [Astro](https://astro.build) (also MIT) and can be easily [deployed to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). UI Widgets can be created using any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/).
 ## Capabilities
 We make it as easy as possible to provide a set of business functionality in one simple package:
 
