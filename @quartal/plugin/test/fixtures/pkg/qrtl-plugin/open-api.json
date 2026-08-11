@@ -1,0 +1,824 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.5.0",
+    "title": "Test 1",
+    "description": "First test plugin for Quartal Plugins.\n\nPlugin: `@samples/test1` (0.5.0)",
+    "x-logo": {
+      "url": "https://cdn.quartal.com/img/logo/quartal-logo-vertical.png",
+      "altText": "Test 1"
+    }
+  },
+  "tags": [
+    {
+      "name": "Calculator",
+      "description": "A class that calculates things."
+    },
+    {
+      "name": "HelloWorld",
+      "description": "A class that says hello to the world."
+    },
+    {
+      "name": "TypesTester",
+      "description": "Tester class for validating different parameter types via the Hub API.\nEach method takes a single object parameter for easy Open API / MCP / RPC schema generation and validation."
+    }
+  ],
+  "components": {
+    "schemas": {
+      "NumberValue": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "Calculator_add_Input": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "number",
+            "description": "The first number to add"
+          },
+          "second": {
+            "type": "number",
+            "description": "The second number to add"
+          }
+        },
+        "required": [
+          "first",
+          "second"
+        ],
+        "description": "The parameters."
+      },
+      "MultiplyThese": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "number",
+            "description": "The first number.",
+            "example": 5
+          },
+          "second": {
+            "type": "number",
+            "description": "The second number.",
+            "example": 3
+          }
+        },
+        "required": [
+          "first",
+          "second"
+        ],
+        "description": "The parameters."
+      },
+      "StringValue": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "HelloWorld_sayHello_Input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name to say hello to."
+          }
+        },
+        "description": "The parameters."
+      },
+      "GreetingType": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the person to greet."
+          },
+          "age": {
+            "type": "number",
+            "description": "The age of the person to greet (number)."
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female"
+            ],
+            "description": "Example of a enum: The gender of the person to greet."
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Example of an array of keywords."
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "gender",
+          "keywords"
+        ],
+        "description": "Greeting fields (name, age, gender, keywords)."
+      },
+      "HelloWorld_sayHelloWithThis_Input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name to say hello to."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "description": "The parameters."
+      },
+      "TypeTesterTree": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Node value."
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "nullable": true
+              }
+            },
+            "description": "Child nodes (recursive reference)."
+          }
+        },
+        "required": [
+          "value",
+          "children"
+        ],
+        "description": "Root tree node."
+      },
+      "TypeTesterPrimitives": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "A string value."
+          },
+          "count": {
+            "type": "number",
+            "description": "A number value."
+          },
+          "flag": {
+            "type": "boolean",
+            "description": "A boolean value."
+          }
+        },
+        "required": [
+          "text",
+          "count",
+          "flag"
+        ]
+      },
+      "TypeTesterJsonSchemaFormats": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "A date string (ISO 8601, e.g. 2026-03-10)."
+          },
+          "dateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "A date-time string (ISO 8601, e.g. 2026-03-10T12:00:00.000Z)."
+          },
+          "time": {
+            "type": "string",
+            "description": "A time string (ISO 8601, e.g. 12:00:00.000)."
+          },
+          "duration": {
+            "type": "string",
+            "description": "A duration string (ISO 8601, e.g. P1Y2M3DT4H5M6S)."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "An email address, e.g. \"user@example.com\"."
+          },
+          "uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "A complete URI (RFC 3986), e.g. \"https://example.com/api/v1/users\"."
+          },
+          "uriReference": {
+            "type": "string",
+            "pattern": "^(https?:\\/\\/|\\/).+",
+            "description": "A URI or a relative reference, e.g. \"/api/v1/users\"."
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A Universally Unique Identifier (e.g., 550e8400-e29b-41d4-a716-446655440000)."
+          }
+        }
+      },
+      "TypeTesterOptionalAndNull": {
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "string",
+            "description": "Required string."
+          },
+          "optional": {
+            "type": "string",
+            "description": "Optional string."
+          },
+          "nullable": {
+            "type": "number",
+            "nullable": true,
+            "description": "Explicitly nullable number."
+          },
+          "nullish": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "May be optional or null."
+          }
+        },
+        "required": [
+          "required",
+          "nullable"
+        ],
+        "description": "Object with optional and nullable fields."
+      },
+      "TypeTesterArraysResult": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "string",
+            "description": "Concatenated labels."
+          },
+          "sum": {
+            "type": "number",
+            "description": "Sum of the numbers."
+          }
+        },
+        "required": [
+          "labels",
+          "sum"
+        ]
+      },
+      "TypeTesterArraysInput": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of labels."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "List of numbers to sum."
+          }
+        },
+        "required": [
+          "labels",
+          "values"
+        ],
+        "description": "Object with array fields."
+      },
+      "TypeTesterNestedObjectResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the nested object result."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the nested object result."
+          },
+          "score": {
+            "type": "number",
+            "description": "The score of the nested object result."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "score"
+        ]
+      },
+      "TypeTesterNestedObjectInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Outer id."
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Inner name."
+              },
+              "score": {
+                "type": "number",
+                "description": "Inner score."
+              }
+            },
+            "required": [
+              "name",
+              "score"
+            ],
+            "description": "Nested payload."
+          }
+        },
+        "required": [
+          "id",
+          "payload"
+        ],
+        "description": "Object containing a nested object."
+      },
+      "TypesTester_unionParam_Output": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "TypeTesterUnionParam": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "alpha",
+              "beta",
+              "gamma"
+            ],
+            "description": "One of the allowed values."
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "description": "Object with a union field."
+      },
+      "Record": {
+        "nullable": true
+      },
+      "TypeTesterMixed": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the mixed object."
+          },
+          "count": {
+            "type": "number",
+            "description": "The count of the mixed object."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The tags of the mixed object."
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "The meta of the mixed object."
+          }
+        },
+        "required": [
+          "title",
+          "count",
+          "tags"
+        ],
+        "description": "Mixed fields for broader validation tests."
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/Calculator/add": {
+      "post": {
+        "tags": [
+          "Calculator"
+        ],
+        "description": "Add two numbers. This example uses inline / anonymous types.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Calculator_add_Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The sum of the two numbers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Calculator/multiply": {
+      "post": {
+        "tags": [
+          "Calculator"
+        ],
+        "description": "Multiply two numbers with a custom type. This example uses a named interface for the input.\n\nThis description is longer with some paragraphs etc.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultiplyThese"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The product of the two numbers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HelloWorld/sayHello": {
+      "post": {
+        "tags": [
+          "HelloWorld"
+        ],
+        "description": "Say hello to the world.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HelloWorld_sayHello_Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The greeting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HelloWorld/sayHelloAdvanced": {
+      "post": {
+        "tags": [
+          "HelloWorld"
+        ],
+        "description": "Function with advanced parameters.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GreetingType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HelloWorld/sayHelloWithThis": {
+      "post": {
+        "tags": [
+          "HelloWorld"
+        ],
+        "description": "Function using this to access private method.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HelloWorld_sayHelloWithThis_Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The greeting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/treeSum": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Recursive tree type (named interface). Used to verify JSON serialization of codeFiles does not fail with cycles.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterTree"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sum of all node values.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/primitives": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Primitives: string, number, boolean.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TypeTesterPrimitives"
+                  },
+                  {
+                    "description": "Object with primitive fields."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Echo of the input for verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeTesterPrimitives"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/jsonSchemaFormats": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "The formats defined in the JSON schema specification. These ar then specified as @format tags in the function documentation.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TypeTesterJsonSchemaFormats"
+                  },
+                  {
+                    "description": "Object with JSON schema formats."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Object with the same values.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeTesterJsonSchemaFormats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/optionalAndNull": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Optional and nullable fields.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterOptionalAndNull"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Summary string.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/arrays": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Array types: array of strings and array of numbers.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterArraysInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Concatenated and summed result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeTesterArraysResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/nestedObject": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Nested object in params.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterNestedObjectInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Flattened result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeTesterNestedObjectResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/unionParam": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Union type parameter (string literal union).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterUnionParam"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The chosen value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypesTester_unionParam_Output"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TypesTester/mixed": {
+      "post": {
+        "tags": [
+          "TypesTester"
+        ],
+        "description": "Mixed: primitives, array, and optional in one object.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypeTesterMixed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Echo of key fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

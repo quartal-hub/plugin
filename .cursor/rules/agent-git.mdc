@@ -1,0 +1,12 @@
+---
+description: Git and PR policy for agents — branches, commits, pushes, and PRs
+alwaysApply: true
+---
+# Agent git policy
+- Never commit or push to `main`.
+- Create or use a feature branch: `agent/<short-task-name>`.
+- Do not merge locally. Open a PR with `gh pr create` when work is done.
+- Run `pnpm install && pnpm run build && pnpm run test` before pushing.
+- Do not commit secrets, `.env` files, or credentials — this is a **public** repository.
+- Do not publish to npm/JSR or deploy anywhere unless explicitly asked.
+- Do not force-push, hard-reset, or rewrite history unless explicitly asked.

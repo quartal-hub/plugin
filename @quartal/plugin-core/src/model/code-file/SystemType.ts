@@ -1,0 +1,21 @@
+/** System types in TypeScript. */
+export type SystemType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "undefined"
+  | "void"
+  | "any"
+  | "unknown"
+  | "never"
+  | "object"
+  | "array"
+  | "tuple"
+  | "map"
+  | "set"
+  | "date"
+  | "regexp"
+  | "function"
+  | "symbol"
+  | "bigint";

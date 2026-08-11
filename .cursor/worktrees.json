@@ -1,0 +1,4 @@
+{
+  "setup-worktree-windows": ["pnpm install"],
+  "setup-worktree-unix": ["pnpm install"]
+}

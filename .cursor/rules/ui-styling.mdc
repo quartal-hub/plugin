@@ -1,0 +1,28 @@
+---
+description: Bootstrap skin styling for Vue UI components (white-label products)
+globs:
+  - "@quartal/ui-plugin/**"
+  - "@quartal/plugin-docs-web/**"
+  - "**/*.vue"
+alwaysApply: false
+---
+
+# UI styling (Bootstrap skins)
+
+We build white-label products that are often skinned to customer visuals: logos, fonts, colors, rounding, borders, etc. Skins are Bootstrap-based CSS files fetched from CDN; skin choice is configurable in many apps.
+
+Bootstrap is our shared vocabulary — known by designers, usable in Vue, React, and plain HTML.
+
+## Guidelines
+
+- **Use Bootstrap styles** unless otherwise instructed.
+  - Not shadcn, not Tailwind, and avoid custom CSS when a utility class exists.
+- **Model UI from Bootstrap components first** (card, list-group, alert, btn, etc.).
+- **Add a root `q-` class** on components that skins may override, e.g. `q-plugin-tool-group` for `PluginToolGroup`.
+- **Custom styling that skins should override:**
+  - Put it in a single shared CSS file (e.g. `ui-plugin.css`) imported in Storybook preview and app bootstrap — **not** in production library bundles.
+  - These rules are ported to the skins project at release.
+  - When colors are needed in custom CSS, use Bootstrap CSS variables (e.g. `var(--bs-primary)`, `var(--bs-body-color)`) — not hardcoded hex/rgb values.
+- **Non-overridable layout** (position, display, link underline removal): prefer Bootstrap utility classes (`d-flex`, `text-decoration-none`, …).
+- **Never use Vue `<style scoped>`** in component libraries.
+- **Default skin:** `https://cdn.quartal.com/skins/default.css` — load via `loadDefaultSkin()` or equivalent in Storybook and dev apps.

@@ -1,0 +1,725 @@
+{
+  "name": "@samples/test1",
+  "title": "Test 1",
+  "description": "First test plugin for Quartal Plugins.",
+  "version": "0.5.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "samples/test1"
+  },
+  "style": {
+    "logo": "https://cdn.quartal.com/img/logo/quartal-logo-vertical.png",
+    "icons": [
+      {
+        "src": "https://cdn.quartal.com/img/logo/quartal-logo-q.png",
+        "sizes": [
+          "128x128"
+        ],
+        "mimeType": "image/png"
+      }
+    ]
+  },
+  "hasReadme": true,
+  "tools": [
+    {
+      "name": "add",
+      "className": "Calculator",
+      "fileName": "Calculator",
+      "description": "Add two numbers. This example uses inline / anonymous types.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "The parameters.",
+          "type": "Calculator_add_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "The sum of the two numbers.",
+        "type": "NumberValue"
+      },
+      "exposure": {
+        "mcpName": "add",
+        "restUrl": "/api/Calculator/add",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "multiply",
+      "className": "Calculator",
+      "fileName": "Calculator",
+      "description": "Multiply two numbers with a custom type. This example uses a named interface for the input.\n\nThis description is longer with some paragraphs etc.\n",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "The parameters.",
+          "type": "MultiplyThese"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "The product of the two numbers.",
+        "type": "NumberValue"
+      },
+      "exposure": {
+        "mcpName": "multiply",
+        "restUrl": "/api/Calculator/multiply",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "sayHello",
+      "className": "HelloWorld",
+      "fileName": "HelloWorld",
+      "description": "Say hello to the world.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "The parameters.",
+          "type": "HelloWorld_sayHello_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "The greeting.",
+        "type": "StringValue"
+      },
+      "exposure": {
+        "mcpName": "sayHello",
+        "restUrl": "/api/HelloWorld/sayHello",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "sayHelloAdvanced",
+      "className": "HelloWorld",
+      "fileName": "HelloWorld",
+      "description": "Function with advanced parameters.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Greeting fields (name, age, gender, keywords).",
+          "type": "GreetingType"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "StringValue"
+      },
+      "exposure": {
+        "mcpName": "sayHelloAdvanced",
+        "restUrl": "/api/HelloWorld/sayHelloAdvanced",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "sayHelloWithThis",
+      "className": "HelloWorld",
+      "fileName": "HelloWorld",
+      "description": "Function using this to access private method.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "The parameters.",
+          "type": "HelloWorld_sayHelloWithThis_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "The greeting.",
+        "type": "StringValue"
+      },
+      "exposure": {
+        "mcpName": "sayHelloWithThis",
+        "restUrl": "/api/HelloWorld/sayHelloWithThis",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "treeSum",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Recursive tree type (named interface). Used to verify JSON serialization of codeFiles does not fail with cycles.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Root tree node.",
+          "type": "TypeTesterTree"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Sum of all node values.",
+        "type": "NumberValue"
+      },
+      "exposure": {
+        "mcpName": "treeSum",
+        "restUrl": "/api/TypesTester/treeSum",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "primitives",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Primitives: string, number, boolean.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object with primitive fields.",
+          "type": "TypeTesterPrimitives"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Echo of the input for verification.",
+        "type": "TypeTesterPrimitives"
+      },
+      "exposure": {
+        "mcpName": "primitives",
+        "restUrl": "/api/TypesTester/primitives",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "jsonSchemaFormats",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "The formats defined in the JSON schema specification. These ar then specified as @format tags in the function documentation.\n",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object with JSON schema formats.",
+          "type": "TypeTesterJsonSchemaFormats"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Object with the same values.",
+        "type": "TypeTesterJsonSchemaFormats"
+      },
+      "exposure": {
+        "mcpName": "jsonSchemaFormats",
+        "restUrl": "/api/TypesTester/jsonSchemaFormats",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "optionalAndNull",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Optional and nullable fields.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object with optional and nullable fields.",
+          "type": "TypeTesterOptionalAndNull"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Summary string.",
+        "type": "StringValue"
+      },
+      "exposure": {
+        "mcpName": "optionalAndNull",
+        "restUrl": "/api/TypesTester/optionalAndNull",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "arrays",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Array types: array of strings and array of numbers.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object with array fields.",
+          "type": "TypeTesterArraysInput"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Concatenated and summed result.",
+        "type": "TypeTesterArraysResult"
+      },
+      "exposure": {
+        "mcpName": "arrays",
+        "restUrl": "/api/TypesTester/arrays",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "nestedObject",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Nested object in params.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object containing a nested object.",
+          "type": "TypeTesterNestedObjectInput"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Flattened result.",
+        "type": "TypeTesterNestedObjectResult"
+      },
+      "exposure": {
+        "mcpName": "nestedObject",
+        "restUrl": "/api/TypesTester/nestedObject",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "unionParam",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Union type parameter (string literal union).",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Object with a union field.",
+          "type": "TypeTesterUnionParam"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "The chosen value.",
+        "type": "TypesTester_unionParam_Output"
+      },
+      "exposure": {
+        "mcpName": "unionParam",
+        "restUrl": "/api/TypesTester/unionParam",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "mixed",
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "description": "Mixed: primitives, array, and optional in one object.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "Mixed fields for broader validation tests.",
+          "type": "TypeTesterMixed"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "Echo of key fields.",
+        "type": "Record"
+      },
+      "exposure": {
+        "mcpName": "mixed",
+        "restUrl": "/api/TypesTester/mixed",
+        "restMethod": "post"
+      },
+      "hasWidget": false
+    }
+  ],
+  "toolGroups": [
+    {
+      "className": "Calculator",
+      "fileName": "Calculator",
+      "tools": [
+        {
+          "name": "add",
+          "className": "Calculator",
+          "fileName": "Calculator",
+          "description": "Add two numbers. This example uses inline / anonymous types.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "The parameters.",
+              "type": "Calculator_add_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "The sum of the two numbers.",
+            "type": "NumberValue"
+          },
+          "exposure": {
+            "mcpName": "add",
+            "restUrl": "/api/Calculator/add",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "multiply",
+          "className": "Calculator",
+          "fileName": "Calculator",
+          "description": "Multiply two numbers with a custom type. This example uses a named interface for the input.\n\nThis description is longer with some paragraphs etc.\n",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "The parameters.",
+              "type": "MultiplyThese"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "The product of the two numbers.",
+            "type": "NumberValue"
+          },
+          "exposure": {
+            "mcpName": "multiply",
+            "restUrl": "/api/Calculator/multiply",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        }
+      ]
+    },
+    {
+      "className": "HelloWorld",
+      "fileName": "HelloWorld",
+      "tools": [
+        {
+          "name": "sayHello",
+          "className": "HelloWorld",
+          "fileName": "HelloWorld",
+          "description": "Say hello to the world.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "The parameters.",
+              "type": "HelloWorld_sayHello_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "The greeting.",
+            "type": "StringValue"
+          },
+          "exposure": {
+            "mcpName": "sayHello",
+            "restUrl": "/api/HelloWorld/sayHello",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "sayHelloAdvanced",
+          "className": "HelloWorld",
+          "fileName": "HelloWorld",
+          "description": "Function with advanced parameters.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Greeting fields (name, age, gender, keywords).",
+              "type": "GreetingType"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "StringValue"
+          },
+          "exposure": {
+            "mcpName": "sayHelloAdvanced",
+            "restUrl": "/api/HelloWorld/sayHelloAdvanced",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "sayHelloWithThis",
+          "className": "HelloWorld",
+          "fileName": "HelloWorld",
+          "description": "Function using this to access private method.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "The parameters.",
+              "type": "HelloWorld_sayHelloWithThis_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "The greeting.",
+            "type": "StringValue"
+          },
+          "exposure": {
+            "mcpName": "sayHelloWithThis",
+            "restUrl": "/api/HelloWorld/sayHelloWithThis",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        }
+      ]
+    },
+    {
+      "className": "TypesTester",
+      "fileName": "TypesTester",
+      "tools": [
+        {
+          "name": "treeSum",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Recursive tree type (named interface). Used to verify JSON serialization of codeFiles does not fail with cycles.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Root tree node.",
+              "type": "TypeTesterTree"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Sum of all node values.",
+            "type": "NumberValue"
+          },
+          "exposure": {
+            "mcpName": "treeSum",
+            "restUrl": "/api/TypesTester/treeSum",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "primitives",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Primitives: string, number, boolean.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object with primitive fields.",
+              "type": "TypeTesterPrimitives"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Echo of the input for verification.",
+            "type": "TypeTesterPrimitives"
+          },
+          "exposure": {
+            "mcpName": "primitives",
+            "restUrl": "/api/TypesTester/primitives",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "jsonSchemaFormats",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "The formats defined in the JSON schema specification. These ar then specified as @format tags in the function documentation.\n",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object with JSON schema formats.",
+              "type": "TypeTesterJsonSchemaFormats"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Object with the same values.",
+            "type": "TypeTesterJsonSchemaFormats"
+          },
+          "exposure": {
+            "mcpName": "jsonSchemaFormats",
+            "restUrl": "/api/TypesTester/jsonSchemaFormats",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "optionalAndNull",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Optional and nullable fields.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object with optional and nullable fields.",
+              "type": "TypeTesterOptionalAndNull"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Summary string.",
+            "type": "StringValue"
+          },
+          "exposure": {
+            "mcpName": "optionalAndNull",
+            "restUrl": "/api/TypesTester/optionalAndNull",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "arrays",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Array types: array of strings and array of numbers.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object with array fields.",
+              "type": "TypeTesterArraysInput"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Concatenated and summed result.",
+            "type": "TypeTesterArraysResult"
+          },
+          "exposure": {
+            "mcpName": "arrays",
+            "restUrl": "/api/TypesTester/arrays",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "nestedObject",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Nested object in params.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object containing a nested object.",
+              "type": "TypeTesterNestedObjectInput"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Flattened result.",
+            "type": "TypeTesterNestedObjectResult"
+          },
+          "exposure": {
+            "mcpName": "nestedObject",
+            "restUrl": "/api/TypesTester/nestedObject",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "unionParam",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Union type parameter (string literal union).",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Object with a union field.",
+              "type": "TypeTesterUnionParam"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "The chosen value.",
+            "type": "TypesTester_unionParam_Output"
+          },
+          "exposure": {
+            "mcpName": "unionParam",
+            "restUrl": "/api/TypesTester/unionParam",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "mixed",
+          "className": "TypesTester",
+          "fileName": "TypesTester",
+          "description": "Mixed: primitives, array, and optional in one object.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "Mixed fields for broader validation tests.",
+              "type": "TypeTesterMixed"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "Echo of key fields.",
+            "type": "Record"
+          },
+          "exposure": {
+            "mcpName": "mixed",
+            "restUrl": "/api/TypesTester/mixed",
+            "restMethod": "post"
+          },
+          "hasWidget": false
+        }
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "name": "coin-flipper",
+      "description": "Use this skill when the user asks to flip a coin or needs a random 50/50 choice.",
+      "fileCount": 1
+    },
+    {
+      "name": "l33t-translator",
+      "description": "Use this skill to transform text into \"l33t speak\" for testing purposes.",
+      "fileCount": 1
+    },
+    {
+      "name": "letterhead-stamp",
+      "description": "Use this skill when the user asks to apply the \"letterhead stamp\" to a response. The exact letterhead block is stored under `assets/`.",
+      "fileCount": 2
+    },
+    {
+      "name": "magic-multiplier",
+      "description": "Use this skill when the user asks to apply the \"magic multiplier\" to a number. The exact multiplier is defined in code under `scripts/`.",
+      "fileCount": 2
+    },
+    {
+      "name": "protocol-x",
+      "description": "Use this skill when the user mentions 'Protocol X'. It enforces a high-brevity communication style.",
+      "fileCount": 1
+    },
+    {
+      "name": "qrtl-glossary",
+      "description": "Use this skill whenever the user asks for the meaning of a term that starts with the prefix `QRTL-`. The authoritative definitions live in `references/glossary.md`.",
+      "fileCount": 2
+    },
+    {
+      "name": "sentiment-tagger",
+      "description": "Use this skill to prepend a sentiment classification to any generated text.",
+      "fileCount": 1
+    },
+    {
+      "name": "verification-seal",
+      "description": "Use this skill when the user asks to verify that an agent's response is authentic or when they mention a 'seal'.",
+      "fileCount": 1
+    }
+  ],
+  "widgets": [],
+  "resources": [],
+  "prompts": [],
+  "links": {
+    "openApi": "/open-api.json",
+    "types": "/types.json",
+    "mcpServer": "/mcp-server.json",
+    "skillsCatalog": "/skills/catalog.json",
+    "readme": "/readme.md",
+    "api": "/api",
+    "mcp": "/mcp"
+  }
+}

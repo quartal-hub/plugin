@@ -1,0 +1,13 @@
+---
+description: Prefer minimal configuration in this project; avoid speculative options
+alwaysApply: true
+---
+
+# Minimal configuration
+
+In configuration, less is better: It is easy to add more configuration later if necessary, but once we add configuration and deploy to customers, we need to support that config forever in future versions. We do not know whether customers use it or not. So do not add configuration just-in-case unless it is clearly necessary.
+
+Examples:
+
+- Plugin metadata (name, description, icons) belongs in `package.json` + `qrtl.config.ts`, not duplicated in MCP or OpenAPI options.
+- `McpServerOptions` only exposes overrides that are truly needed (e.g. MCP `name` when the scoped plugin name is unsuitable for clients).

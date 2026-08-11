@@ -1,0 +1,11 @@
+{
+  "name": "@samples/test1",
+  "version": "0.5.0",
+  "description": "First test plugin for Quartal Plugins.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "samples/test1"
+  }
+}

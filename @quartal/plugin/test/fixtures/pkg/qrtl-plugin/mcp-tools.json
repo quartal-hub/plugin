@@ -1,0 +1,435 @@
+{
+  "tools": [
+    {
+      "id": "add",
+      "fileName": "Calculator",
+      "className": "Calculator",
+      "methodName": "add",
+      "description": "Add two numbers. This example uses inline / anonymous types.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "number",
+            "description": "The first number to add"
+          },
+          "second": {
+            "type": "number",
+            "description": "The second number to add"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "first",
+          "second"
+        ],
+        "description": "The parameters."
+      }
+    },
+    {
+      "id": "multiply",
+      "fileName": "Calculator",
+      "className": "Calculator",
+      "methodName": "multiply",
+      "description": "Multiply two numbers with a custom type. This example uses a named interface for the input.\n\nThis description is longer with some paragraphs etc.\n",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "number",
+            "description": "The first number.",
+            "example": 5
+          },
+          "second": {
+            "type": "number",
+            "description": "The second number.",
+            "example": 3
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "first",
+          "second"
+        ],
+        "description": "The parameters."
+      }
+    },
+    {
+      "id": "sayHello",
+      "fileName": "HelloWorld",
+      "className": "HelloWorld",
+      "methodName": "sayHello",
+      "description": "Say hello to the world.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name to say hello to."
+          }
+        },
+        "additionalProperties": false,
+        "description": "The parameters."
+      }
+    },
+    {
+      "id": "sayHelloAdvanced",
+      "fileName": "HelloWorld",
+      "className": "HelloWorld",
+      "methodName": "sayHelloAdvanced",
+      "description": "Function with advanced parameters.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the person to greet."
+          },
+          "age": {
+            "type": "number",
+            "description": "The age of the person to greet (number)."
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female"
+            ],
+            "description": "Example of a enum: The gender of the person to greet."
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Example of an array of keywords."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "age",
+          "gender",
+          "keywords"
+        ],
+        "description": "Greeting fields (name, age, gender, keywords)."
+      }
+    },
+    {
+      "id": "sayHelloWithThis",
+      "fileName": "HelloWorld",
+      "className": "HelloWorld",
+      "methodName": "sayHelloWithThis",
+      "description": "Function using this to access private method.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name to say hello to."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "description": "The parameters."
+      }
+    },
+    {
+      "id": "treeSum",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "treeSum",
+      "description": "Recursive tree type (named interface). Used to verify JSON serialization of codeFiles does not fail with cycles.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Node value."
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "Child nodes (recursive reference)."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "children"
+        ],
+        "description": "Root tree node."
+      }
+    },
+    {
+      "id": "primitives",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "primitives",
+      "description": "Primitives: string, number, boolean.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "A string value."
+          },
+          "count": {
+            "type": "number",
+            "description": "A number value."
+          },
+          "flag": {
+            "type": "boolean",
+            "description": "A boolean value."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "count",
+          "flag"
+        ],
+        "description": "Object with primitive fields."
+      }
+    },
+    {
+      "id": "jsonSchemaFormats",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "jsonSchemaFormats",
+      "description": "The formats defined in the JSON schema specification. These ar then specified as @format tags in the function documentation.\n",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "A date string (ISO 8601, e.g. 2026-03-10).",
+            "format": "date"
+          },
+          "dateTime": {
+            "type": "string",
+            "description": "A date-time string (ISO 8601, e.g. 2026-03-10T12:00:00.000Z).",
+            "format": "date-time"
+          },
+          "time": {
+            "type": "string",
+            "description": "A time string (ISO 8601, e.g. 12:00:00.000).",
+            "format": "time"
+          },
+          "duration": {
+            "type": "string",
+            "description": "A duration string (ISO 8601, e.g. P1Y2M3DT4H5M6S).",
+            "format": "duration"
+          },
+          "email": {
+            "type": "string",
+            "description": "An email address, e.g. \"user@example.com\".",
+            "format": "email"
+          },
+          "uri": {
+            "type": "string",
+            "description": "A complete URI (RFC 3986), e.g. \"https://example.com/api/v1/users\".",
+            "format": "uri"
+          },
+          "uriReference": {
+            "type": "string",
+            "description": "A URI or a relative reference, e.g. \"/api/v1/users\".",
+            "format": "uri-reference"
+          },
+          "uuid": {
+            "type": "string",
+            "description": "A Universally Unique Identifier (e.g., 550e8400-e29b-41d4-a716-446655440000).",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Object with JSON schema formats."
+      }
+    },
+    {
+      "id": "optionalAndNull",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "optionalAndNull",
+      "description": "Optional and nullable fields.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "string",
+            "description": "Required string."
+          },
+          "optional": {
+            "type": "string",
+            "description": "Optional string."
+          },
+          "nullable": {
+            "type": "number",
+            "description": "Explicitly nullable number."
+          },
+          "nullish": {
+            "type": "boolean",
+            "description": "May be optional or null."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "required",
+          "nullable"
+        ],
+        "description": "Object with optional and nullable fields."
+      }
+    },
+    {
+      "id": "arrays",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "arrays",
+      "description": "Array types: array of strings and array of numbers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of labels."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "List of numbers to sum."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "labels",
+          "values"
+        ],
+        "description": "Object with array fields."
+      }
+    },
+    {
+      "id": "nestedObject",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "nestedObject",
+      "description": "Nested object in params.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Outer id."
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Inner name."
+              },
+              "score": {
+                "type": "number",
+                "description": "Inner score."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "score"
+            ],
+            "description": "Nested payload."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "payload"
+        ],
+        "description": "Object containing a nested object."
+      }
+    },
+    {
+      "id": "unionParam",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "unionParam",
+      "description": "Union type parameter (string literal union).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "alpha",
+              "beta",
+              "gamma"
+            ],
+            "description": "One of the allowed values."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "kind"
+        ],
+        "description": "Object with a union field."
+      }
+    },
+    {
+      "id": "mixed",
+      "fileName": "TypesTester",
+      "className": "TypesTester",
+      "methodName": "mixed",
+      "description": "Mixed: primitives, array, and optional in one object.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the mixed object."
+          },
+          "count": {
+            "type": "number",
+            "description": "The count of the mixed object."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The tags of the mixed object."
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "source"
+            ],
+            "description": "The meta of the mixed object."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "count",
+          "tags"
+        ],
+        "description": "Mixed fields for broader validation tests."
+      }
+    }
+  ]
+}

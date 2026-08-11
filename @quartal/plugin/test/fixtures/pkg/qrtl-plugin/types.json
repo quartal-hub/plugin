@@ -1,0 +1,461 @@
+[
+  {
+    "name": "Calculator_add_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "first",
+        "type": "number",
+        "description": "The first number to add",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "second",
+        "type": "number",
+        "description": "The second number to add",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "HelloWorld_sayHello_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name to say hello to.",
+        "optional": true,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "HelloWorld_sayHelloWithThis_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name to say hello to.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "GreetingType",
+    "description": "A type that represents a very complex greeting.",
+    "properties": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the person to greet.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "age",
+        "type": "number",
+        "description": "The age of the person to greet (number).",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "gender",
+        "type": "male | female",
+        "description": "Example of a enum: The gender of the person to greet.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "keywords",
+        "type": {
+          "items": "string"
+        },
+        "description": "Example of an array of keywords.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "MultiplyThese",
+    "description": "Custom type for multiplying two numbers.",
+    "properties": [
+      {
+        "name": "first",
+        "type": "number",
+        "description": "The first number.",
+        "optional": false,
+        "nullable": false,
+        "example": 5
+      },
+      {
+        "name": "second",
+        "type": "number",
+        "description": "The second number.",
+        "optional": false,
+        "nullable": false,
+        "example": 3
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterArraysInput",
+    "description": "Array types: array of strings and array of numbers.",
+    "properties": [
+      {
+        "name": "labels",
+        "type": {
+          "items": "string"
+        },
+        "description": "List of labels.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "values",
+        "type": {
+          "items": "number"
+        },
+        "description": "List of numbers to sum.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterArraysResult",
+    "description": "Result of arrays aggregation.",
+    "properties": [
+      {
+        "name": "labels",
+        "type": "string",
+        "description": "Concatenated labels.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "sum",
+        "type": "number",
+        "description": "Sum of the numbers.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterJsonSchemaFormats",
+    "description": "The formats defined in the JSON schema specification (e.g. @format tags in docs).",
+    "properties": [
+      {
+        "name": "date",
+        "type": "string",
+        "description": "A date string (ISO 8601, e.g. 2026-03-10).",
+        "optional": true,
+        "nullable": false,
+        "format": "date"
+      },
+      {
+        "name": "dateTime",
+        "type": "string",
+        "description": "A date-time string (ISO 8601, e.g. 2026-03-10T12:00:00.000Z).",
+        "optional": true,
+        "nullable": false,
+        "format": "date-time"
+      },
+      {
+        "name": "time",
+        "type": "string",
+        "description": "A time string (ISO 8601, e.g. 12:00:00.000).",
+        "optional": true,
+        "nullable": false,
+        "format": "time"
+      },
+      {
+        "name": "duration",
+        "type": "string",
+        "description": "A duration string (ISO 8601, e.g. P1Y2M3DT4H5M6S).",
+        "optional": true,
+        "nullable": false,
+        "format": "duration"
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "description": "An email address, e.g. \"user@example.com\".",
+        "optional": true,
+        "nullable": false,
+        "format": "email"
+      },
+      {
+        "name": "uri",
+        "type": "string",
+        "description": "A complete URI (RFC 3986), e.g. \"https://example.com/api/v1/users\".",
+        "optional": true,
+        "nullable": false,
+        "format": "uri"
+      },
+      {
+        "name": "uriReference",
+        "type": "string",
+        "description": "A URI or a relative reference, e.g. \"/api/v1/users\".",
+        "optional": true,
+        "nullable": false,
+        "format": "uri-reference"
+      },
+      {
+        "name": "uuid",
+        "type": "string",
+        "description": "A Universally Unique Identifier (e.g., 550e8400-e29b-41d4-a716-446655440000).",
+        "optional": true,
+        "nullable": false,
+        "format": "uuid"
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterMixed",
+    "description": "Mixed: primitives, array, and optional in one object.",
+    "properties": [
+      {
+        "name": "title",
+        "type": "string",
+        "description": "The title of the mixed object.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "count",
+        "type": "number",
+        "description": "The count of the mixed object.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "tags",
+        "type": {
+          "items": "string"
+        },
+        "description": "The tags of the mixed object.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "meta",
+        "type": {
+          "name": "",
+          "description": "",
+          "properties": [
+            {
+              "name": "source",
+              "type": "string",
+              "description": "",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        "description": "The meta of the mixed object.",
+        "optional": true,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterNestedObjectInput",
+    "description": "Nested object in params.",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Outer id.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "payload",
+        "type": {
+          "name": "",
+          "description": "",
+          "properties": [
+            {
+              "name": "name",
+              "type": "string",
+              "description": "Inner name.",
+              "optional": false,
+              "nullable": false
+            },
+            {
+              "name": "score",
+              "type": "number",
+              "description": "Inner score.",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        "description": "Nested payload.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterNestedObjectResult",
+    "description": "Flattened result of nested object.",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "The id of the nested object result.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the nested object result.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "score",
+        "type": "number",
+        "description": "The score of the nested object result.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterOptionalAndNull",
+    "description": "Optional and nullable fields.",
+    "properties": [
+      {
+        "name": "required",
+        "type": "string",
+        "description": "Required string.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "optional",
+        "type": "string",
+        "description": "Optional string.",
+        "optional": true,
+        "nullable": false
+      },
+      {
+        "name": "nullable",
+        "type": "number",
+        "description": "Explicitly nullable number.",
+        "optional": false,
+        "nullable": true
+      },
+      {
+        "name": "nullish",
+        "type": "boolean",
+        "description": "May be optional or null.",
+        "optional": true,
+        "nullable": true
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterPrimitives",
+    "description": "Primitives: string, number, boolean.",
+    "properties": [
+      {
+        "name": "text",
+        "type": "string",
+        "description": "A string value.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "count",
+        "type": "number",
+        "description": "A number value.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "flag",
+        "type": "boolean",
+        "description": "A boolean value.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterTree",
+    "description": "Recursive tree node for testing ref-only serialization (no circular references in JSON).",
+    "properties": [
+      {
+        "name": "value",
+        "type": "number",
+        "description": "Node value.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "children",
+        "type": {
+          "items": "TypeTesterTree"
+        },
+        "description": "Child nodes (recursive reference).",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypeTesterUnionParam",
+    "description": "Union type parameter (string literal union).",
+    "properties": [
+      {
+        "name": "kind",
+        "type": "alpha | beta | gamma",
+        "description": "One of the allowed values.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "TypesTester_unionParam_Output",
+    "description": "",
+    "properties": [
+      {
+        "name": "kind",
+        "type": "string",
+        "description": "",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  }
+]

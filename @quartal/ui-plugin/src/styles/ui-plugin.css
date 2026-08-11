@@ -1,0 +1,103 @@
+/**
+ * Skin-overridable hooks for @quartal/ui-plugin.
+ * Import in Storybook preview and app bootstrap only — not in production library builds.
+ * These rules are ported to the skins project at release.
+ *
+ * TODO: Move these rules to the skins project at release.
+ */
+
+ .q-plugin-swagger-view {
+  margin-top: -48px;
+  margin-left: -10px;
+ }
+
+ .q-plugin-redoc-view {
+ }
+
+.q-plugin-summary .q-plugin-summary__title {
+  /* Skins may adjust plugin title typography */
+}
+
+.q-plugin-about .q-plugin-about__readme img {
+  max-width: 100%;
+  height: auto;
+}
+
+.q-plugin-left-navi .list-group-item.active {
+  z-index: 1;
+}
+
+.q-plugin-left-navi button.list-group-item:disabled {
+  opacity: 0.55;
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .btn.execute {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-get .tab-header .tab-item.active h4 span:after {
+  background: var(--bs-primary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-get {
+  background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+  border-color: var(--bs-primary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background: var(--bs-primary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-get .opblock-summary {
+  border-color: var(--bs-primary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-post {
+  background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+  border-color: var(--bs-secondary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background: var(--bs-secondary);
+}
+
+.q-plugin-swagger-view__ui .swagger-ui .opblock.opblock-post .opblock-summary {
+  border-color: var(--bs-secondary);
+}
+
+.q-plugin-redoc-view__ui {
+  min-height: 70vh;
+}
+
+/* McpToolTester / McpWidget */
+.q-mcp-tool-tester__json {
+  max-height: 22rem;
+  overflow: auto;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.q-mcp-tool-tester__log {
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.q-mcp-tool-tester__log > li {
+  padding-block: 0.15rem;
+}
+
+.q-mcp-widget__frame {
+  min-height: 8rem;
+  transition: height 0.15s ease;
+}
+
+.q-mcp-widget__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--bs-body-bg, #fff) 70%, transparent);
+}

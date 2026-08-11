@@ -1,0 +1,13 @@
+{
+  "title": "Test 1",
+  "style": {
+    "logo": "https://cdn.quartal.com/img/logo/quartal-logo-vertical.png",
+    "icons": [
+      {
+        "src": "https://cdn.quartal.com/img/logo/quartal-logo-q.png",
+        "mimeType": "image/png",
+        "sizes": ["128x128"]
+      }
+    ]
+  }
+}

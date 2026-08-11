@@ -1,0 +1,17 @@
+{
+  "name": "@samples/salaxy-agent",
+  "type": "module",
+  "version": "0.5.0",
+  "description": "Simple API that uses an Agent to execute tasks on Salaxy API.",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/quartal-hub/plugin.git", "directory": "samples/salaxy-agent" },
+  "scripts": { "dev": "astro dev", "build": "astro build", "preview": "astro preview" },
+  "dependencies": {
+    "@astrojs/node": "^11.0.0",
+    "@quartal/plugin": "workspace:*",
+    "@quartal/plugin-core": "workspace:*",
+    "@salaxy/core": "^6.0.0",
+    "astro": "^7.0.0"
+  }
+}
