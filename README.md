@@ -22,12 +22,12 @@ Requirements:
 
 With PNPM:
 ```bash
-pnpm create @quartal-hub/plugin
+pnpm create @quartal/plugin
 ```
 
 With NPM:
 ```bash
-npm create @quartal-hub/plugin
+npm create @quartal/plugin
 ```
 
 Alternatively, you may also just fork the template repository in [https://github.com/quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template)
@@ -191,12 +191,12 @@ Requirements:
 
 With PNPM:
 ```bash
-pnpm create @quartal-hub/plugin
+pnpm create @quartal/plugin
 ```
 
 With NPM:
 ```bash
-npm create @quartal-hub/plugin
+npm create @quartal/plugin
 ```
 
 Alternatively, you may also just fork the template repository in [https://github.com/quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template)

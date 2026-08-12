@@ -77,3 +77,5 @@ overrides; use Bootstrap CSS variables (e.g. `var(--bs-primary)`) for colors.
 
 1. `pnpm install && pnpm run build && pnpm run test && pnpm run lint`
 2. Push branch and open a PR (never push to `main`).
+3. When working on Olli's local computer, include any pre-existing uncommitted changes in the
+   working tree (e.g. a regenerated `README.md`) in the PR — do not leave them behind.
