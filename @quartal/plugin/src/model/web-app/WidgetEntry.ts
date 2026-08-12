@@ -1,7 +1,4 @@
-import type { WidgetCsp } from "../model/index.ts";
-
-/** MIME type the host uses to recognize an MCP Apps widget UI resource. */
-export const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
+import type { WidgetCsp } from "@quartal/plugin-core";
 
 /**
  * A resolved widget: a tool id, its `ui://` resource URI, display name, and optional CSP. The widget

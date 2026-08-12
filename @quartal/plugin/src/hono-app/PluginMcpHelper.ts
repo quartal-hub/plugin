@@ -12,15 +12,22 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 import { buildMcpTools } from "../code/buildMcpTools.ts";
-import type { PluginManifest, ExecuteFn, McpServerOptions, McpToolDescriptor, PluginAppConfig } from "../model/index.ts";
+import type {
+  PluginManifest,
+  ExecuteFn,
+  FetchWidgetHtml,
+  McpServerOptions,
+  McpToolDescriptor,
+  PluginAppConfig,
+  WidgetEntry,
+} from "../model/index.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
-import { WIDGET_MIME_TYPE, type WidgetEntry } from "../widgets/widgetTypes.ts";
 import {
   defaultFetchWidgetHtml,
-  type FetchWidgetHtml,
   rewriteWidgetHtml,
+  WIDGET_MIME_TYPE,
   withWidgetOrigin,
 } from "../widgets/runtimeWidgets.ts";
 

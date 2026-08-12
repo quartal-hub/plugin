@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 import { pluginDevServerPlugin } from "../src/vite/pluginDevServer.ts";
 import type { ConnectMiddleware, ViteDevServerLike } from "../src/vite/qrtlCodegenPlugin.ts";
 

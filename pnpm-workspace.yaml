@@ -5,3 +5,4 @@ allowBuilds:
   esbuild: true
   "@scarf/scarf": false
   core-js: false
+  unrs-resolver: true

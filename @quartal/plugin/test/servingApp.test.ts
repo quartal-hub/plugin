@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import { PluginApiHelper } from "../src/index.ts";
 

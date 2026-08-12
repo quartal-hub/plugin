@@ -24,8 +24,6 @@ import type {
   WidgetCatalogEntry,
 } from "../model/index.ts";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Builds a Hono API that executes plugin tool methods. Loads pre-generated metadata from
  * `qrtl-plugin/` and executes methods via the injected static tool-module registry

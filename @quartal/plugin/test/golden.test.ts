@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generateTools } from "../src/index.ts";
 
 // Byte-exact golden check: run the FULL pipeline (TsMorphAnalyzer → buildPluginArtifacts → writers)
