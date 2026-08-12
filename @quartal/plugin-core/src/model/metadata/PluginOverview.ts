@@ -1,3 +1,5 @@
+import type { PromptArgument } from "../mcp/McpPrompt.ts";
+
 /** A tool parameter or return slot with a type reference resolvable via `links.types`. */
 export interface PluginToolParameter {
   /** Parameter or return slot name (empty for anonymous return). */
@@ -52,6 +54,24 @@ export interface PluginToolEntry {
   exposure: PluginToolExposure;
   /** Whether an MCP Apps widget UI is registered for this tool. */
   hasWidget: boolean;
+}
+
+/** One MCP prompt (prompt-class function) exposed by the plugin. */
+export interface PluginPromptEntry {
+  /** MCP prompt name advertised in `prompts/list`. */
+  name: string;
+  /** Source class name. */
+  className: string;
+  /** Source file stem (without `.ts`). */
+  fileName: string;
+  /** Source method name on the class. */
+  methodName: string;
+  /** Short summary from `@summary` JSDoc. */
+  summary?: string;
+  /** Longer description from JSDoc. */
+  description: string;
+  /** Arguments accepted by the prompt (string-valued on the MCP wire). */
+  arguments: PromptArgument[];
 }
 
 /** Skill summary for the plugin overview (file list loaded from `links.skillsCatalog`). */

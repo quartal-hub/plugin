@@ -39,6 +39,12 @@ export interface PluginAppConfig {
   toolModules?: ToolModuleRegistry;
 
   /**
+   * Static prompt-module registry (from the generated `prompts.registry.ts`). Required to render
+   * MCP prompts at runtime. When omitted, `prompts/get` returns a helpful error.
+   */
+  promptModules?: ToolModuleRegistry;
+
+  /**
    * Explicit widget entries advertised as MCP Apps UI resources. When set, runtime widget-page
    * discovery is skipped (used by tests / non-Astro hosts). The entries carry no HTML — each
    * `resources/read` renders the live widget page. When omitted, widgets are discovered from

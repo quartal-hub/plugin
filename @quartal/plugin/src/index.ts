@@ -17,6 +17,7 @@ export {
 } from "./code/buildPluginArtifacts.ts";
 export type { PluginArtifacts } from "./code/buildPluginArtifacts.ts";
 export { buildMcpCatalog } from "./code/buildMcpCatalog.ts";
+export { buildMcpPrompts } from "./code/buildMcpPrompts.ts";
 export { buildMcpTools, makeMcpToolName } from "./code/buildMcpTools.ts";
 export { buildOpenApiDocument } from "./code/buildOpenApiDocument.ts";
 export { buildOpenApiTags } from "./code/buildOpenApiTags.ts";
@@ -126,7 +127,16 @@ export type {
   McpCatalog,
   McpCatalogEntry,
   McpCatalogTool,
+  McpPromptDescriptor,
+  McpPromptsDocument,
   McpToolDescriptor,
+  PluginPromptEntry,
+  PromptArgument,
+  PromptMessage,
+  PromptResponse,
+  PromptResult,
+  PromptRole,
+  PromptTextContent,
   QuartalPluginContext,
   SystemType,
 } from "./model/index.ts";

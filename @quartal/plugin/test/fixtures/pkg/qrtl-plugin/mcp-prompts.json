@@ -1,0 +1,38 @@
+{
+  "prompts": [
+    {
+      "id": "writeGreeting",
+      "fileName": "GreetingPrompts",
+      "className": "GreetingPrompts",
+      "methodName": "writeGreeting",
+      "title": "Write a greeting.",
+      "description": "Builds a prompt that asks the model to write a friendly greeting.",
+      "arguments": [
+        {
+          "name": "name",
+          "description": "Who the greeting is for.",
+          "required": true
+        },
+        {
+          "name": "tone",
+          "description": "Tone of the greeting, e.g. \"formal\" or \"playful\"."
+        }
+      ]
+    },
+    {
+      "id": "greetingVariants",
+      "fileName": "GreetingPrompts",
+      "className": "GreetingPrompts",
+      "methodName": "greetingVariants",
+      "title": "Greeting variants.",
+      "description": "Builds a prompt asking for greeting variants in a language.",
+      "arguments": [
+        {
+          "name": "language",
+          "description": "The language to greet in.",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

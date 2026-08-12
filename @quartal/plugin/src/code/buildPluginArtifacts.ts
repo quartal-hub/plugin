@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import type { CodeFile, PluginManifest, McpCatalog, WidgetCatalogEntry } from "../model/index.ts";
+import type { CodeFile, PluginManifest, McpCatalog, McpPromptDescriptor, WidgetCatalogEntry } from "../model/index.ts";
 import { buildMcpCatalog } from "./buildMcpCatalog.ts";
+import { buildMcpPrompts } from "./buildMcpPrompts.ts";
 import { buildMcpTools } from "./buildMcpTools.ts";
 import { buildOpenApiDocument } from "./buildOpenApiDocument.ts";
 import { getSystemCodeFile } from "./getSystemCodeFile.ts";
@@ -15,6 +16,8 @@ export interface PluginArtifacts {
   openApi: Record<string, unknown>;
   /** MCP tool descriptors (id, schema, etc.) — the execution-side metadata. */
   mcpTools: ReturnType<typeof buildMcpTools>;
+  /** MCP prompt descriptors (id, arguments, etc.) from the plugin's `prompts/` entry. */
+  mcpPrompts: McpPromptDescriptor[];
   /** In-memory MCP catalog (tools/resources/prompts/widgets); feeds `contents.json` (not written to disk). */
   mcpCatalog: McpCatalog;
   /** Flat list of all exported types across analyzed files. */
@@ -38,18 +41,27 @@ export function prepareCodeFilesForPlugin(files: CodeFile[]): CodeFile[] {
 export function buildPluginArtifacts(
   files: CodeFile[],
   manifest: PluginManifest,
-  options?: { basePath?: string; defaultMethod?: "get" | "post"; widgets?: WidgetCatalogEntry[] },
+  options?: {
+    basePath?: string;
+    defaultMethod?: "get" | "post";
+    widgets?: WidgetCatalogEntry[];
+    /** Analyzed code files from the plugin's `prompts/` entry (kept out of tools/REST artifacts). */
+    promptFiles?: CodeFile[];
+  },
 ): PluginArtifacts {
   const codeFiles = prepareCodeFilesForPlugin(files);
 
   const openApi = buildOpenApiDocument(codeFiles, manifest, options);
   const mcpTools = buildMcpTools(codeFiles);
-  const mcpCatalog = buildMcpCatalog(codeFiles, options?.widgets);
+  const mcpPrompts = options?.promptFiles?.length
+    ? buildMcpPrompts(prepareCodeFilesForPlugin(options.promptFiles))
+    : [];
+  const mcpCatalog = buildMcpCatalog(codeFiles, options?.widgets, mcpPrompts);
   const types = codeFiles
     .filter((f) => f.path !== "__system__.ts")
     .flatMap((f) => f.types);
 
-  return { files: codeFiles, openApi, mcpTools, mcpCatalog, types };
+  return { files: codeFiles, openApi, mcpTools, mcpPrompts, mcpCatalog, types };
 }
 
 /** Writes pretty-printed JSON (matches `deno fmt`: 2-space indent + trailing newline).
@@ -72,6 +84,7 @@ export async function writePluginArtifacts(
   await writeJsonToFile(join(out, "tools.json"), { files: artifacts.files });
   await writeJsonToFile(join(out, "open-api.json"), artifacts.openApi);
   await writeJsonToFile(join(out, "mcp-tools.json"), { tools: artifacts.mcpTools });
+  await writeJsonToFile(join(out, "mcp-prompts.json"), { prompts: artifacts.mcpPrompts });
   await writeJsonToFile(join(out, "types.json"), artifacts.types);
 }
 

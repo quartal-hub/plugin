@@ -29,6 +29,8 @@ export interface PluginDevServerOptions {
   qrtlPluginDir: string;
   /** Absolute path to the generated `tools.registry.ts` (imported for tool execution). */
   registryPath: string;
+  /** Absolute path to the generated `prompts.registry.ts` (imported for prompt rendering). */
+  promptsRegistryPath?: string;
 }
 
 /** Reads the whole request body from a Node `IncomingMessage`. */
@@ -71,37 +73,47 @@ async function writeResponse(res: ServerResponse, response: Response): Promise<v
 export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePluginLike {
   let appPromise: Promise<Hono> | undefined;
 
-  const loadToolModules = async (server?: ViteDevServerLike): Promise<ToolModuleRegistry | undefined> => {
+  const loadRegistry = async (
+    server: ViteDevServerLike | undefined,
+    registryFile: string,
+    registryPath: string,
+    exportName: string,
+  ): Promise<ToolModuleRegistry | undefined> => {
     // The registry is emitted by the codegen plugin's buildStart; load it lazily. Prefer Vite's SSR
     // loader so the tool sources are TS-transformed (parameter properties, enums, `.ts` specifiers) —
     // a raw Node import only strips types and throws on those. Fall back to raw import (e.g. in tests
     // without a Vite server). Tolerate failure: docs + metadata still work; only execution needs it.
     try {
       if (server?.ssrLoadModule) {
-        const url = `/${options.qrtlPluginDir.replace(/\\/g, "/")}/tools.registry.ts`;
+        const url = `/${options.qrtlPluginDir.replace(/\\/g, "/")}/${registryFile}`;
         const mod = await server.ssrLoadModule(url);
-        return (mod as { toolModules?: ToolModuleRegistry }).toolModules;
+        return (mod as Record<string, ToolModuleRegistry | undefined>)[exportName];
       }
-      const mod = (await import(/* @vite-ignore */ pathToFileURL(options.registryPath).href)) as {
-        toolModules?: ToolModuleRegistry;
-      };
-      return mod.toolModules;
+      const mod = (await import(/* @vite-ignore */ pathToFileURL(registryPath).href)) as Record<
+        string,
+        ToolModuleRegistry | undefined
+      >;
+      return mod[exportName];
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[qrtl-plugin-dev-server] Could not load tools.registry.ts — tool execution is disabled. ${message}`);
+      console.warn(`[qrtl-plugin-dev-server] Could not load ${registryFile} — execution is disabled. ${message}`);
       return undefined;
     }
   };
 
   const getApp = (server?: ViteDevServerLike): Promise<Hono> => {
     appPromise ??= (async (): Promise<Hono> => {
-      const toolModules = await loadToolModules(server);
+      const toolModules = await loadRegistry(server, "tools.registry.ts", options.registryPath, "toolModules");
+      const promptModules = options.promptsRegistryPath
+        ? await loadRegistry(server, "prompts.registry.ts", options.promptsRegistryPath, "promptModules")
+        : undefined;
       // Widget resources are discovered from src/pages/widgets at app build and served live, so MCP
       // widgets work in `astro dev` without a prior `astro build`.
       const config = {
         pluginRootFolder: options.cwd,
         qrtlPluginDir: options.qrtlPluginDir,
         ...(toolModules ? { toolModules } : {}),
+        ...(promptModules ? { promptModules } : {}),
       };
       return options.auth === "quartal-iam" ? await getAuthApp(config) : await getAnonApp(config);
     })();

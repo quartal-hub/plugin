@@ -6,9 +6,11 @@ import type {
   CodeType,
   PluginManifest,
   McpCatalogEntry,
+  McpPromptDescriptor,
   McpToolDescriptor,
   PluginInfo,
   PluginLinks,
+  PluginPromptEntry,
   PluginSkillSummary,
   PluginToolEntry,
   PluginToolGroup,
@@ -32,8 +34,8 @@ export interface BuildPluginInfoInput {
   mcpTools: McpToolDescriptor[];
   /** MCP resources exposed by the plugin. */
   resources: McpCatalogEntry[];
-  /** MCP prompts exposed by the plugin. */
-  prompts: McpCatalogEntry[];
+  /** MCP prompt descriptors (from mcp-prompts.json or `buildMcpPrompts`). */
+  prompts: McpPromptDescriptor[];
   /** Widget catalog entries (tool ids that have a UI). */
   widgetCatalog: WidgetCatalogEntry[];
   /** Skill summaries discovered under `skills/`. */
@@ -120,6 +122,18 @@ function buildToolGroups(tools: PluginToolEntry[]): PluginToolGroup[] {
   return [...byClass.values()].sort((a, b) => a.className.localeCompare(b.className));
 }
 
+function buildPrompts(prompts: McpPromptDescriptor[]): PluginPromptEntry[] {
+  return prompts.map((p) => ({
+    name: p.id,
+    className: p.className,
+    fileName: p.fileName,
+    methodName: p.methodName,
+    ...(p.title ? { summary: p.title } : {}),
+    description: p.description,
+    arguments: p.arguments,
+  }));
+}
+
 function buildWidgets(input: BuildPluginInfoInput): PluginWidgetEntry[] {
   const mcpById = new Map(input.mcpTools.map((t) => [t.id, t]));
   return input.widgetCatalog.map((w) => {
@@ -189,7 +203,7 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
     skills: input.skills,
     widgets: buildWidgets(input),
     resources: input.resources,
-    prompts: input.prompts,
+    prompts: buildPrompts(input.prompts),
     links: defaultLinks(),
   };
 }

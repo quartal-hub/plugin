@@ -1,7 +1,13 @@
 import type { PluginLinks } from "./PluginLinks.ts";
 import type { PluginManifest } from "./PluginManifest.ts";
 import type { McpCatalogEntry } from "../mcp/McpCatalog.ts";
-import type { PluginSkillSummary, PluginToolEntry, PluginToolGroup, PluginWidgetEntry } from "./PluginOverview.ts";
+import type {
+  PluginPromptEntry,
+  PluginSkillSummary,
+  PluginToolEntry,
+  PluginToolGroup,
+  PluginWidgetEntry,
+} from "./PluginOverview.ts";
 
 /**
  * Unified plugin overview served at `GET /plugin.json`.
@@ -19,8 +25,8 @@ export interface PluginInfo extends PluginManifest {
   widgets: PluginWidgetEntry[];
   /** MCP resources exposed by this plugin (currently often empty). */
   resources: McpCatalogEntry[];
-  /** MCP prompts exposed by this plugin (currently often empty). */
-  prompts: McpCatalogEntry[];
+  /** MCP prompts exposed by this plugin (prompt-class functions from `src/prompts/`). */
+  prompts: PluginPromptEntry[];
   /** Relative URLs to detailed metadata endpoints. */
   links: PluginLinks;
 }

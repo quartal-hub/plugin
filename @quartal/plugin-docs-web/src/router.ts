@@ -10,6 +10,7 @@ import ToolDetailView from "./views/ToolDetailView.vue";
 import WidgetsView from "./views/WidgetsView.vue";
 import ResourcesView from "./views/ResourcesView.vue";
 import PromptsView from "./views/PromptsView.vue";
+import PromptDetailView from "./views/PromptDetailView.vue";
 
 /** Hash routing: works with refresh, direct links, and embedding on hosts with their own path router. */
 export const router = createRouter({
@@ -37,6 +38,12 @@ export const router = createRouter({
     { path: "/widgets", name: "widgets", component: WidgetsView },
     { path: "/resources", name: "resources", component: ResourcesView },
     { path: "/prompts", name: "prompts", component: PromptsView },
+    {
+      path: "/prompts/:promptName",
+      name: "prompt",
+      component: PromptDetailView,
+      props: (route) => ({ promptName: route.params.promptName }),
+    },
     { path: "/api", name: "api", component: ApiView },
     { path: "/api/swagger", name: "apiSwagger", component: () => import("./views/SwaggerView.vue") },
     { path: "/api/redoc", name: "apiRedoc", component: () => import("./views/ReDocView.vue") },
