@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { npxSkillsAddCommand } from "@quartal/plugin-core";
 import { getAnonApp } from "../src/index.ts";

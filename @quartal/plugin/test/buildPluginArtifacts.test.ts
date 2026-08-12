@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 import { buildPluginArtifacts, buildMcpTools, loadCodeFiles, writeJsonToFile } from "../src/index.ts";
 import { analyzeSource } from "./helpers/analyzeSource.ts";

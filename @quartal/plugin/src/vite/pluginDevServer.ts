@@ -1,10 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { pathToFileURL } from "node:url";
 
+import type { Hono } from "hono";
 import { isServerPath } from "../astro/pluginMiddleware.ts";
 import { getAnonApp } from "../hono-app/getAnonApp.ts";
 import { getAuthApp } from "../hono-app/getAuthApp.ts";
-import type { Hono } from "hono";
 import type { ToolModuleRegistry } from "../model/index.ts";
 import type { VitePluginLike, ViteDevServerLike } from "./qrtlCodegenPlugin.ts";
 

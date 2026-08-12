@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 import { qrtlCodegenPlugin } from "../src/index.ts";
 import type { ViteDevServerLike } from "../src/vite/qrtlCodegenPlugin.ts";
 

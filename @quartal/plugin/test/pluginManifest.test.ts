@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 import { Helpers } from "../src/index.ts";
 
 // The manifest reader: package.json identity overlaid with qrtl.config metadata.

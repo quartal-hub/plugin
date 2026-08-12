@@ -22,7 +22,7 @@ import {
   type ResolvedOAuthOptions,
   resolveOAuthOptions,
   unauthorized,
-} from "../oauth/index.ts";
+} from "../oauth/oauthAuth.ts";
 
 /** Default client_id pre-filled in the Swagger UI Authorize dialog when nothing else is supplied. */
 const DEFAULT_SWAGGER_CLIENT_ID = "swagger-test-client";

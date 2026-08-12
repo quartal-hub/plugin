@@ -27,6 +27,17 @@ from this repo.
 - `pnpm run build` — build every workspace project (`build:libs` for just `@quartal/plugin-core` + `@quartal/plugin`).
 - `pnpm run test` — run all workspace tests (currently the `@quartal/plugin` suite).
 - `pnpm run typecheck` — `vue-tsc`/`tsc` across packages (kept out of `build`).
+- `pnpm run lint` — ESLint import-hygiene rules (`lint:fix` auto-fixes import order).
+
+## Code organization
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full rules. Summary: one primary artifact per
+file, named after the file. Barrels (`index.ts`) exist **only** at package roots, npm subpath
+entries (`astro/`, `widget/`), and `model/` folders — implementation folders have none. Import
+concrete files directly with explicit `.ts` extensions; the one sanctioned barrel import is the
+model facade (`../model/index.ts`). Never import your own folder's or parent's barrel — ESLint
+bans it (cycle risk). `model/` is the bottom layer and must not import from implementation
+folders.
 
 ## Libraries
 
@@ -64,5 +75,7 @@ overrides; use Bootstrap CSS variables (e.g. `var(--bs-primary)`) for colors.
 
 ## Before PR
 
-1. `pnpm install && pnpm run build && pnpm run test`
+1. `pnpm install && pnpm run build && pnpm run test && pnpm run lint`
 2. Push branch and open a PR (never push to `main`).
+3. When working on Olli's local computer, include any pre-existing uncommitted changes in the
+   working tree (e.g. a regenerated `README.md`) in the PR — do not leave them behind.

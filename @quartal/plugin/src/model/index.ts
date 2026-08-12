@@ -3,7 +3,14 @@
 export type { AuthContext } from "./AuthContext.ts";
 export { defineQrtlConfig } from "./QrtlConfig.ts";
 export type { QrtlConfig } from "./QrtlConfig.ts";
-export type { ExecuteFn, McpServerOptions, PluginAppConfig, ToolModuleRegistry } from "./web-app/index.ts";
+export type {
+  ExecuteFn,
+  FetchWidgetHtml,
+  McpServerOptions,
+  PluginAppConfig,
+  ToolModuleRegistry,
+  WidgetEntry,
+} from "./web-app/index.ts";
 export type {
   Avatar,
   AvatarEntityType,

@@ -1,5 +1,5 @@
+import type { WidgetCsp } from "@quartal/plugin-core";
 import type { McpServerOptions } from "./web-app/McpServerOptions.ts";
-import type { WidgetCsp } from "./index.ts";
 
 /**
  * Quartal Plugin configuration (`qrtl.config.ts` / `.js` / `.mjs` / `.json`). Holds the Quartal

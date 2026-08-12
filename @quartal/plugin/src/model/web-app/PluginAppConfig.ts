@@ -1,8 +1,8 @@
 import type { MiddlewareHandler } from "hono";
 import type { McpServerOptions } from "./McpServerOptions.ts";
 import type { AuthContext } from "../AuthContext.ts";
-import type { WidgetEntry } from "../../widgets/widgetTypes.ts";
-import type { FetchWidgetHtml } from "../../widgets/runtimeWidgets.ts";
+import type { FetchWidgetHtml } from "./FetchWidgetHtml.ts";
+import type { WidgetEntry } from "./WidgetEntry.ts";
 
 /**
  * A static registry of tool modules keyed by file name (basename without extension). Generated as

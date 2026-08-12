@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 import { analyzeSource } from "./helpers/analyzeSource.ts";
 import type { CodeFile, CodeType } from "../src/index.ts";
 

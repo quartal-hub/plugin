@@ -2,9 +2,8 @@ import { join } from "node:path";
 import type { Hono } from "hono";
 
 import { Helpers } from "../helpers/Helpers.ts";
-import type { WidgetCsp } from "../model/index.ts";
+import type { FetchWidgetHtml, WidgetCsp, WidgetEntry } from "../model/index.ts";
 import { discoverWidgets } from "./discoverWidgets.ts";
-import type { WidgetEntry } from "./widgetTypes.ts";
 
 /**
  * Runtime widget serving. A widget MCP resource is the live Astro page (`/widgets/<toolId>`) fetched
@@ -14,6 +13,9 @@ import type { WidgetEntry } from "./widgetTypes.ts";
  * origin is whitelisted in the widget CSP, and assets are served through {@link WIDGET_ASSETS_PREFIX}
  * — a same-origin passthrough that adds the CORS header module scripts require cross-origin.
  */
+
+/** MIME type the host uses to recognize an MCP Apps widget UI resource. */
+export const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
 
 /** Default widget-pages directory relative to the plugin root. */
 export const WIDGET_PAGES_DIR = "src/pages/widgets";
@@ -25,9 +27,6 @@ export const WIDGET_PAGES_DIR = "src/pages/widgets";
  * blocked. Rewritten widget HTML points at `<origin>/widget-assets/_astro/…` instead.
  */
 export const WIDGET_ASSETS_PREFIX = "/widget-assets";
-
-/** Renders a widget's live page HTML for `resources/read`; `null` when the page cannot be fetched. */
-export type FetchWidgetHtml = (entry: WidgetEntry, origin: string) => Promise<string | null>;
 
 /**
  * Resolves the plugin's widget entries at runtime: discovers pages under `src/pages/widgets/` and

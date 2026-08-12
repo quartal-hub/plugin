@@ -5,10 +5,16 @@
   "type": "module",
   "license": "MIT",
   "author": "Quartal Accounting Software Oy",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "README.md"
@@ -31,6 +37,7 @@
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@quartal/plugin-core": "workspace:*",
     "@storybook/addon-docs": "^10.3.3",
     "@storybook/vue3": "^10.3.3",
     "@storybook/vue3-vite": "^10.3.3",

@@ -74,8 +74,6 @@ export type { OAuthOptions, ResolvedOAuthOptions } from "./oauth/oauthAuth.ts";
 export { PluginApiHelper } from "./hono-app/PluginApiHelper.ts";
 export { PluginMcpHelper } from "./hono-app/PluginMcpHelper.ts";
 export { buildMcpServerImplementation } from "./hono-app/pluginIcon.ts";
-export { WIDGET_MIME_TYPE } from "./widgets/widgetTypes.ts";
-export type { WidgetEntry } from "./widgets/widgetTypes.ts";
 
 // Widgets: page discovery (config-time catalog) + runtime live serving of MCP UI resources.
 export {
@@ -91,11 +89,18 @@ export {
   resolveWidgetEntries,
   rewriteWidgetHtml,
   WIDGET_ASSETS_PREFIX,
+  WIDGET_MIME_TYPE,
   WIDGET_PAGES_DIR,
   withWidgetOrigin,
 } from "./widgets/runtimeWidgets.ts";
-export type { FetchWidgetHtml } from "./widgets/runtimeWidgets.ts";
-export type { ExecuteFn, McpServerOptions, PluginAppConfig, ToolModuleRegistry } from "./model/index.ts";
+export type {
+  ExecuteFn,
+  FetchWidgetHtml,
+  McpServerOptions,
+  PluginAppConfig,
+  ToolModuleRegistry,
+  WidgetEntry,
+} from "./model/index.ts";
 
 // App assemblers + route groups
 export { getAnonApp } from "./hono-app/getAnonApp.ts";
