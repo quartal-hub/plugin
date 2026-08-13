@@ -1,5 +1,5 @@
 import type { ContractParty } from "@salaxy/core";
-import { ContractPartyLogic, LegalEntityType } from "@salaxy/core";
+import { ContractPartyLogic } from "@salaxy/core";
 
 /**
  * Test data and operations for employees and employment relations.
@@ -16,7 +16,7 @@ export class Employment {
    * @returns The sample employees as ContractParty objects.
    */
   public static getEmployees(): ContractParty[] {
-    return ContractPartyLogic.getSampleContacts().filter((c) => c.avatar?.entityType == LegalEntityType.Person);
+    return ContractPartyLogic.getSampleContacts().filter((c) => c.avatar?.entityType == "person");
   }
 
   /**
@@ -25,6 +25,6 @@ export class Employment {
    * @returns The sample companies as ContractParty objects.
    */
   public static getCompanies(): ContractParty[] {
-    return ContractPartyLogic.getSampleContacts().filter((c) => c.avatar?.entityType == LegalEntityType.Company);
+    return ContractPartyLogic.getSampleContacts().filter((c) => c.avatar?.entityType == "company");
   }
 }

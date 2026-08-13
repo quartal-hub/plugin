@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { Objects, Translations } from "@salaxy/core";
+import type { Language } from "@salaxy/core";
+import { CalculationMapper, Templates } from "@salaxy/reports";
 import { useExtApps } from "../lib/useExtApps";
-import { loadSalaxy } from "../lib/salaxy";
 
 type Layout = "tables" | "full";
 
@@ -38,24 +40,15 @@ const grossText = computed(() => {
 const reportHtml = ref<string | null>(null);
 const renderError = ref<string | null>(null);
 
-// `@salaxy/reports` has top-level side effects (its precompiled Handlebars
-// templates self-register and inject DOM nodes at module-evaluation time).
-// Static-importing it dumps that source as HTML into the iframe. Load both
-// libraries lazily inside the watcher so they're only evaluated AFTER the
-// first tool result arrives — same lifecycle the original esm.sh widget had.
 watch(calc, async (current) => {
   if (!current) return;
   reportHtml.value = null;
   renderError.value = null;
   try {
-    const { core, reports } = await loadSalaxy();
-    const { Language, Objects, ReportType, Translations } = core;
-    const { CalculationMapper, Templates } = reports;
-
-    const lang = Language.Fi;
+    const lang: Language = "fi";
     await Translations.loadLanguage(lang);
-    const report = CalculationMapper.getCalculationReport(current, ReportType.SalarySlip, lang) ?? {};
-    const headerFooter = CalculationMapper.getHeaderFooter(ReportType.SalarySlip, current, {}, lang);
+    const report = CalculationMapper.getCalculationReport(current, "salarySlip", lang) ?? {};
+    const headerFooter = CalculationMapper.getHeaderFooter("salarySlip", current, {}, lang);
     const layout = CalculationMapper.getReportLayout();
     layout.hasCustomCss = false;
     layout.customCss = "";

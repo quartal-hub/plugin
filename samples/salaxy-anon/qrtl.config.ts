@@ -10,15 +10,15 @@ export default defineQrtlConfig({
   },
   auth: "anon",
   deploy: { org: "quartal", app: "salaxy-anon" },
-  // Widgets lazy-load @salaxy/* from esm.sh + Salaxy CDN inside the sandboxed iframe; allow those origins.
+  // Widgets load skin/fonts/translations from the Salaxy CDN inside the sandboxed iframe; allow those origins.
   widgets: {
     csp: {
       resourceDomains: [
-        "https://cdn.salaxy.com", "https://esm.sh", "https://fonts.googleapis.com",
+        "https://cdn.salaxy.com", "https://fonts.googleapis.com",
         "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com",
         "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net",
       ],
-      connectDomains: ["https://cdn.salaxy.com", "https://esm.sh", "https://cdnjs.cloudflare.com"],
+      connectDomains: ["https://cdn.salaxy.com", "https://cdnjs.cloudflare.com"],
     },
   },
 });

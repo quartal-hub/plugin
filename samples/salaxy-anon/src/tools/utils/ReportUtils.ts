@@ -1,5 +1,5 @@
-import { Numeric, Objects, ReportType, Translations } from "@salaxy/core";
-import type { Calculation, Language } from "@salaxy/core";
+import { Numeric, Objects, Translations } from "@salaxy/core";
+import type { Calculation, Language, ReportType } from "@salaxy/core";
 import { CalculationMapper, ESalaryMapper, Templates } from "@salaxy/reports";
 import type { CalculationReport, ReportData, ReportOptions } from "@salaxy/reports";
 
@@ -58,7 +58,7 @@ export interface TemplateReportHtmlParams {
   /** Single calculation or summary over multiple calculations. */
   calc: Calculation | Calculation[];
   /** Report type (UI type from CalcReports, or Salaxy {@link ReportType} value). */
-  reportType: TemplateReportType | (typeof ReportType)[keyof typeof ReportType];
+  reportType: TemplateReportType | ReportType;
   /** Handlebars template name; resolved from {@link reportType} + {@link view} when omitted. */
   templateName?: string;
   /** Used with {@link reportType} to resolve {@link templateName} when omitted. Defaults to `"partial"`. */
@@ -257,13 +257,12 @@ ${fragment}
   }
 
   private static toMapperReportType(
-    reportType: TemplateReportType | (typeof ReportType)[keyof typeof ReportType],
-  ): (typeof ReportType)[keyof typeof ReportType] {
-    const type = String(reportType);
-    if (type === "paymentSummaryReport" || type === ReportType.PaymentSummaryReport) {
-      return ReportType.PayerSummaryReport;
+    reportType: TemplateReportType | ReportType,
+  ): ReportType {
+    if (reportType === "paymentSummaryReport") {
+      return "payerSummaryReport";
     }
-    return reportType as (typeof ReportType)[keyof typeof ReportType];
+    return reportType as ReportType;
   }
 
   private static getDefaultReportOptions(optionsInput?: ReportOptions): ReportOptions {

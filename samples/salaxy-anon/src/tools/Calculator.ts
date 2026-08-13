@@ -1,4 +1,4 @@
-import { AjaxFetch, Calculator as SalaxyCalculator, CalculatorLogic, Dates, ReportType } from "@salaxy/core";
+import { AjaxFetch, Calculator as SalaxyCalculator, CalculatorLogic, Dates } from "@salaxy/core";
 import type { Calculation, CalculationRowType, Language } from "@salaxy/core";
 
 import { ReportUtils } from "./utils/index.ts";
@@ -54,13 +54,13 @@ export class Calculator {
     if (input.type === "fragment") {
       return await this.getReportFragment({
         calculation,
-        reportType: input.reportType ?? ReportType.SalarySlip,
+        reportType: input.reportType ?? "salarySlip",
         lang: (input.lang || "fi") as "fi" | "sv" | "en",
       });
     }
     return await this.getReportDocument({
       calculation,
-      reportType: input.reportType ?? ReportType.SalarySlip,
+      reportType: input.reportType ?? "salarySlip",
       lang: (input.lang || "fi") as "fi" | "sv" | "en",
     });
   }
@@ -88,7 +88,7 @@ export class Calculator {
   public async getReportFragment(input: ReportInput): Promise<string> {
     return await ReportUtils.generateFragment({
       calc: input.calculation,
-      reportType: input.reportType ?? ReportType.SalarySlip,
+      reportType: input.reportType ?? "salarySlip",
       lang: (input.lang || "fi") as Language,
     });
   }

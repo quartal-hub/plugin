@@ -195,8 +195,8 @@ importers:
         specifier: workspace:*
         version: link:../../@quartal/plugin-core
       '@salaxy/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^7.0.0-beta.1
+        version: 7.0.0-beta.1
       astro:
         specifier: ^7.0.0
         version: 7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0)
@@ -213,11 +213,11 @@ importers:
         specifier: workspace:*
         version: link:../../@quartal/plugin
       '@salaxy/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^7.0.0-beta.1
+        version: 7.0.0-beta.1
       '@salaxy/reports':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^7.0.0-beta.1
+        version: 7.0.0-beta.1
       astro:
         specifier: ^7.0.0
         version: 7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0)
@@ -1732,12 +1732,12 @@ packages:
   '@rushstack/ts-command-line@5.3.10':
     resolution: {integrity: sha512-fwI076HYknC0IrMXdY6UmjDv+PH7NHhNJX3/pY2UblSE5XrXgndXZPiOe/6ZtuFpn6DvVDVNhtkIzQ+Qu/MhVQ==}
 
-  '@salaxy/core@6.0.0':
-    resolution: {integrity: sha512-bqh39rEO41zq3Nwj88AWrnwtf4XRqODCRuAz4guHRmaJmYjDtAfhhcNHm5sjFNN15w9oXCHI8CkFgBvrTX87YA==}
+  '@salaxy/core@7.0.0-beta.1':
+    resolution: {integrity: sha512-pff3+Gq9m8ExjZBL/5cHDqFj2uoojNorpd6JYieGzGMFQWo9fezgTRXgi3kRlRluIVE04rSkVLpqUUl9AGTIiQ==}
     engines: {node: '>=18.16.0', npm: '>=9.5.1'}
 
-  '@salaxy/reports@6.0.0':
-    resolution: {integrity: sha512-PBPBeBJGxuzIsW/1egXRHt78+rvn5bUX2m49Za9ab82USn5sI/n0uXUPhVFsL9qq5sSxC3Uw2KPtgaC/vsw2EA==}
+  '@salaxy/reports@7.0.0-beta.1':
+    resolution: {integrity: sha512-BnyUoTId8x1teVCmrO2w1MTEyGJPZ7zv0qzh609FWPb6yKVRKtsBEl7E8QQ1pwjGdyds98Sz3wgsDzEEXpC8BA==}
     engines: {node: '>=18.16.0', npm: '>=9.5.1'}
 
   '@scarf/scarf@1.4.0':
@@ -6069,14 +6069,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@salaxy/core@6.0.0':
+  '@salaxy/core@7.0.0-beta.1':
     dependencies:
       dayjs: 1.11.21
       js-base64: 3.9.1
 
-  '@salaxy/reports@6.0.0':
+  '@salaxy/reports@7.0.0-beta.1':
     dependencies:
-      '@salaxy/core': 6.0.0
+      '@salaxy/core': 7.0.0-beta.1
       handlebars: 4.7.9
       jsbarcode: 3.12.3
       qrcode: 1.5.3
