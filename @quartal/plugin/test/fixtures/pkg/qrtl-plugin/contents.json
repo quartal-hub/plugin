@@ -723,6 +723,7 @@
       "arguments": [
         {
           "name": "name",
+          "title": "Recipient name.",
           "description": "Who the greeting is for.",
           "required": true
         },

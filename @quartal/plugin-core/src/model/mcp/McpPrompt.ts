@@ -2,6 +2,8 @@
 export interface PromptArgument {
   /** Argument name (a property of the prompt function's input object). */
   name: string;
+  /** Human-readable display title from JSDoc `@summary`. */
+  title?: string;
   /** Argument description from JSDoc. */
   description?: string;
   /** Whether the argument must be provided (input property is non-optional). */

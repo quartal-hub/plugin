@@ -10,7 +10,10 @@ export class GreetingPrompts {
    * @returns One user message (a plain string return becomes a single text message).
    */
   static writeGreeting(input: {
-    /** Who the greeting is for. */
+    /**
+     * Who the greeting is for.
+     * @summary Recipient name.
+     */
     name: string;
     /** Tone of the greeting, e.g. "formal" or "playful". */
     tone?: string;

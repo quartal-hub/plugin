@@ -226,6 +226,8 @@ export class TsMorphAnalyzer {
       optional: prop.hasQuestionToken() || optional,
       nullable,
     };
+    const sum = summaryTag(prop);
+    if (sum !== undefined) out.summary = sum;
     const fmt = formatTag(prop);
     if (fmt !== undefined) out.format = fmt;
     const ex = exampleTag(prop);

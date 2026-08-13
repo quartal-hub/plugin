@@ -29,7 +29,10 @@ defineProps<{
         </thead>
         <tbody>
           <tr v-for="arg in prompt.arguments" :key="arg.name">
-            <td><code class="font-monospace">{{ arg.name }}</code></td>
+            <td>
+              <code class="font-monospace">{{ arg.name }}</code>
+              <div v-if="arg.title" class="small text-muted">{{ arg.title }}</div>
+            </td>
             <td>
               <span v-if="arg.required" class="badge text-bg-warning">required</span>
               <span v-else class="text-muted">optional</span>

@@ -13,14 +13,17 @@ export class SalaryPrompts {
    * @returns One user message describing the task.
    */
   static calculateSalary(input: {
-    /** Gross salary amount in euros, e.g. "3500". */
+    /**
+     * Gross salary amount in euros, e.g. "3500" this is description.
+     * @summary Gross salary title.
+     */
     grossSalary: string;
     /** Optional employment period, e.g. "2026-08". */
     period?: string;
   }): string {
     const period = input.period ? ` for the period ${input.period}` : "";
-    return `Calculate a Finnish salary with a gross amount of ${input.grossSalary} EUR${period} `
-      + `using the simpleSalary tool. Then explain the employer costs, withholding and net pay in plain language.`;
+    return `Calculate a Finnish salary with a gross amount of ${input.grossSalary} ${typeof(input.grossSalary)} EUR${period} `
+      + `using the simpleSalary tool XX.`;
   }
 
   /**

@@ -256,16 +256,19 @@ export class ZodBuilder {
     if (p.description) {
       schema = schema.describe(p.description);
     }
+    if (p.summary) {
+      schema = this.applyOpenApiMeta(schema, { title: p.summary });
+    }
     if (p.example !== undefined) {
-      schema = this.applyOpenApiExample(schema, p.example);
+      schema = this.applyOpenApiMeta(schema, { example: p.example });
     }
     return schema;
   }
 
-  private applyOpenApiExample(schema: z.ZodType<unknown>, example: unknown): z.ZodType<unknown> {
-    const openApi = (schema as { openapi?: (meta: { example?: unknown }) => z.ZodType<unknown> }).openapi;
+  private applyOpenApiMeta(schema: z.ZodType<unknown>, meta: { title?: string; example?: unknown }): z.ZodType<unknown> {
+    const openApi = (schema as { openapi?: (meta: { title?: string; example?: unknown }) => z.ZodType<unknown> }).openapi;
     if (typeof openApi === "function") {
-      return openApi.call(schema, { example });
+      return openApi.call(schema, meta);
     }
     return schema;
   }

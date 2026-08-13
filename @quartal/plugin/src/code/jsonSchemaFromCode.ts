@@ -162,6 +162,7 @@ export function codePropToJsonSchema(
   seen: Set<string>,
 ): Record<string, unknown> {
   const schema = codeOrSystemTypeToJsonSchema(p.type, typeIndex, seen);
+  if (p.summary) (schema as Record<string, unknown>).title = p.summary;
   if (p.description) (schema as Record<string, unknown>).description = p.description;
   if (p.format && (schema as { type?: unknown }).type === "string") {
     (schema as Record<string, unknown>).format = p.format;

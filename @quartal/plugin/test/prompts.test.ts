@@ -90,6 +90,35 @@ describe("MCP prompts (Streamable HTTP end-to-end)", () => {
     }
   });
 
+  it("sends per-argument titles (property @summary) on the wire", async () => {
+    // The SDK client's PromptArgumentSchema (<= 1.29) does not know `title` yet and strips it on
+    // parse, so assert the raw JSON-RPC response instead of using Client.listPrompts().
+    const headers = { "content-type": "application/json", accept: "application/json, text/event-stream" };
+    const init = await fetch(`${baseUrl}/mcp`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "raw", version: "0.0.1" } },
+      }),
+    });
+    const sessionId = init.headers.get("mcp-session-id") ?? "";
+    await init.text();
+    const listRes = await fetch(`${baseUrl}/mcp`, {
+      method: "POST",
+      headers: { ...headers, "mcp-session-id": sessionId },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "prompts/list", params: {} }),
+    });
+    const sse = await listRes.text();
+    const json = JSON.parse(sse.split("data: ")[1]) as {
+      result: { prompts: { name: string; arguments?: { name: string; title?: string }[] }[] };
+    };
+    const greeting = json.result.prompts.find((p) => p.name === writeGreetingId);
+    expect(greeting?.arguments?.find((a) => a.name === "name")?.title).toBe("Recipient name.");
+  });
+
   it("returns an error for an unknown prompt", async () => {
     const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`));
     const client = new Client({ name: "hub-prompts-test", version: "0.0.1" }, { capabilities: {} });

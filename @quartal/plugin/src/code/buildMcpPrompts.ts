@@ -50,12 +50,11 @@ function buildPromptArguments(
   };
   const required = new Set(schema.required ?? []);
   return Object.entries(schema.properties ?? {}).map(([name, prop]) => {
-    const description = prop && typeof prop === "object" && "description" in prop
-      ? (prop as { description?: unknown }).description
-      : undefined;
+    const meta = (prop && typeof prop === "object" ? prop : {}) as { title?: unknown; description?: unknown };
     return {
       name,
-      ...(typeof description === "string" && description ? { description } : {}),
+      ...(typeof meta.title === "string" && meta.title ? { title: meta.title } : {}),
+      ...(typeof meta.description === "string" && meta.description ? { description: meta.description } : {}),
       ...(required.has(name) ? { required: true } : {}),
     };
   });
