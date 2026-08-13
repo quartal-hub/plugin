@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { Server, WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/server";
+import { createMcpHandler, Server, type McpHttpHandler } from "@modelcontextprotocol/server";
 
 import { buildMcpTools } from "../code/buildMcpTools.ts";
 import type {
@@ -32,7 +32,11 @@ interface RequestContextLike {
 }
 
 /**
- * Builds an MCP server (Streamable HTTP) from pre-generated or runtime tool metadata. Mount at `/mcp`.
+ * Builds an MCP server from pre-generated or runtime tool metadata. Mount at `/mcp`.
+ *
+ * Serving goes through the SDK's `createMcpHandler`: 2026-07-28 (per-request envelope) traffic is
+ * served natively, and 2025-era clients keep working through the handler's built-in stateless
+ * legacy fallback — one server factory backs both eras.
  *
  * Widgets are supplied by the caller (`applyToApp`'s `widgets` argument — resolved by
  * `resolveWidgetEntries` from `src/pages/widgets/` + `qrtl.config`). `resources/read` serves the live
@@ -51,8 +55,7 @@ export class PluginMcpHelper {
   private readonly serverOptions: McpServerOptions;
   private readonly fetchWidgetHtml: FetchWidgetHtml;
   private serverOrigin = "";
-  private transport: WebStandardStreamableHTTPServerTransport | null = null;
-  private initPromise: Promise<WebStandardStreamableHTTPServerTransport> | null = null;
+  private handler: McpHttpHandler | null = null;
 
   /** Mounts an MCP server at `/mcp` on `app`, wiring auth middleware and supplied widgets.
    * @param app Hono app to mount the MCP routes on.
@@ -138,38 +141,40 @@ export class PluginMcpHelper {
     return headers;
   }
 
-  /** Returns the Hono sub-app that handles the MCP Streamable HTTP transport. */
+  /** Returns the Hono sub-app that serves MCP via `createMcpHandler` (modern + legacy fallback). */
   getApp(): Hono {
     const app = new Hono();
-    app.all("/*", async (c) => {
-      const transport = await this.ensureTransport(new URL(c.req.url).origin);
-      return transport.handleRequest(c.req.raw);
+    app.all("/*", (c) => {
+      // Fallback origin for requests without a `host` header — latched from the first request,
+      // matching the previous transport-creation-time behavior. `resolveOrigin` prefers the
+      // per-request headers.
+      if (!this.serverOrigin) this.serverOrigin = new URL(c.req.url).origin;
+      this.handler ??= createMcpHandler(() => this.buildServer());
+      return this.handler.fetch(c.req.raw);
     });
     return app;
   }
 
-  private ensureTransport(serverOrigin: string): Promise<WebStandardStreamableHTTPServerTransport> {
-    if (this.transport) return Promise.resolve(this.transport);
-    if (!this.initPromise) {
-      this.initPromise = this.createTransport(serverOrigin);
-    }
-    return this.initPromise;
-  }
-
-  private async createTransport(serverOrigin: string): Promise<WebStandardStreamableHTTPServerTransport> {
-    this.serverOrigin = serverOrigin;
+  /**
+   * Builds a fresh `Server` for one serving unit — `createMcpHandler` calls this once per HTTP
+   * request (modern 2026-07-28 exchanges and stateless legacy requests alike), so instances hold
+   * no cross-request state.
+   */
+  private buildServer(): Server {
     const hasWidgets = this.widgets.length > 0;
     const hasPrompts = this.promptEntries.length > 0;
     const capabilities: Record<string, unknown> = { tools: {}, logging: {} };
     if (hasWidgets) capabilities.resources = {};
     if (hasPrompts) capabilities.prompts = {};
     const mcpServer = new Server(
-      buildMcpServerImplementation(this.manifest, this.serverOptions, serverOrigin),
+      buildMcpServerImplementation(this.manifest, this.serverOptions, this.serverOrigin),
       { capabilities },
     );
 
     // logging/setLevel needs no handler here — declaring the `logging` capability makes the v2 SDK
-    // register its built-in one (clients like MCPJam and Inspector send setLevel on connect).
+    // register its built-in one for legacy (2025-era) clients (MCPJam and Inspector send setLevel
+    // on connect). 2026-07-28 clients pass `logLevel` per request in `_meta` instead; no handler
+    // is involved.
 
     // The generator always emits `type: "object"` schemas (see buildToolInputSchema /
     // buildToolOutputSchema), which the SDK's Tool type requires but our JSON-level
@@ -295,12 +300,7 @@ export class PluginMcpHelper {
       },
     );
 
-    // Stateless (no session ids) — matches the previous @hono/mcp behavior: one shared transport
-    // instance serving concurrent requests without session tracking.
-    const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-    await mcpServer.connect(transport);
-    this.transport = transport;
-    return transport;
+    return mcpServer;
   }
 }
 

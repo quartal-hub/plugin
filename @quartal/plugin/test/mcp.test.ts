@@ -86,4 +86,24 @@ describe("PluginMcpHelper — MCP over Streamable HTTP (SDK client)", () => {
       await transport.close();
     }
   });
+
+  // Pinned negotiation has no fallback: connect() itself proves the server serves the modern
+  // (2026-07-28, per-request envelope) era via createMcpHandler, not just the legacy fallback.
+  it("serves the 2026-07-28 era to a version-pinned client", async () => {
+    const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`));
+    const client = new Client(
+      { name: "hub-mcp-test-modern", version: "0.0.1" },
+      { capabilities: {}, versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
+    await client.connect(transport);
+    try {
+      expect(client.getNegotiatedProtocolVersion()).toBe("2026-07-28");
+      const list = await client.listTools();
+      expect(list.tools.some((t) => t.name === addToolId)).toBe(true);
+      const call = await client.callTool({ name: addToolId, arguments: { first: 2, second: 3 } });
+      expect(call.structuredContent).toEqual({ value: 5 });
+    } finally {
+      await transport.close();
+    }
+  });
 });
