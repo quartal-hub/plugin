@@ -204,4 +204,4 @@ Alternatively, you may also just fork the template repository in [https://github
 Once you have run the template / starter-kit, follow the instructions in the `README.md` or use your favourite development agent to modify your project.
 
 ## Contributing
-As we are still publishing the first v01 version, we do not accept any PRs or feedback at this time. This will change as we get the first version up-and-running. Check back in September - October 2026 timeline for how to contribute.
+As we are still publishing the first v01 version, we do not accept any PRs or feedback at this time. This will change as we get the first version up-and-running. Check back in September - October 2026 timeline or you can already look at the [Contributing guideline](./CONTRIBUTING.md).

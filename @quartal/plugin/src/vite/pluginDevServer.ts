@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import type { Hono } from "hono";
@@ -124,6 +125,23 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
     name: "qrtl-plugin-dev-server",
     configureServer(server) {
       if (!server.middlewares) return;
+
+      // The Hono app snapshots the generated artifacts (contents.json, mcp-tools.json,
+      // mcp-prompts.json) and the registry modules when it is built. The codegen plugin rewrites
+      // those artifacts whenever src/tools, src/prompts or skills change — so drop the cached app
+      // when they do, and the next request rebuilds it against the fresh artifacts and (Vite-
+      // invalidated) tool/prompt sources. Without this, edits regenerate metadata on disk but the
+      // running server keeps serving the state from its first build.
+      const artifactsDir = resolve(options.cwd, options.qrtlPluginDir);
+      server.watcher.add(artifactsDir);
+      const invalidateApp = (file: string): void => {
+        if (file === artifactsDir || file.startsWith(artifactsDir + "/") || file.startsWith(artifactsDir + "\\")) {
+          appPromise = undefined;
+        }
+      };
+      server.watcher.on("add", invalidateApp);
+      server.watcher.on("change", invalidateApp);
+      server.watcher.on("unlink", invalidateApp);
       const delegate: import("./qrtlCodegenPlugin.ts").ConnectMiddleware = (req, res, next) => {
         // Widget iframes load Vite-served modules cross-origin (from the host sandbox origin), and the
         // dev module graph escapes the /widget-assets passthrough via root-relative nested imports
