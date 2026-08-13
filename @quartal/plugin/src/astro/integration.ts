@@ -35,6 +35,12 @@ const WIDGETS_PAGES_DIR = "src/pages/widgets";
 export interface QrtlPluginOptions {
   /** Auth mode: `"anon"` (default, `getAnonApp`) or `"quartal-iam"` (`getAuthApp`). */
   auth?: "anon" | "quartal-iam";
+  /**
+   * Whether to show the Astro dev toolbar in `astro dev` (default: `false`). Plugins are mostly
+   * widget/API surfaces where the toolbar gets in the way, so the integration hides it centrally;
+   * pass `true` to keep Astro's own default behavior (shown unless disabled elsewhere).
+   */
+  devToolbar?: boolean;
 }
 
 /**
@@ -121,6 +127,7 @@ function toPath(root: URL | string | undefined): string | undefined {
  */
 export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
   const auth = options?.auth ?? "anon";
+  const devToolbar = options?.devToolbar ?? false;
   const registryImport = `/${QRTL_PLUGIN_DIR}/tools.registry.ts`;
   const promptsRegistryImport = `/${QRTL_PLUGIN_DIR}/prompts.registry.ts`;
 
@@ -165,7 +172,13 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
           }));
         }
 
-        updateConfig({ vite: { plugins } });
+        // Hide the Astro dev toolbar by default (it gets in the way of widget development inside
+        // the MCP host iframe). Only merged when disabling, so `devToolbar: true` leaves the
+        // project's own config/preferences untouched.
+        updateConfig({
+          vite: { plugins },
+          ...(devToolbar ? {} : { devToolbar: { enabled: false } }),
+        });
 
         addMiddleware({ entrypoint: PLUGIN_MIDDLEWARE_VIRTUAL_ID, order: "pre" });
 

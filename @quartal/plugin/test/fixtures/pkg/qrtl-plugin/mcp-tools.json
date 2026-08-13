@@ -24,6 +24,19 @@
           "second"
         ],
         "description": "The parameters."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The sum of the two numbers."
       }
     },
     {
@@ -52,6 +65,19 @@
           "second"
         ],
         "description": "The parameters."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The product of the two numbers."
       }
     },
     {
@@ -70,6 +96,19 @@
         },
         "additionalProperties": false,
         "description": "The parameters."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The greeting."
       }
     },
     {
@@ -113,6 +152,18 @@
           "keywords"
         ],
         "description": "Greeting fields (name, age, gender, keywords)."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
       }
     },
     {
@@ -134,6 +185,19 @@
           "name"
         ],
         "description": "The parameters."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The greeting."
       }
     },
     {
@@ -164,6 +228,19 @@
           "children"
         ],
         "description": "Root tree node."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "Sum of all node values."
       }
     },
     {
@@ -195,6 +272,34 @@
           "flag"
         ],
         "description": "Object with primitive fields."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A string value."
+          },
+          "count": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "A number value."
+          },
+          "flag": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "A boolean value."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Echo of the input for verification."
       }
     },
     {
@@ -249,6 +354,77 @@
         },
         "additionalProperties": false,
         "description": "Object with JSON schema formats."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A date string (ISO 8601, e.g. 2026-03-10).",
+            "format": "date"
+          },
+          "dateTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A date-time string (ISO 8601, e.g. 2026-03-10T12:00:00.000Z).",
+            "format": "date-time"
+          },
+          "time": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A time string (ISO 8601, e.g. 12:00:00.000).",
+            "format": "time"
+          },
+          "duration": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A duration string (ISO 8601, e.g. P1Y2M3DT4H5M6S).",
+            "format": "duration"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An email address, e.g. \"user@example.com\".",
+            "format": "email"
+          },
+          "uri": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A complete URI (RFC 3986), e.g. \"https://example.com/api/v1/users\".",
+            "format": "uri"
+          },
+          "uriReference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A URI or a relative reference, e.g. \"/api/v1/users\".",
+            "format": "uri-reference"
+          },
+          "uuid": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A Universally Unique Identifier (e.g., 550e8400-e29b-41d4-a716-446655440000).",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": true,
+        "description": "Object with the same values."
       }
     },
     {
@@ -283,6 +459,19 @@
           "nullable"
         ],
         "description": "Object with optional and nullable fields."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "Summary string."
       }
     },
     {
@@ -315,6 +504,27 @@
           "values"
         ],
         "description": "Object with array fields."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Concatenated labels."
+          },
+          "sum": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Sum of the numbers."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Concatenated and summed result."
       }
     },
     {
@@ -356,6 +566,34 @@
           "payload"
         ],
         "description": "Object containing a nested object."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The id of the nested object result."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the nested object result."
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The score of the nested object result."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Flattened result."
       }
     },
     {
@@ -382,6 +620,19 @@
           "kind"
         ],
         "description": "Object with a union field."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The chosen value."
       }
     },
     {

@@ -31,18 +31,18 @@ export interface SimpleCalculatorInput {
    */
   period?: Period;
   /**
-   * The rows
+   * The rows that make up the calculation.
    * @example
    * [
    * {
-   *   rowType: "hourlySalary",
-   *   price: 15.50,
-   *   count: 40
+   *   "rowType": "hourlySalary",
+   *   "price": 15.50,
+   *   "count": 40
    * },
    * {
-   *   rowType: "phoneBenefit",
-   *   price: 20,
-   *   count: 1
+   *   "rowType": "phoneBenefit",
+   *   "price": 20,
+   *   "count": 1
    * }
    * ]
    */

@@ -1,5 +1,5 @@
 import type { Hono } from "hono";
-import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
+import type { Implementation } from "@modelcontextprotocol/server";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 
 /** Registers `GET /plugin.json` (overview) and `GET /mcp-server.json`.

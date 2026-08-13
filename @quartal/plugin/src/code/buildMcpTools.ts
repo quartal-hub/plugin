@@ -1,6 +1,6 @@
 import type { CodeFile, McpToolDescriptor } from "@quartal/plugin-core";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
-import { buildToolInputSchema } from "./jsonSchemaFromCode.ts";
+import { buildToolInputSchema, buildToolOutputSchema } from "./jsonSchemaFromCode.ts";
 
 /** Sanitized MCP tool name (`^[a-zA-Z0-9_-]{1,128}$`).
  * @param className Source class name.
@@ -32,6 +32,7 @@ export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
       for (const fn of cls.functions) {
         const functionNameUsed = usedNames.has(fn.name);
         const id = makeMcpToolName(cls.name, fn.name, functionNameUsed);
+        const outputSchema = buildToolOutputSchema(fn.returns, typeIndex);
         toolIds.push({
           id,
           fileName,
@@ -40,6 +41,7 @@ export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
           ...(fn.summary ? { title: fn.summary } : {}),
           description: fn.description ?? `${cls.name}.${fn.name}`,
           inputSchema: buildToolInputSchema(fn.parameters, typeIndex),
+          ...(outputSchema ? { outputSchema } : {}),
         });
         if (!functionNameUsed) usedNames.add(fn.name);
       }

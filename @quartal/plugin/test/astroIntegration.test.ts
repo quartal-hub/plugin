@@ -62,14 +62,16 @@ describe("createPluginMiddleware", () => {
 });
 
 describe("qrtlPlugin integration", () => {
-  function runSetup(output: string) {
-    const integ = qrtlPlugin();
+  function runSetup(output: string, options?: Parameters<typeof qrtlPlugin>[0]) {
+    const integ = qrtlPlugin(options);
     let vitePlugins: { name: string }[] = [];
+    let updatedConfig: Record<string, unknown> = {};
     let middleware: { entrypoint: string | URL; order: string } | undefined;
     const warnings: string[] = [];
     const opts: AstroConfigSetupOptions = {
       config: { output, root: "/proj" },
       updateConfig: (c) => {
+        updatedConfig = c;
         vitePlugins = ((c as { vite?: { plugins?: { name: string }[] } }).vite?.plugins) ?? [];
       },
       addMiddleware: (m) => {
@@ -79,7 +81,7 @@ describe("qrtlPlugin integration", () => {
       command: "dev",
     };
     integ.hooks["astro:config:setup"]!(opts);
-    return { integ, vitePlugins, middleware, warnings };
+    return { integ, vitePlugins, updatedConfig, middleware, warnings };
   }
 
   it("has the expected name and hook", () => {
@@ -100,6 +102,11 @@ describe("qrtlPlugin integration", () => {
   it("warns when output is not on-demand-capable", () => {
     expect(runSetup("static").warnings.length).toBeGreaterThan(0);
     expect(runSetup("server").warnings.length).toBe(0);
+  });
+
+  it("hides the Astro dev toolbar by default, keeps it with devToolbar: true", () => {
+    expect(runSetup("server").updatedConfig.devToolbar).toEqual({ enabled: false });
+    expect(runSetup("server", { devToolbar: true }).updatedConfig.devToolbar).toBeUndefined();
   });
 
   it("virtual-middleware plugin resolves/loads generated server source", () => {

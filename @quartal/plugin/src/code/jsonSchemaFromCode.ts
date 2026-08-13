@@ -212,3 +212,59 @@ export function buildToolInputSchema(
   if (required.length) inputSchema.required = required;
   return inputSchema;
 }
+
+/**
+ * Recursively relaxes a schema for use as a tool output schema. MCP clients built on the SDK
+ * validate `structuredContent` against the advertised `outputSchema` and reject the whole tool
+ * result on any mismatch, while tool results come from live APIs whose JSON routinely exceeds the
+ * analyzed TypeScript typings: serializers emit explicit `null` for empty fields and APIs return
+ * properties the typings don't declare. The output schema therefore documents the shape
+ * (properties, types, descriptions) but must not assert closed-world constraints: no `required`,
+ * open `additionalProperties`, and every non-root type widened to accept `null`.
+ */
+function relaxForOutput(schema: Record<string, unknown>, root = false): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...schema };
+  delete out.required;
+  if (out.type === "object") {
+    out.additionalProperties = true;
+    if (out.properties && typeof out.properties === "object") {
+      out.properties = Object.fromEntries(
+        Object.entries(out.properties as Record<string, Record<string, unknown>>)
+          .map(([key, value]) => [key, relaxForOutput(value)]),
+      );
+    }
+  }
+  if (out.items && typeof out.items === "object" && !Array.isArray(out.items)) {
+    out.items = relaxForOutput(out.items as Record<string, unknown>);
+  }
+  if (Array.isArray(out.oneOf)) {
+    const members = (out.oneOf as Record<string, unknown>[]).map((m) => relaxForOutput(m));
+    out.oneOf = root ? members : [...members, { type: "null" }];
+  }
+  if (!root && typeof out.type === "string" && out.type !== "null") {
+    out.type = [out.type, "null"];
+    if (Array.isArray(out.enum) && !out.enum.includes(null)) {
+      out.enum = [...out.enum, null];
+    }
+  }
+  return out;
+}
+
+/** MCP tool output schema for a function's return value, or undefined when it does not resolve to
+ * an object schema. Execution always returns an object (primitives/arrays are wrapped as `{ value }`
+ * and the analyzer maps such returns to the system `*Value` types), so a non-object schema here
+ * means the type could not be resolved and no `outputSchema` should be advertised. The schema is
+ * relaxed for validation against real API results — see {@link relaxForOutput}.
+ * @param returns Function return value definition to convert.
+ * @param typeIndex Flat type index for resolving named types.
+ */
+export function buildToolOutputSchema(
+  returns: CodePropOrParam,
+  typeIndex: Map<string, CodeType>,
+): Record<string, unknown> | undefined {
+  const schema = codePropToJsonSchema(returns, typeIndex, new Set<string>());
+  if ((schema as { type?: unknown }).type !== "object") {
+    return undefined;
+  }
+  return relaxForOutput(schema, true);
+}

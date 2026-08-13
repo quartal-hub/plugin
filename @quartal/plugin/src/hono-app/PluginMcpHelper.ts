@@ -1,17 +1,7 @@
 import { join } from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { StreamableHTTPTransport } from "@hono/mcp";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import {
-  CallToolRequestSchema,
-  GetPromptRequestSchema,
-  ListPromptsRequestSchema,
-  ListResourcesRequestSchema,
-  ListToolsRequestSchema,
-  ReadResourceRequestSchema,
-  SetLevelRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { Server, WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/server";
 
 import { buildMcpTools } from "../code/buildMcpTools.ts";
 import type {
@@ -36,9 +26,9 @@ import {
   withWidgetOrigin,
 } from "../widgets/runtimeWidgets.ts";
 
-/** The slice of the SDK's per-request handler extra this helper reads (HTTP request headers). */
-interface RequestExtraLike {
-  requestInfo?: { headers?: Record<string, string | string[] | undefined> };
+/** The slice of the SDK's per-request handler context this helper reads (the HTTP request). */
+interface RequestContextLike {
+  http?: { req?: Request };
 }
 
 /**
@@ -61,8 +51,8 @@ export class PluginMcpHelper {
   private readonly serverOptions: McpServerOptions;
   private readonly fetchWidgetHtml: FetchWidgetHtml;
   private serverOrigin = "";
-  private transport: StreamableHTTPTransport | null = null;
-  private initPromise: Promise<StreamableHTTPTransport> | null = null;
+  private transport: WebStandardStreamableHTTPServerTransport | null = null;
+  private initPromise: Promise<WebStandardStreamableHTTPServerTransport> | null = null;
 
   /** Mounts an MCP server at `/mcp` on `app`, wiring auth middleware and supplied widgets.
    * @param app Hono app to mount the MCP routes on.
@@ -130,17 +120,22 @@ export class PluginMcpHelper {
    * falling back to the origin of the request that created the transport. Widget HTML and CSP are
    * per-origin (multi-hostname deploys), so this must not latch onto the first request only.
    */
-  private resolveOrigin(extra?: RequestExtraLike): string {
-    const headers = extra?.requestInfo?.headers ?? {};
-    const get = (key: string): string | undefined => {
-      const value = headers[key];
-      return Array.isArray(value) ? value[0] : value;
-    };
-    const host = get("host");
+  private resolveOrigin(ctx?: RequestContextLike): string {
+    const headers = ctx?.http?.req?.headers;
+    const host = headers?.get("host");
     if (!host) return this.serverOrigin;
-    const proto = get("x-forwarded-proto")?.split(",")[0]?.trim()
+    const proto = headers?.get("x-forwarded-proto")?.split(",")[0]?.trim()
       || (this.serverOrigin.startsWith("https:") ? "https" : "http");
     return `${proto}://${host}`;
+  }
+
+  /** Headers of the per-request HTTP request as a plain record (for the execute/prompt auth context). */
+  private static headersRecord(ctx: RequestContextLike): Record<string, string> {
+    const headers: Record<string, string> = {};
+    ctx.http?.req?.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    return headers;
   }
 
   /** Returns the Hono sub-app that handles the MCP Streamable HTTP transport. */
@@ -148,12 +143,12 @@ export class PluginMcpHelper {
     const app = new Hono();
     app.all("/*", async (c) => {
       const transport = await this.ensureTransport(new URL(c.req.url).origin);
-      return transport.handleRequest(c);
+      return transport.handleRequest(c.req.raw);
     });
     return app;
   }
 
-  private ensureTransport(serverOrigin: string): Promise<StreamableHTTPTransport> {
+  private ensureTransport(serverOrigin: string): Promise<WebStandardStreamableHTTPServerTransport> {
     if (this.transport) return Promise.resolve(this.transport);
     if (!this.initPromise) {
       this.initPromise = this.createTransport(serverOrigin);
@@ -161,7 +156,7 @@ export class PluginMcpHelper {
     return this.initPromise;
   }
 
-  private async createTransport(serverOrigin: string): Promise<StreamableHTTPTransport> {
+  private async createTransport(serverOrigin: string): Promise<WebStandardStreamableHTTPServerTransport> {
     this.serverOrigin = serverOrigin;
     const hasWidgets = this.widgets.length > 0;
     const hasPrompts = this.promptEntries.length > 0;
@@ -173,25 +168,30 @@ export class PluginMcpHelper {
       { capabilities },
     );
 
-    // Accept logging/setLevel as a no-op — clients (MCPJam, Inspector) send it on connect.
-    mcpServer.setRequestHandler(SetLevelRequestSchema, () => ({}));
+    // logging/setLevel needs no handler here — declaring the `logging` capability makes the v2 SDK
+    // register its built-in one (clients like MCPJam and Inspector send setLevel on connect).
 
-    mcpServer.setRequestHandler(ListToolsRequestSchema, () => ({
-      tools: this.toolEntries.map(({ id, title, description, inputSchema }) => {
+    // The generator always emits `type: "object"` schemas (see buildToolInputSchema /
+    // buildToolOutputSchema), which the SDK's Tool type requires but our JSON-level
+    // McpToolDescriptor cannot express — hence the cast.
+    type ObjectSchema = { type: "object"; [key: string]: unknown };
+    mcpServer.setRequestHandler("tools/list", () => ({
+      tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema }) => {
         const widgetEntry = this.widgetsByToolId.get(id);
         return {
           name: id,
           ...(title ? { title } : {}),
           description,
-          inputSchema,
+          inputSchema: inputSchema as ObjectSchema,
+          ...(outputSchema ? { outputSchema: outputSchema as ObjectSchema } : {}),
           ...(widgetEntry ? { _meta: { ui: { resourceUri: widgetEntry.uri } } } : {}),
         };
       }),
     }));
 
     if (hasWidgets) {
-      mcpServer.setRequestHandler(ListResourcesRequestSchema, (_request, extra) => {
-        const origin = this.resolveOrigin(extra as RequestExtraLike);
+      mcpServer.setRequestHandler("resources/list", (_request, ctx) => {
+        const origin = this.resolveOrigin(ctx);
         return {
           resources: this.widgets.map((w) => ({
             uri: w.uri,
@@ -202,7 +202,7 @@ export class PluginMcpHelper {
         };
       });
 
-      mcpServer.setRequestHandler(ReadResourceRequestSchema, async (request: { params: { uri: string } }, extra) => {
+      mcpServer.setRequestHandler("resources/read", async (request, ctx) => {
         const uri = request.params.uri;
         const widgetEntry = this.widgetsByUri.get(uri);
         if (!widgetEntry) {
@@ -211,7 +211,7 @@ export class PluginMcpHelper {
         // Serve the live widget page: fetch it from this origin, then make it renderable inside the
         // host's base-URL-less sandbox — asset URLs become absolute (via /widget-assets for CORS) and
         // the origin is whitelisted in the CSP.
-        const origin = this.resolveOrigin(extra as RequestExtraLike);
+        const origin = this.resolveOrigin(ctx);
         const html = await this.fetchWidgetHtml(widgetEntry, origin);
         if (html == null) {
           throw new Error(
@@ -233,7 +233,7 @@ export class PluginMcpHelper {
     }
 
     if (hasPrompts) {
-      mcpServer.setRequestHandler(ListPromptsRequestSchema, () => ({
+      mcpServer.setRequestHandler("prompts/list", () => ({
         prompts: this.promptEntries.map(({ id, title, description, arguments: args }) => ({
           name: id,
           ...(title ? { title } : {}),
@@ -242,21 +242,14 @@ export class PluginMcpHelper {
         })),
       }));
 
-      mcpServer.setRequestHandler(GetPromptRequestSchema, async (request, extra) => {
+      mcpServer.setRequestHandler("prompts/get", async (request, ctx) => {
         const { name: promptName, arguments: args } = request.params;
         const match = this.promptEntries.find((p) => p.id === promptName);
         if (!match) {
           throw new Error(`Unknown prompt: ${String(promptName)}`);
         }
 
-        // Coerce the SDK's IsomorphicHeaders (values may be string[]) to Record<string,string>.
-        const rawHeaders = extra.requestInfo?.headers ?? {};
-        const headers: Record<string, string> = {};
-        for (const [k, v] of Object.entries(rawHeaders)) {
-          if (typeof v === "string") headers[k] = v;
-          else if (Array.isArray(v)) headers[k] = v.join(", ");
-        }
-
+        const headers = PluginMcpHelper.headersRecord(ctx);
         const { fileName, className, methodName } = match;
         const input = (args && typeof args === "object" && !Array.isArray(args))
           ? (args as Record<string, unknown>)
@@ -267,23 +260,10 @@ export class PluginMcpHelper {
     }
 
     mcpServer.setRequestHandler(
-      CallToolRequestSchema,
-      async (request, extra) => {
+      "tools/call",
+      async (request, ctx) => {
         const { name: toolName, arguments: args } = request.params;
-        // Coerce the SDK's IsomorphicHeaders (values may be string[]) to Record<string,string>.
-        const rawHeaders = extra.requestInfo?.headers ?? {};
-        const headers: Record<string, string> = {};
-        for (const [k, v] of Object.entries(rawHeaders)) {
-          if (typeof v === "string") headers[k] = v;
-          else if (Array.isArray(v)) headers[k] = v.join(", ");
-        }
-
-        if (typeof toolName !== "string") {
-          return {
-            content: [{ type: "text" as const, text: JSON.stringify({ error: "Invalid tool name" }) }],
-            isError: true,
-          };
-        }
+        const headers = PluginMcpHelper.headersRecord(ctx);
 
         const match = this.toolEntries.find((t) => t.id === toolName);
         if (!match) {
@@ -297,7 +277,11 @@ export class PluginMcpHelper {
         const params = (args && typeof args === "object" && !Array.isArray(args)) ? (args as Record<string, unknown>) : {};
         try {
           const result = await this.execute(fileName, className, methodName, params, { headers });
+          // `structuredContent` first, then the spec's backwards-compat serialized-JSON text block
+          // ("a tool that returns structured content SHOULD also return the serialized JSON in a
+          // TextContent block") — structured data leads when inspecting the raw result in MCPJam.
           return {
+            structuredContent: result,
             content: [{ type: "text" as const, text: JSON.stringify(result) }],
           };
         } catch (err) {
@@ -311,7 +295,9 @@ export class PluginMcpHelper {
       },
     );
 
-    const transport = new StreamableHTTPTransport();
+    // Stateless (no session ids) — matches the previous @hono/mcp behavior: one shared transport
+    // instance serving concurrent requests without session tracking.
+    const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     await mcpServer.connect(transport);
     this.transport = transport;
     return transport;

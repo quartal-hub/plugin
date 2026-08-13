@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { PluginApiHelper, PluginMcpHelper } from "../src/index.ts";
 import type { PluginAppConfig } from "../src/index.ts";
 
@@ -63,8 +62,23 @@ describe("PluginMcpHelper — MCP over Streamable HTTP (SDK client)", () => {
       expect(schema.properties?.first).toBeDefined();
       expect(schema.properties?.second).toBeDefined();
       expect(schema.required).toEqual(expect.arrayContaining(["first", "second"]));
+      // Output schemas are relaxed (nullable leaves, open objects, no `required`) so that real API
+      // results always pass the SDK client's structuredContent validation.
+      const outputSchema = addTool!.outputSchema as {
+        type?: string;
+        properties?: Record<string, unknown>;
+        required?: string[];
+        additionalProperties?: boolean;
+      };
+      expect(outputSchema?.type).toBe("object");
+      expect(outputSchema?.properties?.value).toEqual(expect.objectContaining({ type: ["number", "null"] }));
+      expect(outputSchema?.required).toBeUndefined();
+      expect(outputSchema?.additionalProperties).toBe(true);
 
+      // The SDK client validates structuredContent against the advertised outputSchema, so a
+      // successful call also proves the schema and the wrapped `{ value }` result agree.
       const call = await client.callTool({ name: addToolId, arguments: { first: 2, second: 3 } });
+      expect(call.structuredContent).toEqual({ value: 5 });
       const content = call.content as { type: string; text: string }[];
       expect(content[0]?.type).toBe("text");
       expect(JSON.parse(content[0].text)).toEqual({ value: 5 });

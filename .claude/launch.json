@@ -6,6 +6,18 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@samples/test1", "dev"],
       "port": 4321
+    },
+    {
+      "name": "test1-node",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["samples/test1/node_modules/astro/bin/astro.mjs", "dev", "--root", "samples/test1"],
+      "port": 4321
+    },
+    {
+      "name": "salaxy-anon-node",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["samples/salaxy-anon/node_modules/astro/bin/astro.mjs", "dev", "--root", "samples/salaxy-anon", "--port", "4322"],
+      "port": 4322
     }
   ]
 }
