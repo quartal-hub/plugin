@@ -42,6 +42,7 @@ describe("qrtlCodegenPlugin", () => {
     plugin.configureServer?.(server);
 
     expect(added.some((p) => p.endsWith(join("src", "tools")))).toBe(true);
+    expect(added.some((p) => p.endsWith(join("src", "prompts")))).toBe(true);
     expect(added.some((p) => p.endsWith("skills"))).toBe(true);
     expect(events).toContain("change");
   });

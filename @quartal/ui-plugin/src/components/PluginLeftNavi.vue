@@ -41,6 +41,8 @@ function isSectionActive(section: string): boolean {
       return path.startsWith("/skills");
     case "widgets":
       return path.startsWith("/widgets");
+    case "prompts":
+      return path.startsWith("/prompts");
     case "api":
       return path.startsWith("/api");
     default:
@@ -160,14 +162,31 @@ function countEnabled(count: number): boolean {
         <span v-if="plugin.resources.length" class="badge bg-primary rounded-pill">{{ plugin.resources.length }}</span>
       </RouterLink>
 
-      <RouterLink
-        to="/prompts"
-        class="list-group-item list-group-item-action text-truncate d-flex justify-content-between align-items-start"
-        :class="{ disabled: !countEnabled(plugin.prompts.length), active: route.path === '/prompts' }"
-      >
-        Prompts
-        <span v-if="plugin.prompts.length" class="badge bg-primary rounded-pill">{{ plugin.prompts.length }}</span>
-      </RouterLink>
+      <div class="list-group-item p-0 border-0">
+        <button
+          type="button"
+          class="list-group-item list-group-item-action w-100 d-flex justify-content-between align-items-center"
+          :class="{ active: isSectionActive('prompts') }"
+          :disabled="!countEnabled(plugin.prompts.length)"
+          @click="toggleSection('prompts')"
+        >
+          <span>Prompts
+            <span v-if="plugin.prompts.length" class="badge bg-primary rounded-pill ms-1">{{ plugin.prompts.length }}</span>
+          </span>
+          <i class="bi" :class="isSectionOpen('prompts') ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </button>
+        <div v-show="isSectionOpen('prompts') && plugin.prompts.length" class="list-group list-group-flush border-start ms-2">
+          <RouterLink
+            v-for="prompt in plugin.prompts"
+            :key="prompt.name"
+            :to="{ name: 'prompt', params: { promptName: prompt.name } }"
+            class="list-group-item list-group-item-action py-0 ps-3 text-truncate"
+            :class="{ active: route.params.promptName === prompt.name }"
+          >
+            {{ prompt.summary || prompt.name }}
+          </RouterLink>
+        </div>
+      </div>
 
       <div class="list-group-item p-0 border-0">
         <button

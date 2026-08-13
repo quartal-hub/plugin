@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
@@ -31,6 +32,10 @@ export interface GenerateToolsOptions {
   emitRegistry?: boolean;
   /** Import base used inside the generated registry (relative to `out`). Default: `../tools`. */
   registryImportBase?: string;
+  /** Prompts entry module path, relative to `cwd`. Analyzed only when the file exists. Default: `./prompts/mod.ts`. */
+  promptsEntry?: string;
+  /** Import base used inside the generated prompts registry (relative to `out`). Default: `../prompts`. */
+  promptsRegistryImportBase?: string;
 }
 
 /**
@@ -38,9 +43,11 @@ export interface GenerateToolsOptions {
  * - tools.json (CodeFile[] including system types)
  * - open-api.json (OpenAPI 3.0, validated at build time)
  * - mcp-tools.json (MCP tool definitions with JSON Schema inputs)
+ * - mcp-prompts.json (MCP prompt definitions with argument lists)
  * - types.json (named type definitions)
  * - contents.json (unified plugin overview served at `GET /plugin.json`)
  * - tools.registry.ts (static tool-module import map for runtime execution)
+ * - prompts.registry.ts (static prompt-module import map; empty when the plugin has no prompts)
  *
  * Pure Node (no Deno). Type introspection is done with the TypeScript compiler via ts-morph — see
  * {@link TsMorphAnalyzer}.
@@ -60,12 +67,19 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   const files = new TsMorphAnalyzer().analyzeEntry(entry, { cwd });
   const manifest = await Helpers.getPluginManifest(cwd);
 
+  // Prompts are optional: analyzed only when the plugin has a prompts entry module.
+  const promptsEntry = resolve(cwd, options?.promptsEntry ?? "./prompts/mod.ts");
+  const promptFiles = existsSync(promptsEntry)
+    ? new TsMorphAnalyzer().analyzeEntry(promptsEntry, { cwd })
+    : [];
+
   let artifacts;
   try {
     artifacts = buildPluginArtifacts(files, manifest, {
       basePath: options?.basePath,
       defaultMethod: options?.defaultMethod,
       widgets,
+      promptFiles,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -77,6 +91,14 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   if (options?.emitRegistry ?? true) {
     const registry = buildToolsRegistrySource(artifacts.files, { importBase: options?.registryImportBase });
     await writeFile(join(out, "tools.registry.ts"), registry);
+    // Always emitted (empty when the plugin has no prompts) so the generated middleware can import
+    // it unconditionally.
+    const promptsRegistry = buildToolsRegistrySource(promptFiles, {
+      importBase: options?.promptsRegistryImportBase ?? "../prompts",
+      exportName: "promptModules",
+      kind: "prompt",
+    });
+    await writeFile(join(out, "prompts.registry.ts"), promptsRegistry);
   }
 
   const basePath = options?.basePath ?? "/api";
@@ -88,7 +110,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     codeFiles: artifacts.files,
     mcpTools: artifacts.mcpTools,
     resources: artifacts.mcpCatalog.resources,
-    prompts: artifacts.mcpCatalog.prompts,
+    prompts: artifacts.mcpPrompts,
     widgetCatalog: widgets,
     skills,
     basePath,

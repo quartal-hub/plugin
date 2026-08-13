@@ -712,7 +712,43 @@
   ],
   "widgets": [],
   "resources": [],
-  "prompts": [],
+  "prompts": [
+    {
+      "name": "writeGreeting",
+      "className": "GreetingPrompts",
+      "fileName": "GreetingPrompts",
+      "methodName": "writeGreeting",
+      "summary": "Write a greeting.",
+      "description": "Builds a prompt that asks the model to write a friendly greeting.",
+      "arguments": [
+        {
+          "name": "name",
+          "title": "Recipient name.",
+          "description": "Who the greeting is for.",
+          "required": true
+        },
+        {
+          "name": "tone",
+          "description": "Tone of the greeting, e.g. \"formal\" or \"playful\"."
+        }
+      ]
+    },
+    {
+      "name": "greetingVariants",
+      "className": "GreetingPrompts",
+      "fileName": "GreetingPrompts",
+      "methodName": "greetingVariants",
+      "summary": "Greeting variants.",
+      "description": "Builds a prompt asking for greeting variants in a language.",
+      "arguments": [
+        {
+          "name": "language",
+          "description": "The language to greet in.",
+          "required": true
+        }
+      ]
+    }
+  ],
   "links": {
     "openApi": "/open-api.json",
     "types": "/types.json",

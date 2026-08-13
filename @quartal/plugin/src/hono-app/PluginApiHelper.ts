@@ -18,9 +18,11 @@ import type {
   PluginManifest,
   ExecuteFn,
   McpCatalog,
+  McpPromptDescriptor,
   McpToolDescriptor,
   PluginAppConfig,
   PluginInfo,
+  PromptResult,
   WidgetCatalogEntry,
 } from "../model/index.ts";
 
@@ -39,6 +41,7 @@ export class PluginApiHelper {
   private prebuiltTypes: unknown[] | null = null;
   private prebuiltContents: PluginInfo | null = null;
   private prebuiltMcpTools: McpToolDescriptor[] | null = null;
+  private prebuiltMcpPrompts: McpPromptDescriptor[] | null = null;
   private widgetEntries: WidgetCatalogEntry[] = [];
   private baseDir: string;
   /** Directory (under {@link baseDir}) holding the generated artifacts. Default `"qrtl-plugin"`. */
@@ -85,7 +88,12 @@ export class PluginApiHelper {
 
   /** In-memory MCP catalog derived from code files + configured widgets (feeds `contents.json`). */
   public getMcpCatalog(): McpCatalog {
-    return buildMcpCatalog(this.codeFiles, this.widgetEntries);
+    return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
+  }
+
+  /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
+  public get mcpPrompts(): McpPromptDescriptor[] {
+    return this.prebuiltMcpPrompts ?? [];
   }
 
   /**
@@ -107,7 +115,7 @@ export class PluginApiHelper {
       codeFiles: this.codeFiles,
       mcpTools: this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles),
       resources: catalog.resources,
-      prompts: catalog.prompts,
+      prompts: this.mcpPrompts,
       widgetCatalog: this.widgetEntries,
       skills: await buildSkillSummaries(this.baseDir, this.manifest!.name),
       basePath: this.basePath,
@@ -272,6 +280,59 @@ export class PluginApiHelper {
   };
 
   /**
+   * Executes a prompt function, resolving the class from the injected prompt-module registry
+   * (`config.promptModules`, generated as `prompts.registry.ts`). Unlike {@link execute}, the raw
+   * return value is preserved (a `string` or a `PromptResponse`) and failures throw — the MCP
+   * `prompts/get` handler turns them into protocol errors.
+   * @param fileName File name without extension (letters, numbers, underscores, dashes).
+   * @param className Class name within the file.
+   * @param methodName Method name (static first, then instance).
+   * @param input Prompt arguments (string-valued, per the MCP prompt spec).
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  executePrompt = async (
+    fileName: string,
+    className: string,
+    methodName: string,
+    input: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<PromptResult> => {
+    const validatedFileName = PluginApiHelper.validateFileName(fileName);
+    const module = this.config.promptModules?.[validatedFileName] as Record<string, any> | undefined;
+    if (!module) {
+      throw new Error(
+        `Prompt module not found: "${fileName}". Ensure prompts.registry.ts is generated and passed as config.promptModules.`,
+      );
+    }
+    const TargetClass = module[className];
+    if (!TargetClass) {
+      throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
+    }
+
+    // Resolve static vs instance and keep the correct `this` receiver (same rules as tools).
+    let targetMethod: (input: Record<string, unknown>) => unknown;
+    let thisArg: object;
+    const staticMethod = TargetClass[methodName];
+    if (staticMethod) {
+      targetMethod = staticMethod;
+      thisArg = TargetClass;
+    } else {
+      const instance = new TargetClass();
+      targetMethod = instance[methodName];
+      thisArg = instance;
+    }
+    if (typeof targetMethod !== "function") {
+      throw new Error(`Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`);
+    }
+
+    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
+    const result = this.config.execute
+      ? await this.config.execute<unknown>(boundMethod, input, authContext)
+      : await boundMethod(input);
+    return result as PromptResult;
+  };
+
+  /**
    * Validates a file name (letters, numbers, underscores, dashes; no extension).
    * @param fileName The file name to validate.
    */
@@ -333,6 +394,11 @@ export class PluginApiHelper {
 
     const mcpToolsJson = await Helpers.readIfExists(join(hubDir, "mcp-tools.json"));
     this.prebuiltMcpTools = mcpToolsJson ? (JSON.parse(mcpToolsJson) as { tools?: McpToolDescriptor[] }).tools ?? null : null;
+
+    const mcpPromptsJson = await Helpers.readIfExists(join(hubDir, "mcp-prompts.json"));
+    this.prebuiltMcpPrompts = mcpPromptsJson
+      ? (JSON.parse(mcpPromptsJson) as { prompts?: McpPromptDescriptor[] }).prompts ?? null
+      : null;
 
     this.zodCreator = new ZodBuilder(this.codeFiles);
     this.functionDefs = this.zodCreator.getZodsForAllFunctions();

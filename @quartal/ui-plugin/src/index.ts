@@ -30,6 +30,7 @@ export { default as McpWidget } from "./components/McpWidget.vue";
 
 export { default as PluginAbout } from "./components/PluginAbout.vue";
 export { default as PluginLeftNavi } from "./components/PluginLeftNavi.vue";
+export { default as PluginPromptDetail } from "./components/PluginPromptDetail.vue";
 export { default as PluginSummary } from "./components/PluginSummary.vue";
 export { default as PluginToolDetail } from "./components/PluginToolDetail.vue";
 export { default as PluginToolGroup } from "./components/PluginToolGroup.vue";

@@ -112,6 +112,8 @@ describe("qrtlPlugin integration", () => {
     expect(resolved).toBe("\0" + PLUGIN_MIDDLEWARE_VIRTUAL_ID);
     const src = plugin.load(resolved!)!;
     expect(src).toContain("tools.registry.ts");
+    expect(src).toContain("prompts.registry.ts");
+    expect(src).toContain("promptModules");
     expect(src).toContain("getAnonApp");
     expect(src).toContain("createPluginMiddleware");
   });
@@ -126,5 +128,18 @@ describe("buildPluginMiddlewareSource", () => {
     const iam = buildPluginMiddlewareSource({ auth: "quartal-iam", root: "/proj", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
     expect(iam).toContain("getAuthApp");
     expect(iam).toContain('pluginRootFolder: "/proj"');
+  });
+
+  it("imports and passes promptModules when a prompts registry is given", () => {
+    const src = buildPluginMiddlewareSource({
+      auth: "anon",
+      registryImport: "/src/qrtl-plugin/tools.registry.ts",
+      promptsRegistryImport: "/src/qrtl-plugin/prompts.registry.ts",
+    });
+    expect(src).toContain('import { promptModules } from "/src/qrtl-plugin/prompts.registry.ts";');
+    expect(src).toContain("toolModules, promptModules");
+
+    const withoutPrompts = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
+    expect(withoutPrompts).not.toContain("promptModules");
   });
 });

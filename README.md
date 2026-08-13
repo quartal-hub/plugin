@@ -4,7 +4,7 @@
   Regenerate with: pnpm export:plugin-readme (in the docs repository root)
 -->
 
-<img src="docs/img/quartal-plugins.png" alt="Quartal Plugins">
+<img src="docs/img/quartal-plugins.png" style="margin-left: -14px" alt="Quartal Plugins">
 
 Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
 
@@ -204,4 +204,4 @@ Alternatively, you may also just fork the template repository in [https://github
 Once you have run the template / starter-kit, follow the instructions in the `README.md` or use your favourite development agent to modify your project.
 
 ## Contributing
-As we are still publishing the first v01 version, we do not accept any PRs or feedback at this time. This will change as we get the first version up-and-running. Check back in September - October 2026 timeline for how to contribute.
+As we are still publishing the first v01 version, we do not accept any PRs or feedback at this time. This will change as we get the first version up-and-running. Check back in September - October 2026 timeline or you can already look at the [Contributing guideline](./CONTRIBUTING.md).

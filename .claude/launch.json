@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "test1",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@samples/test1", "dev"],
+      "port": 4321
+    }
+  ]
+}

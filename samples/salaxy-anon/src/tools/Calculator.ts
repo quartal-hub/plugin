@@ -12,7 +12,7 @@ export class Calculator {
 
   /**
    * Create a simple salary calculation for a set of rows, employment id, period and salary date.
-   * @summary Create a simple calculation.
+   * @summary Create a simple calculation. 
    * @param input The input parameters. See SimpleCalculatorInput for details.
    * @returns The calculation object with results.
    */

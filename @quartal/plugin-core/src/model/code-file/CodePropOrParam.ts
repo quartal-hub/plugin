@@ -8,6 +8,8 @@ export interface CodePropOrParam {
   type: CodeOrSystemType;
   /** Description of the property or parameter. */
   description: string;
+  /** Short display title from JSDoc `@summary` (JSON Schema / OpenAPI `title`, MCP prompt argument `title`). */
+  summary?: string;
   /** If true, the property / parameter is optional (e.g. `foo?: string`). */
   optional?: boolean;
   /** If true, the property / parameter may be null (e.g. `foo: string | null`). */

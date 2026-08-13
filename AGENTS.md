@@ -54,8 +54,10 @@ Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private
 
 `astro.config.mjs` (`integrations:[qrtlPlugin()]`, `output:'server'`, adapter), `qrtl.config.ts`
 (title/style/auth/deploy/widgets), `package.json`, `src/tools/` (tool classes analyzed by the codegen
-plugin), `src/pages/widgets/` (one page per tool, any framework), `skills/`, `public/`. The generated
-`src/qrtl-plugin/` (metadata + `tools.registry.ts`) is gitignored.
+plugin), `src/prompts/` (optional MCP prompt classes — same convention: each function takes one object
+parameter whose properties become the prompt arguments, returns a string or `{ messages }`),
+`src/pages/widgets/` (one page per tool, any framework), `skills/`, `public/`. The generated
+`src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts`) is gitignored.
 
 ## Run a plugin locally
 

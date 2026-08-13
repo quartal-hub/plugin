@@ -5,6 +5,8 @@ import { StreamableHTTPTransport } from "@hono/mcp";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
@@ -16,9 +18,12 @@ import type {
   PluginManifest,
   ExecuteFn,
   FetchWidgetHtml,
+  McpPromptDescriptor,
   McpServerOptions,
   McpToolDescriptor,
   PluginAppConfig,
+  PromptMessage,
+  PromptResult,
   WidgetEntry,
 } from "../model/index.ts";
 import { Helpers } from "../helpers/Helpers.ts";
@@ -47,6 +52,8 @@ interface RequestExtraLike {
 export class PluginMcpHelper {
   private readonly manifest: PluginManifest;
   private readonly toolEntries: McpToolDescriptor[];
+  private readonly promptEntries: McpPromptDescriptor[];
+  private readonly executePrompt: PluginApiHelper["executePrompt"];
   private readonly widgets: WidgetEntry[];
   private readonly widgetsByToolId: Map<string, WidgetEntry>;
   private readonly widgetsByUri: Map<string, WidgetEntry>;
@@ -69,7 +76,7 @@ export class PluginMcpHelper {
     config?: PluginAppConfig,
     widgets: WidgetEntry[] = [],
   ): Promise<void> {
-    if (!helper.codeFiles.length || config?.mcp === false) {
+    if ((!helper.codeFiles.length && !helper.mcpPrompts.length) || config?.mcp === false) {
       return;
     }
     const baseDir = config?.pluginRootFolder ?? process.cwd();
@@ -108,10 +115,12 @@ export class PluginMcpHelper {
   ) {
     this.manifest = apiHelper.manifest!;
     this.toolEntries = toolEntries;
+    this.promptEntries = apiHelper.mcpPrompts;
     this.widgets = widgets;
     this.widgetsByToolId = new Map(widgets.map((w) => [w.toolId, w]));
     this.widgetsByUri = new Map(widgets.map((w) => [w.uri, w]));
     this.execute = apiHelper.execute;
+    this.executePrompt = apiHelper.executePrompt;
     this.serverOptions = serverOptions ?? {};
     this.fetchWidgetHtml = fetchWidgetHtml ?? defaultFetchWidgetHtml;
   }
@@ -155,8 +164,10 @@ export class PluginMcpHelper {
   private async createTransport(serverOrigin: string): Promise<StreamableHTTPTransport> {
     this.serverOrigin = serverOrigin;
     const hasWidgets = this.widgets.length > 0;
+    const hasPrompts = this.promptEntries.length > 0;
     const capabilities: Record<string, unknown> = { tools: {}, logging: {} };
     if (hasWidgets) capabilities.resources = {};
+    if (hasPrompts) capabilities.prompts = {};
     const mcpServer = new Server(
       buildMcpServerImplementation(this.manifest, this.serverOptions, serverOrigin),
       { capabilities },
@@ -221,6 +232,40 @@ export class PluginMcpHelper {
       });
     }
 
+    if (hasPrompts) {
+      mcpServer.setRequestHandler(ListPromptsRequestSchema, () => ({
+        prompts: this.promptEntries.map(({ id, title, description, arguments: args }) => ({
+          name: id,
+          ...(title ? { title } : {}),
+          description,
+          ...(args.length ? { arguments: args } : {}),
+        })),
+      }));
+
+      mcpServer.setRequestHandler(GetPromptRequestSchema, async (request, extra) => {
+        const { name: promptName, arguments: args } = request.params;
+        const match = this.promptEntries.find((p) => p.id === promptName);
+        if (!match) {
+          throw new Error(`Unknown prompt: ${String(promptName)}`);
+        }
+
+        // Coerce the SDK's IsomorphicHeaders (values may be string[]) to Record<string,string>.
+        const rawHeaders = extra.requestInfo?.headers ?? {};
+        const headers: Record<string, string> = {};
+        for (const [k, v] of Object.entries(rawHeaders)) {
+          if (typeof v === "string") headers[k] = v;
+          else if (Array.isArray(v)) headers[k] = v.join(", ");
+        }
+
+        const { fileName, className, methodName } = match;
+        const input = (args && typeof args === "object" && !Array.isArray(args))
+          ? (args as Record<string, unknown>)
+          : {};
+        const result = await this.executePrompt(fileName, className, methodName, input, { headers });
+        return toGetPromptResult(result, match);
+      });
+    }
+
     mcpServer.setRequestHandler(
       CallToolRequestSchema,
       async (request, extra) => {
@@ -271,4 +316,30 @@ export class PluginMcpHelper {
     this.transport = transport;
     return transport;
   }
+}
+
+/**
+ * Normalizes a prompt function's return value into the MCP `prompts/get` result shape. A plain
+ * string becomes a single `user` text message; a `PromptResponse` passes through (with the prompt's
+ * description as the default).
+ */
+function toGetPromptResult(
+  result: PromptResult,
+  descriptor: McpPromptDescriptor,
+): { description?: string; messages: PromptMessage[] } {
+  if (typeof result === "string") {
+    return {
+      description: descriptor.description,
+      messages: [{ role: "user", content: { type: "text", text: result } }],
+    };
+  }
+  if (result && typeof result === "object" && Array.isArray(result.messages)) {
+    return {
+      description: result.description ?? descriptor.description,
+      messages: result.messages,
+    };
+  }
+  throw new Error(
+    `Prompt "${descriptor.id}" returned an unexpected value; expected a string or a { messages } response object.`,
+  );
 }

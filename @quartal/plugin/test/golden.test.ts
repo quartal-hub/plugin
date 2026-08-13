@@ -12,7 +12,7 @@ import { generateTools } from "../src/index.ts";
 // formatting changes in the writers don't make it brittle.
 
 const PKG_DIR = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
-const GOLDEN_FILES = ["tools.json", "types.json", "mcp-tools.json", "open-api.json", "contents.json"];
+const GOLDEN_FILES = ["tools.json", "types.json", "mcp-tools.json", "mcp-prompts.json", "open-api.json", "contents.json"];
 
 /** Deep key-sort so the comparison ignores object key order (and pure formatting), catching only real diffs. */
 function sortDeep(value: unknown): unknown {
