@@ -1,6 +1,7 @@
 export * from "./code-file/index.ts";
 export * from "./context/index.ts";
 export * from "./mcp/index.ts";
+export * from "./mcp-spec/index.ts";
 export * from "./metadata/index.ts";
 export * from "./prompts/index.ts";
 export * from "./skills/index.ts";

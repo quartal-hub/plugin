@@ -135,8 +135,22 @@ export type {
   PromptMessage,
   PromptResponse,
   PromptResult,
-  PromptRole,
-  PromptTextContent,
   QuartalPluginContext,
   SystemType,
+} from "./model/index.ts";
+// MCP specification types (copied into plugin-core, original names) — for authoring prompt/tool results.
+export type {
+  Annotations,
+  AudioContent,
+  BaseMetadata,
+  BlobResourceContents,
+  ContentBlock,
+  EmbeddedResource,
+  ImageContent,
+  Resource,
+  ResourceContents,
+  ResourceLink,
+  Role,
+  TextContent,
+  TextResourceContents,
 } from "./model/index.ts";

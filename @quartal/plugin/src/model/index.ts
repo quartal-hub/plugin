@@ -44,8 +44,6 @@ export type {
   PromptMessage,
   PromptResponse,
   PromptResult,
-  PromptRole,
-  PromptTextContent,
   QuartalPluginContext,
   SkillCatalogEntry,
   SkillCatalogUrls,
@@ -58,4 +56,20 @@ export type {
   SystemType,
   WidgetCatalogEntry,
   WidgetCsp,
+} from "@quartal/plugin-core";
+// MCP specification types (copied into plugin-core's model/mcp-spec, original names).
+export type {
+  Annotations,
+  AudioContent,
+  BaseMetadata,
+  BlobResourceContents,
+  ContentBlock,
+  EmbeddedResource,
+  ImageContent,
+  Resource,
+  ResourceContents,
+  ResourceLink,
+  Role,
+  TextContent,
+  TextResourceContents,
 } from "@quartal/plugin-core";

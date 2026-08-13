@@ -1,4 +1,4 @@
-import type { PromptMessage } from "./PromptMessage.ts";
+import type { PromptMessage } from "../mcp-spec/PromptMessage.ts";
 
 /**
  * Full response object a prompt function may return (mirrors the MCP `prompts/get` result). A prompt
