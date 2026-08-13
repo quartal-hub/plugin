@@ -14,6 +14,8 @@ export interface McpToolDescriptor {
   description: string;
   /** JSON Schema for the tool's input parameters. */
   inputSchema: Record<string, unknown>;
+  /** JSON Schema for the tool's result (always an object — non-object results are wrapped as `{ value }`). */
+  outputSchema?: Record<string, unknown>;
 }
 
 /** Root object for `mcp-tools.json`. */

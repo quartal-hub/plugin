@@ -5,8 +5,7 @@ import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Hono } from "hono";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import {
   buildPluginMiddlewareSource,
   discoverWidgets,

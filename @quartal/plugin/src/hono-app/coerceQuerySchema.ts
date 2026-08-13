@@ -35,14 +35,14 @@ export function coerceNumberAndBooleanObject(schema: z.ZodTypeAny): z.ZodTypeAny
   for (const [key, value] of Object.entries(shape)) {
     if (value instanceof z.ZodNumber) {
       const meta = getDescriptionAndExample(value);
-      const base = z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number());
+      const base = z.preprocess((v: unknown) => (v === "" ? undefined : v), z.coerce.number());
       newShape[key] = withMeta(base, meta);
       continue;
     }
 
     if (value instanceof z.ZodBoolean) {
       const meta = getDescriptionAndExample(value);
-      const base = z.preprocess((v) => (v === "" ? undefined : v), z.coerce.boolean());
+      const base = z.preprocess((v: unknown) => (v === "" ? undefined : v), z.coerce.boolean());
       newShape[key] = withMeta(base, meta);
       continue;
     }
@@ -52,7 +52,7 @@ export function coerceNumberAndBooleanObject(schema: z.ZodTypeAny): z.ZodTypeAny
       (value as any)._def.innerType instanceof z.ZodNumber
     ) {
       const meta = getDescriptionAndExample(value);
-      const base = z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number()).optional();
+      const base = z.preprocess((v: unknown) => (v === "" ? undefined : v), z.coerce.number()).optional();
       newShape[key] = withMeta(base, meta);
       continue;
     }
@@ -62,7 +62,7 @@ export function coerceNumberAndBooleanObject(schema: z.ZodTypeAny): z.ZodTypeAny
       (value as any)._def.innerType instanceof z.ZodBoolean
     ) {
       const meta = getDescriptionAndExample(value);
-      const base = z.preprocess((v) => (v === "" ? undefined : v), z.coerce.boolean()).optional();
+      const base = z.preprocess((v: unknown) => (v === "" ? undefined : v), z.coerce.boolean()).optional();
       newShape[key] = withMeta(base, meta);
       continue;
     }

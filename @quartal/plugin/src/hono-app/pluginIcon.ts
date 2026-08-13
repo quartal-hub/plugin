@@ -1,4 +1,4 @@
-import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
+import type { Implementation } from "@modelcontextprotocol/server";
 import type { McpServerOptions, PluginIcon, PluginManifest } from "../model/index.ts";
 import { mcpServerDisplayName, resolveHomepage } from "./pluginMetadata.ts";
 
@@ -9,7 +9,7 @@ export { mcpServerDisplayName } from "./pluginMetadata.ts";
  * (`/icons/:index`) are registered by the runtime server layer (a later slice).
  */
 
-/** MCP icon entry shape (matches @modelcontextprotocol/sdk Implementation.icons). */
+/** MCP icon entry shape (matches @modelcontextprotocol/server Implementation.icons). */
 export type McpIconEntry = {
   src: string;
   mimeType?: string;
