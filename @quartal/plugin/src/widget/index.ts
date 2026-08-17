@@ -27,7 +27,10 @@ export interface ConnectWidgetOptions<TResult = unknown> {
   applyTheme?: boolean;
   /** Called with the parsed tool result each time the host delivers one. */
   onResult?: (result: TResult) => void;
-  /** Called with a human-readable message when a tool result cannot be parsed. */
+  /**
+   * Called with a human-readable message when the tool reports an execution error (`isError: true`),
+   * the tool run is cancelled by the host, or a tool result cannot be parsed.
+   */
   onError?: (message: string) => void;
   /** Called with the host theme on connect and whenever it changes. */
   onTheme?: (theme: WidgetTheme) => void;
@@ -37,7 +40,7 @@ export interface ConnectWidgetOptions<TResult = unknown> {
 export interface WidgetBridge<TResult = unknown> {
   /** Latest parsed tool result, or `null` before the first result arrives. */
   result: TResult | null;
-  /** Latest parse error message, or `null`. */
+  /** Latest error message (tool execution error, cancellation, or parse failure), or `null`. */
   error: string | null;
   /** Current host theme. */
   theme: WidgetTheme;
@@ -45,20 +48,60 @@ export interface WidgetBridge<TResult = unknown> {
   app: App;
 }
 
-/** Extracts the first text content block from a tool-result notification, if present. */
+/** The slice of the MCP `CallToolResult` the bridge reads from a tool-result notification. */
+interface ToolResultLike {
+  content?: ReadonlyArray<unknown>;
+  structuredContent?: unknown;
+  isError?: boolean;
+}
+
+/** Extracts the first `type: "text"` content block from tool-result content, wherever it sits. */
 function firstTextContent(content: ReadonlyArray<unknown> | undefined): string | undefined {
-  const first = content?.[0];
-  if (first && typeof first === "object" && "text" in first) {
-    const text = (first as { text?: unknown }).text;
-    if (typeof text === "string") return text;
+  for (const block of content ?? []) {
+    if (block && typeof block === "object" && (block as { type?: unknown }).type === "text") {
+      const text = (block as { text?: unknown }).text;
+      if (typeof text === "string") return text;
+    }
   }
   return undefined;
 }
 
 /**
- * Connects a widget to its MCP host and returns a live {@link WidgetBridge}. Subscribes to tool results
- * (JSON-parsed from the first text content block, optionally `parse`d) and host-context changes, applies
- * the host theme to the document, and resolves once the `ui/initialize` handshake completes.
+ * Extracts an error message from an error-shaped value: an `{ error: string }` object (with no
+ * other keys), as produced by the plugin REST API and by older Quartal MCP servers that reported
+ * execution errors without `isError: true`.
+ */
+function errorShapedMessage(raw: unknown): string | undefined {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const record = raw as Record<string, unknown>;
+    const keys = Object.keys(record);
+    if (keys.length === 1 && keys[0] === "error" && typeof record.error === "string") {
+      return record.error;
+    }
+  }
+  return undefined;
+}
+
+/** Best human-readable message for an `isError: true` result: unwraps a JSON `{ error }` text block. */
+function executionErrorMessage(content: ReadonlyArray<unknown> | undefined): string {
+  const text = firstTextContent(content);
+  if (text === undefined) return "Tool execution failed.";
+  try {
+    return errorShapedMessage(JSON.parse(text)) ?? text;
+  } catch {
+    return text;
+  }
+}
+
+/**
+ * Connects a widget to its MCP host and returns a live {@link WidgetBridge}. Subscribes to tool
+ * results and host-context changes, applies the host theme to the document, and resolves once the
+ * `ui/initialize` handshake completes.
+ *
+ * Tool results are read `structuredContent`-first, falling back to the first `type: "text"` content
+ * block (JSON-parsed) for servers that do not return structured content. Errors — a result with
+ * `isError: true`, a host-side cancellation, an error-shaped legacy payload, or a parse failure —
+ * set {@link WidgetBridge.error} and fire `onError` instead of touching the last good result.
  * @param options Bridge options (name/version, parse transform, callbacks, theme handling).
  */
 export async function connectWidget<TResult = unknown>(
@@ -78,24 +121,59 @@ export async function connectWidget<TResult = unknown>(
     options.onTheme?.(theme);
   };
 
-  app.ontoolresult = (params) => {
-    const text = firstTextContent(params.content);
-    if (text === undefined) return;
+  const setError = (message: string): void => {
+    bridge.error = message;
+    options.onError?.(message);
+  };
+
+  app.addEventListener("toolresult", (params: ToolResultLike) => {
+    // Tool execution error (MCP spec): the result carries `isError: true` and the error in content.
+    if (params.isError) {
+      setError(executionErrorMessage(params.content));
+      return;
+    }
+
+    // Prefer `structuredContent`; fall back to the first text content block (JSON-parsed) for
+    // servers that do not return structured content.
+    let raw: unknown;
+    if (params.structuredContent !== undefined) {
+      raw = params.structuredContent;
+    } else {
+      const text = firstTextContent(params.content);
+      if (text === undefined) return;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error));
+        return;
+      }
+    }
+
+    // Older Quartal servers reported execution errors as a plain `{ error }` result without
+    // `isError` — surface those as errors too, not as results.
+    const legacyError = errorShapedMessage(raw);
+    if (legacyError !== undefined) {
+      setError(legacyError);
+      return;
+    }
+
     try {
-      const raw: unknown = JSON.parse(text);
       const value = (options.parse ? options.parse(raw) : raw) as TResult;
       bridge.result = value;
       bridge.error = null;
       options.onResult?.(value);
     } catch (error) {
-      bridge.error = error instanceof Error ? error.message : String(error);
-      options.onError?.(bridge.error);
+      setError(error instanceof Error ? error.message : String(error));
     }
-  };
+  });
 
-  app.onhostcontextchanged = (ctx) => {
+  app.addEventListener("toolcancelled", (params: { reason?: string }) => {
+    setError(params.reason ? `Tool execution cancelled: ${params.reason}` : "Tool execution cancelled.");
+  });
+
+  app.addEventListener("hostcontextchanged", (ctx: { theme?: unknown } | undefined) => {
     setTheme(ctx?.theme === "dark" ? "dark" : "light");
-  };
+  });
 
   await app.connect();
   setTheme(app.getHostContext()?.theme === "dark" ? "dark" : "light");

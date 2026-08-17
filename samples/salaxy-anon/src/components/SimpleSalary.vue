@@ -1,77 +1,46 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Objects, Translations } from "@salaxy/core";
-import type { Language } from "@salaxy/core";
-import { CalculationMapper, Templates } from "@salaxy/reports";
-import { useExtApps } from "../lib/useExtApps";
-
-type Layout = "tables" | "full";
-
-/**
- * Layout for the rendered Salaxy report fragment:
- * - "tables" (default) — `workerCalculationTablesV2` template, matches
- *   `Calculator.getReportFragment` with view: "partial". Tables only, no header.
- * - "full"             — `salarySlipV2` template, matches `Calculator.getReportDocument`
- *   visual layout. Includes employee/period header above the tables.
- */
-const LAYOUT = "tables" as Layout;
-
-const fmt = new Intl.NumberFormat("fi-FI", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
-
-interface Calculation {
-  result?: { totals?: { totalGrossSalary?: number } };
-  [k: string]: unknown;
-}
+import { Numeric } from "@salaxy/core";
+import type { Calculation } from "@salaxy/core";
+import { createReport } from "@salaxy/reports";
+import { useExtApps } from "@quartal/plugin-vue";
 
 const { result: calc, error } = useExtApps<Calculation>({
   name: "SimpleSalaryApp",
   version: "0.3.0",
 });
 
-const grossText = computed(() => {
-  const gross = calc.value?.result?.totals?.totalGrossSalary;
-  return typeof gross === "number" ? fmt.format(gross) : null;
-});
-
+const gross = computed<number | null>(() => calc.value?.result?.totals?.totalGrossSalary ?? null);
 const reportHtml = ref<string | null>(null);
 const renderError = ref<string | null>(null);
+const errorText = computed<string | null>(() => error.value ?? renderError.value);
 
 watch(calc, async (current) => {
-  if (!current) return;
   reportHtml.value = null;
   renderError.value = null;
+  if (!current) return;
+  if (!current.result) {
+    renderError.value = "Calculation result is missing.";
+    return;
+  }
   try {
-    const lang: Language = "fi";
-    await Translations.loadLanguage(lang);
-    const report = CalculationMapper.getCalculationReport(current, "salarySlip", lang) ?? {};
-    const headerFooter = CalculationMapper.getHeaderFooter("salarySlip", current, {}, lang);
-    const layout = CalculationMapper.getReportLayout();
-    layout.hasCustomCss = false;
-    layout.customCss = "";
-    const reportData = { report, headerFooter, layout: Objects.copy(layout) };
-    const templates = new Templates();
-    const templateName = LAYOUT === "full" ? "salarySlipV2" : "workerCalculationTablesV2";
-    reportHtml.value = templates.getHtml(templateName, reportData, lang);
+    reportHtml.value =await createReport({
+      calc: current,
+      type: "salarySlip",
+      language: "fi",
+      view: "partial",
+    });
   } catch (e) {
     renderError.value = e instanceof Error ? e.message : String(e);
   }
 });
 
-const errorText = computed(() => error.value ?? renderError.value);
 </script>
 
 <template>
   <div class="card">
     <div class="card-body">
-      <h2>
-        Palkkalaskelma:
-        <span v-if="grossText">{{ grossText }}</span>
-        <span v-else class="placeholder">-</span>
-      </h2>
+      <h2>Palkkalaskelma 3: {{ Numeric.formatNumber(gross) }}</h2>
       <div v-if="reportHtml" class="report-host">
         <div class="report-table-html">
           <div class="report-binder table-responsive" v-html="reportHtml"></div>
