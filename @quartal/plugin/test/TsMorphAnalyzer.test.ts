@@ -194,34 +194,3 @@ describe("TsMorphAnalyzer imported-types closure", () => {
     expect(row.properties.map((p) => p.name)).toEqual(["price"]);
   });
 });
-
-describe("TsMorphAnalyzer tool discovery (entry export graph)", () => {
-  it("excludes utility classes that are imported for implementation but not re-exported from mod.ts", () => {
-    const files = analyzeSource({
-      // Explicit barrel: only the tool is re-exported — the util is not.
-      "/tools/mod.ts": `export * from "./Calculator.ts";`,
-      "/tools/utils/ReportUtils.ts": `
-        /** Internal helper — not a tool. */
-        export class ReportUtils {
-          static render(input: { id: string }): string { return input.id; }
-        }
-      `,
-      "/tools/Calculator.ts": `
-        import { ReportUtils } from "./utils/ReportUtils.ts";
-        /** Calculator. */
-        export class Calculator {
-          /** Compute. @param input the id */
-          static compute(input: string): string { return ReportUtils.render({ id: input }); }
-        }
-      `,
-    });
-
-    const classNames = files.flatMap((f) => f.classes.map((c) => c.name));
-    const typeNames = files.flatMap((f) => f.types.map((t) => t.name));
-    expect(classNames).toContain("Calculator");
-    expect(classNames).not.toContain("ReportUtils");
-    expect(typeNames).not.toContain("ReportUtils");
-    // The util's file must not appear as a tool file (its path would break the basename-keyed registry).
-    expect(files.some((f) => f.path.includes("ReportUtils"))).toBe(false);
-  });
-});

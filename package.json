@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "pnpm -r run build",
-    "build:libs": "pnpm --filter @quartal/plugin-core --filter @quartal/plugin run build",
+    "build:libs": "pnpm --filter @quartal/plugin-core --filter @quartal/plugin --filter @quartal/plugin-vue run build",
     "test": "pnpm -r --if-present run test",
     "typecheck": "pnpm -r --if-present run typecheck",
     "lint": "eslint .",

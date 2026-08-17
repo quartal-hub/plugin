@@ -3,7 +3,7 @@
 import { CellRenderingLogic } from "@salaxy/core";
 import type { ContractParty } from "@salaxy/core";
 
-import { useExtApps } from "../lib/useExtApps";
+import { useExtApps } from "@quartal/plugin-vue";
 
 const { result } = useExtApps<{ value?: Array<ContractParty> }>({
   name: "GetEmployeesApp",

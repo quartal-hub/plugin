@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useExtApps } from "../lib/useExtApps";
+import { useExtApps } from "@quartal/plugin-vue";
 import type { CompanySummary, SearchCompaniesResult } from "../lib/types";
 
 const { result, error, sendMessage } = useExtApps<SearchCompaniesResult>({

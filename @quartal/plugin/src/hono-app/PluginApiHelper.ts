@@ -1,12 +1,13 @@
 import { join } from "node:path";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 
 import { buildMcpCatalog } from "../code/buildMcpCatalog.ts";
 import { buildMcpTools } from "../code/buildMcpTools.ts";
 import { buildOpenApiTags } from "../code/buildOpenApiTags.ts";
 import { loadCodeFiles } from "../code/loadCodeFiles.ts";
-import { type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
+import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
@@ -94,6 +95,16 @@ export class PluginApiHelper {
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
   public get mcpPrompts(): McpPromptDescriptor[] {
     return this.prebuiltMcpPrompts ?? [];
+  }
+
+  /**
+   * The Zod definition (input/returns schemas) for a tool method, for callers that validate
+   * outside the OpenAPI routes (the MCP `tools/call` path). Available after `init()`.
+   * @param className The class name.
+   * @param methodName The method name.
+   */
+  public getFunctionDef(className: string, methodName: string): FunctionZodDefinition | undefined {
+    return this.zodCreator?.getZodForFunction(className, methodName);
   }
 
   /**
@@ -215,7 +226,70 @@ export class PluginApiHelper {
 
   /**
    * Executes a class method, resolving the class from the injected tool-module registry
-   * (`config.toolModules`, generated as `tools.registry.ts`).
+   * (`config.toolModules`, generated as `tools.registry.ts`). Failures throw — resolution problems
+   * and errors thrown by the tool method alike. The MCP `tools/call` handler uses this directly so
+   * it can report execution errors per the MCP spec (`isError: true`).
+   * @param fileName File name without extension (letters, numbers, underscores, dashes).
+   * @param className Class name within the file.
+   * @param methodName Method name (static first, then instance).
+   * @param input Validated input parameters.
+   * @param authContext Authentication context carrier for the execute wrapper.
+   * @returns Always an object; a non-object result is wrapped as `{ value }`.
+   */
+  executeStrict: ExecuteFn = async (
+    fileName: string,
+    className: string,
+    methodName: string,
+    input: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<Record<string, unknown>> => {
+    const validatedFileName = PluginApiHelper.validateFileName(fileName);
+    const module = this.config.toolModules?.[validatedFileName] as Record<string, any> | undefined;
+    if (!module) {
+      throw new Error(
+        `Tool module not found: "${fileName}". Ensure tools.registry.ts is generated and passed as config.toolModules.`,
+      );
+    }
+
+    const TargetClass = module[className];
+    if (!TargetClass) {
+      throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
+    }
+
+    // Resolve static vs instance and keep the correct `this` receiver.
+    let targetMethod: (input: Record<string, unknown>) => unknown;
+    let thisArg: object;
+    const staticMethod = TargetClass[methodName];
+    if (staticMethod) {
+      targetMethod = staticMethod;
+      thisArg = TargetClass;
+    } else {
+      const instance = new TargetClass();
+      targetMethod = instance[methodName];
+      thisArg = instance;
+    }
+    if (typeof targetMethod !== "function") {
+      throw new Error(
+        `Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`,
+      );
+    }
+
+    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
+    let result: unknown;
+    if (this.config.execute) {
+      result = await this.config.execute<unknown>(boundMethod, input, authContext);
+    } else {
+      result = await boundMethod(input);
+    }
+
+    const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
+    return isObject ? (result as Record<string, unknown>) : { value: result ?? null };
+  };
+
+  /**
+   * Executes a class method like {@link executeStrict}, but wraps failures as an `{ error }` object
+   * (the REST API contract). `HTTPException`s pass through so auth failures keep their HTTP
+   * semantics (e.g. 401 + WWW-Authenticate).
    * @param fileName File name without extension (letters, numbers, underscores, dashes).
    * @param className Class name within the file.
    * @param methodName Method name (static first, then instance).
@@ -230,51 +304,10 @@ export class PluginApiHelper {
     input: Record<string, unknown>,
     authContext?: AuthContext,
   ): Promise<Record<string, unknown>> => {
-    const validatedFileName = PluginApiHelper.validateFileName(fileName);
-    const module = this.config.toolModules?.[validatedFileName] as Record<string, any> | undefined;
-    if (!module) {
-      return {
-        error:
-          `Tool module not found: "${fileName}". Ensure tools.registry.ts is generated and passed as config.toolModules.`,
-      };
-    }
-
     try {
-      const TargetClass = module[className];
-      if (!TargetClass) {
-        return { error: `Class not found: "${className}" in file "${fileName}.ts"` };
-      }
-
-      // Resolve static vs instance and keep the correct `this` receiver.
-      let targetMethod: (input: Record<string, unknown>) => unknown;
-      let thisArg: object;
-      const staticMethod = TargetClass[methodName];
-      if (staticMethod) {
-        targetMethod = staticMethod;
-        thisArg = TargetClass;
-      } else {
-        const instance = new TargetClass();
-        targetMethod = instance[methodName];
-        thisArg = instance;
-      }
-      if (typeof targetMethod !== "function") {
-        return {
-          value: null,
-          info: `Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`,
-        };
-      }
-
-      const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
-      let result: unknown;
-      if (this.config.execute) {
-        result = await this.config.execute<unknown>(boundMethod, input, authContext);
-      } else {
-        result = await boundMethod(input);
-      }
-
-      const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
-      return isObject ? (result as Record<string, unknown>) : { value: result ?? null };
+      return await this.executeStrict(fileName, className, methodName, input, authContext);
     } catch (error: unknown) {
+      if (error instanceof HTTPException) throw error;
       return { error: error instanceof Error ? error.message : "Unknown error" };
     }
   };

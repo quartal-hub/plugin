@@ -1,0 +1,42 @@
+{
+  "name": "@quartal/plugin-vue",
+  "version": "0.5.0",
+  "description": "Vue bindings for Quartal Plugin widgets (composables over @quartal/plugin/widget)",
+  "type": "module",
+  "license": "MIT",
+  "author": "Quartal Accounting Software Oy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "@quartal/plugin-vue"
+  },
+  "main": "./dist/mod.js",
+  "types": "./dist/mod.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/mod.d.ts",
+      "import": "./dist/mod.js",
+      "default": "./dist/mod.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@quartal/plugin": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vue": "^3.5.0"
+  }
+}

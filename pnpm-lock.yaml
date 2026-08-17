@@ -104,6 +104,19 @@ importers:
         specifier: ^2.2.0
         version: 2.2.12(typescript@5.9.3)
 
+  '@quartal/plugin-vue':
+    dependencies:
+      '@quartal/plugin':
+        specifier: workspace:*
+        version: link:../plugin
+    devDependencies:
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      vue:
+        specifier: ^3.5.0
+        version: 3.5.39(typescript@5.9.3)
+
   '@quartal/ui-plugin':
     dependencies:
       '@modelcontextprotocol/ext-apps':
@@ -176,6 +189,9 @@ importers:
       '@quartal/plugin':
         specifier: workspace:*
         version: link:../../@quartal/plugin
+      '@quartal/plugin-vue':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-vue
       astro:
         specifier: ^7.0.0
         version: 7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0)
@@ -212,6 +228,9 @@ importers:
       '@quartal/plugin':
         specifier: workspace:*
         version: link:../../@quartal/plugin
+      '@quartal/plugin-vue':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-vue
       '@salaxy/core':
         specifier: ^7.0.0-beta.1
         version: 7.0.0-beta.1
@@ -230,12 +249,21 @@ importers:
       '@astrojs/node':
         specifier: ^11.0.0
         version: 11.0.2(astro@7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0))
+      '@astrojs/vue':
+        specifier: ^7.0.0
+        version: 7.0.1(@types/node@22.20.1)(astro@7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0))(esbuild@0.28.1)(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)
       '@quartal/plugin':
         specifier: workspace:*
         version: link:../../@quartal/plugin
+      '@quartal/plugin-vue':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-vue
       astro:
         specifier: ^7.0.0
         version: 7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0)
+      vue:
+        specifier: ^3.5.0
+        version: 3.5.39(typescript@5.9.3)
 
 packages:
 

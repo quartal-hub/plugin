@@ -24,7 +24,7 @@ from this repo.
 
 - No custom registry needed — everything installs from npm. Tool type-introspection uses the
   TypeScript compiler via **`ts-morph`** (a build-time dependency of `@quartal/plugin`).
-- `pnpm run build` — build every workspace project (`build:libs` for just `@quartal/plugin-core` + `@quartal/plugin`).
+- `pnpm run build` — build every workspace project (`build:libs` for just `@quartal/plugin-core` + `@quartal/plugin` + `@quartal/plugin-vue`).
 - `pnpm run test` — run all workspace tests (currently the `@quartal/plugin` suite).
 - `pnpm run typecheck` — `vue-tsc`/`tsc` across packages (kept out of `build`).
 - `pnpm run lint` — ESLint import-hygiene rules (`lint:fix` auto-fixes import order).
@@ -45,6 +45,7 @@ folders.
 | -------------------------- | -------------------------------------------------------------------------------------------- |
 | `@quartal/plugin-core`     | Core types + HTTP client for connecting to a published plugin (npm)                           |
 | `@quartal/plugin`          | The Astro integration + Vite codegen plugin + Hono runtime for creating plugins (npm)         |
+| `@quartal/plugin-vue`      | Vue bindings for widgets (composables over the framework-agnostic `@quartal/plugin/widget`)   |
 | `@quartal/ui-plugin`       | Vue artifact UI components (workspace pkg; Storybook here)                                    |
 | `@quartal/plugin-docs-web` | Docs SPA; its `build` vendors into `@quartal/plugin/static/plugin-docs-web` (see its README)  |
 

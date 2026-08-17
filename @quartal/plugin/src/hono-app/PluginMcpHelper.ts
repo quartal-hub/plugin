@@ -1,7 +1,14 @@
 import { join } from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { createMcpHandler, Server, type McpHttpHandler } from "@modelcontextprotocol/server";
+import {
+  createMcpHandler,
+  INVALID_PARAMS,
+  ProtocolError,
+  Server,
+  type McpHttpHandler,
+} from "@modelcontextprotocol/server";
+import { z } from "@hono/zod-openapi";
 
 import { buildMcpTools } from "../code/buildMcpTools.ts";
 import type {
@@ -17,6 +24,7 @@ import type {
   WidgetEntry,
 } from "../model/index.ts";
 import { Helpers } from "../helpers/Helpers.ts";
+import type { FunctionZodDefinition } from "../code/ZodBuilder.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import {
@@ -52,6 +60,7 @@ export class PluginMcpHelper {
   private readonly widgetsByToolId: Map<string, WidgetEntry>;
   private readonly widgetsByUri: Map<string, WidgetEntry>;
   private readonly execute: ExecuteFn;
+  private readonly getFunctionDef: (className: string, methodName: string) => FunctionZodDefinition | undefined;
   private readonly serverOptions: McpServerOptions;
   private readonly fetchWidgetHtml: FetchWidgetHtml;
   private serverOrigin = "";
@@ -112,7 +121,10 @@ export class PluginMcpHelper {
     this.widgets = widgets;
     this.widgetsByToolId = new Map(widgets.map((w) => [w.toolId, w]));
     this.widgetsByUri = new Map(widgets.map((w) => [w.uri, w]));
-    this.execute = apiHelper.execute;
+    // The strict variant: failures throw, so the tools/call handler below can report them per the
+    // MCP spec (`isError: true`) instead of returning `{ error }` as a success-shaped result.
+    this.execute = apiHelper.executeStrict;
+    this.getFunctionDef = (className, methodName) => apiHelper.getFunctionDef(className, methodName);
     this.executePrompt = apiHelper.executePrompt;
     this.serverOptions = serverOptions ?? {};
     this.fetchWidgetHtml = fetchWidgetHtml ?? defaultFetchWidgetHtml;
@@ -270,16 +282,33 @@ export class PluginMcpHelper {
         const { name: toolName, arguments: args } = request.params;
         const headers = PluginMcpHelper.headersRecord(ctx);
 
+        // Per the MCP spec, an unknown tool is a protocol error (-32602 Invalid params), not a
+        // tool result.
         const match = this.toolEntries.find((t) => t.id === toolName);
         if (!match) {
-          return {
-            content: [{ type: "text" as const, text: JSON.stringify({ error: "Invalid tool name" }) }],
-            isError: true,
-          };
+          throw new ProtocolError(INVALID_PARAMS, `Unknown tool: ${String(toolName)}`);
         }
 
         const { fileName, className, methodName } = match;
-        const params = (args && typeof args === "object" && !Array.isArray(args)) ? (args as Record<string, unknown>) : {};
+        let params = (args && typeof args === "object" && !Array.isArray(args)) ? (args as Record<string, unknown>) : {};
+
+        // Validate against the same Zod input schema the REST route uses. Invalid arguments are a
+        // protocol error per the MCP spec; the Zod issue tree rides along as `data`.
+        const def = this.getFunctionDef(className, methodName);
+        if (def) {
+          const parsed = def.input.safeParse(params);
+          if (!parsed.success) {
+            throw new ProtocolError(
+              INVALID_PARAMS,
+              `Invalid arguments for tool ${String(toolName)}: ${parsed.error.issues
+                .map((issue: z.core.$ZodIssue) => `${issue.path.join(".") || "(input)"}: ${issue.message}`)
+                .join("; ")}`,
+              z.treeifyError(parsed.error),
+            );
+          }
+          params = parsed.data;
+        }
+
         try {
           const result = await this.execute(fileName, className, methodName, params, { headers });
           // `structuredContent` first, then the spec's backwards-compat serialized-JSON text block
@@ -291,9 +320,13 @@ export class PluginMcpHelper {
           };
         } catch (err) {
           if (err instanceof HTTPException) throw err;
+          if (err instanceof ProtocolError) throw err;
+          // Tool execution errors are reported inside the result with `isError: true` (MCP spec).
+          // No `structuredContent`: it must conform to the tool's outputSchema, which an error
+          // message does not.
           const text = err instanceof Error ? err.message : String(err);
           return {
-            content: [{ type: "text" as const, text: JSON.stringify({ error: text }) }],
+            content: [{ type: "text" as const, text }],
             isError: true,
           };
         }

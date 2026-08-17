@@ -1,0 +1,7 @@
+---
+import WidgetLayout from "../../layouts/WidgetLayout.astro";
+import Widget from "../../components/ErrorTester.vue";
+---
+<WidgetLayout title="ThrowError">
+  <Widget client:only="vue" />
+</WidgetLayout>

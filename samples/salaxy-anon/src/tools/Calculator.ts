@@ -1,8 +1,9 @@
 import { AjaxFetch, Calculator as SalaxyCalculator, CalculatorLogic, Dates } from "@salaxy/core";
 import type { Calculation, CalculationRowType, Language } from "@salaxy/core";
+import { createReport } from "@salaxy/reports";
 
-import { ReportUtils } from "./utils/index.ts";
 import type { ReportInput, SimpleCalculatorInput, SimpleSalaryReportInput } from "./model/index.ts";
+
 
 /**
  * Salary calculator for anonymous calculations.
@@ -18,7 +19,6 @@ export class Calculator {
    */
   public async simpleSalary(input: SimpleCalculatorInput): Promise<Calculation> {
     const ajax = new AjaxFetch();
-    ajax.useCookie = false;
     const calcInput = CalculatorLogic.getBlank();
     calcInput.worker!.accountId = input.employmentId || "example-default";
     calcInput.info!.workStartDate = input.period?.start || Dates.startEnd(Dates.getToday(), "start-month");
@@ -72,10 +72,11 @@ export class Calculator {
    * @returns The report document as HTML string.
    */
   public async getReportDocument(input: ReportInput): Promise<string> {
-    return await ReportUtils.generateDocument({
+    return createReport({
       calc: input.calculation,
-      reportType: input.reportType ?? "salarySlip",
-      lang: (input.lang || "fi") as Language,
+      type: input.reportType ?? "salarySlip",
+      language: (input.lang || "fi") as Language,
+      view: "full",
     });
   }
 
@@ -86,10 +87,11 @@ export class Calculator {
    * @returns The report fragment as HTML string.
    */
   public async getReportFragment(input: ReportInput): Promise<string> {
-    return await ReportUtils.generateFragment({
+    return createReport({
       calc: input.calculation,
-      reportType: input.reportType ?? "salarySlip",
-      lang: (input.lang || "fi") as Language,
+      type: input.reportType ?? "salarySlip", 
+      language: (input.lang || "fi") as Language,
+      view: "partial",
     });
   }
 }
