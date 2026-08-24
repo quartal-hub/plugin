@@ -6,3 +6,6 @@ allowBuilds:
   "@scarf/scarf": false
   core-js: false
   unrs-resolver: true
+  vue-demi: true
+minimumReleaseAgeExclude:
+  - '@quartal/ui-core@1.4.2'

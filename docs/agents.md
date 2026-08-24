@@ -130,8 +130,10 @@ the agent definition is served publicly.
 
 The docs SPA lists agents at `/#/agents` (also reachable from the **Agents** card on the front page
 and the left navigation, both placed right after Widgets). `/#/agents/<name>` shows the resolved
-settings — model, tools by origin, skills, MCP servers — next to the agent's markdown in a
-read-only editor.
+settings — model, tools by origin, skills, MCP servers — next to the agent's system prompt,
+rendered with `QMarkdown` from `@quartal/ui-core`. The frontmatter is dropped there because the
+settings column already visualizes it; skill pages render their `SKILL.md` with
+`frontmatter="table"` instead.
 
 ## Claude compatibility notes
 

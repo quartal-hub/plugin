@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
+import { QMarkdown } from "@quartal/ui-core";
 import type { AgentsCatalogResponse, PluginInfo } from "@quartal/plugin-core";
 import { pluginClient } from "../lib/pluginClient.ts";
 
@@ -144,9 +145,9 @@ async function load() {
         <div class="col-md-8">
           <h2 class="h6">{{ agent.source }}</h2>
           <div v-if="markdownError" class="alert alert-warning">{{ markdownError }}</div>
-          <div v-else style="height: 640px;">
-            <qrtl-editor type="monaco" read-only lang="markdown" :code="markdown"></qrtl-editor>
-          </div>
+          <!-- Frontmatter is dropped: the settings column next to this already visualizes it.
+               Rendered as authored (first-party content) — see the note in SkillDetailView. -->
+          <QMarkdown v-else :text="markdown" frontmatter="remove" insecure-accept-incoming-html />
         </div>
       </div>
     </template>

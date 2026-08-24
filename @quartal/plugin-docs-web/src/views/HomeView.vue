@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { marked } from "marked";
 import { onMounted, ref } from "vue";
+import { MarkdownUtil } from "@quartal/ui-core";
 import type { PluginInfo } from "@quartal/plugin-core";
 import { PluginAbout } from "@quartal/ui-plugin";
 import { pluginClient } from "../lib/pluginClient.ts";
@@ -18,7 +18,9 @@ onMounted(async () => {
     const plugin = await pluginClient.getPlugin();
     if (plugin.hasReadme) {
       const md = await pluginClient.getReadme();
-      readmeHtml.value = marked(md, { async: false }) as string;
+      // The README is first-party content: it ships in the plugin that serves this SPA, so raw
+      // HTML in it (layout divs, images) is rendered rather than escaped.
+      readmeHtml.value = MarkdownUtil.render(md, true);
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
