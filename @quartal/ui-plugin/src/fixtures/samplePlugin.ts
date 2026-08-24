@@ -111,7 +111,9 @@ export const samplePlugin: PluginInfo = {
       resourceUri: "ui://widgets/calculator_multiply.html",
     },
   ],
-  resources: [],
+  resources: [
+    { name: "ui://widgets/calculator_multiply.html", title: "Calculator widget", description: "Widget HTML for multiply." },
+  ],
   prompts: [],
   links: {
     openApi: "/open-api.json",

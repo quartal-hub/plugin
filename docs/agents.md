@@ -128,6 +128,11 @@ the agent definition is served publicly.
 
 `@quartal/plugin-core`'s `PluginClient.getAgentsCatalog()` fetches the catalog.
 
+The docs SPA lists agents at `/#/agents` (also reachable from the **Agents** card on the front page
+and the left navigation, both placed right after Widgets). `/#/agents/<name>` shows the resolved
+settings — model, tools by origin, skills, MCP servers — next to the agent's markdown in a
+read-only editor.
+
 ## Claude compatibility notes
 
 - Claude's **plugin-shipped** agents deliberately ignore `hooks`, `mcpServers` and

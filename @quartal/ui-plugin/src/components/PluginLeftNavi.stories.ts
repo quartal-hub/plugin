@@ -27,6 +27,7 @@ export const EmptySections: Story = {
       toolGroups: [],
       skills: [],
       widgets: [],
+      agents: [],
     },
   },
 };

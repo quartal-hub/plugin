@@ -88,15 +88,22 @@ export class PluginClient {
     return this.#fetchJson<Record<string, unknown>>("/open-api.json");
   }
 
-  /** Fetches a skill file by absolute URL or plugin-relative path.
-   * @param url Absolute URL or plugin-relative path to the skill file.
+  /** Fetches any plugin file as text (e.g. a skill file or an agent's markdown).
+   * @param url Absolute URL or plugin-relative path to the file.
    */
-  fetchSkillFile(url: string): Promise<string> {
+  fetchFile(url: string): Promise<string> {
     const path = url.startsWith("http") ? url : this.url(url);
     return this.#fetch(path).then((res) => {
       if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
       return res.text();
     });
+  }
+
+  /** Fetches a skill file by absolute URL or plugin-relative path.
+   * @param url Absolute URL or plugin-relative path to the skill file.
+   */
+  fetchSkillFile(url: string): Promise<string> {
+    return this.fetchFile(url);
   }
 }
 
