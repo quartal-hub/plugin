@@ -15,6 +15,8 @@ export default [
       "**/static/**",
       "**/.astro/**",
       "**/qrtl-plugin/**",
+      // Generated deployment stages: copies of the samples, rewritten for a hosting platform.
+      ".deploy/**",
     ],
   },
   {
