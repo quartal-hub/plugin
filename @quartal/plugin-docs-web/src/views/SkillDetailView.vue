@@ -7,6 +7,7 @@ import {
   type SkillFileWithUrl,
   type SkillsCatalogResponse,
 } from "@quartal/plugin-core";
+import { QMarkdown } from "@quartal/ui-core";
 import FileTree from "../components/FileTree.vue";
 import CopyButton from "../components/CopyButton.vue";
 import { pluginClient } from "../lib/pluginClient.ts";
@@ -20,6 +21,8 @@ const preview = ref("");
 const previewLang = ref("text");
 const previewError = ref("");
 const loadError = ref("");
+/** Markdown (SKILL.md and friends) is rendered; every other file type stays in the code editor. */
+const isMarkdown = computed(() => previewLang.value === "markdown");
 
 const npxCmd = computed(() => {
   if (!skill.value) return null;
@@ -110,6 +113,10 @@ async function selectFile(file: SkillFileWithUrl) {
         <div class="col-md-8">
           <h2 class="h6">{{ selected?.path ?? "Select a file" }}</h2>
           <div v-if="previewError" class="alert alert-warning">{{ previewError }}</div>
+          <!-- Skill files ship inside the plugin serving this page, so their markdown is rendered as
+               authored. In encoded mode MarkdownUtil escapes the whole source up front, which
+               double-escapes code spans (`scripts/x.ts` becomes `scripts&#x2F;x.ts`). -->
+          <QMarkdown v-else-if="isMarkdown" :text="preview" frontmatter="table" insecure-accept-incoming-html />
           <div v-else style="height: 480px;">
             <qrtl-editor type="monaco" read-only :lang="previewLang" :code="preview"></qrtl-editor>
           </div>

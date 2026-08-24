@@ -3,6 +3,8 @@ import HomeView from "./views/HomeView.vue";
 import ApiView from "./views/ApiView.vue";
 import McpView from "./views/McpView.vue";
 import SkillsView from "./views/SkillsView.vue";
+import AgentsView from "./views/AgentsView.vue";
+import AgentDetailView from "./views/AgentDetailView.vue";
 import SkillDetailView from "./views/SkillDetailView.vue";
 import ToolsView from "./views/ToolsView.vue";
 import ToolGroupView from "./views/ToolGroupView.vue";
@@ -36,7 +38,13 @@ export const router = createRouter({
     { path: "/skills", name: "skills", component: SkillsView },
     { path: "/skills/:name", name: "skill", component: SkillDetailView, props: true },
     { path: "/widgets", name: "widgets", component: WidgetsView },
-    { path: "/resources", name: "resources", component: ResourcesView },
+    { path: "/agents", name: "agents", component: AgentsView },
+    {
+      path: "/agents/:agentName",
+      name: "agent",
+      component: AgentDetailView,
+      props: (route) => ({ agentName: route.params.agentName }),
+    },
     { path: "/prompts", name: "prompts", component: PromptsView },
     {
       path: "/prompts/:promptName",
@@ -44,6 +52,7 @@ export const router = createRouter({
       component: PromptDetailView,
       props: (route) => ({ promptName: route.params.promptName }),
     },
+    { path: "/resources", name: "resources", component: ResourcesView },
     { path: "/api", name: "api", component: ApiView },
     { path: "/api/swagger", name: "apiSwagger", component: () => import("./views/SwaggerView.vue") },
     { path: "/api/redoc", name: "apiRedoc", component: () => import("./views/ReDocView.vue") },

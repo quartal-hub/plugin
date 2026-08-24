@@ -7,10 +7,12 @@ import { PluginApiHelper } from "./PluginApiHelper.ts";
 import { PluginMcpHelper } from "./PluginMcpHelper.ts";
 import type { AuthContext, PluginAppConfig, QuartalPluginContext } from "../model/index.ts";
 import { registerSkillRoutes } from "./skillRoutes.ts";
+import { registerAgentRoutes } from "../agents/agentRoutes.ts";
 import { registerPluginInfoRoutes } from "./pluginInfoRoutes.ts";
 import { registerDocsSpaRoutes } from "./docsSpaRoutes.ts";
 import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
+import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
 import {
   getOAuthContextFromKv,
@@ -88,6 +90,10 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
   registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
+  registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
+    pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
+    pluginServer: mcpServerDisplayName(helper.manifest!.name),
+  });
   registerPluginInfoRoutes(
     app as Hono,
     helper,

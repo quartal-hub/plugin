@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
         "/types.json": apiTarget,
         "/mcp-server.json": apiTarget,
         "/skills": apiTarget,
+        "/agents": apiTarget,
         "/readme.md": apiTarget,
         "/api": apiTarget,
         "/mcp": apiTarget,

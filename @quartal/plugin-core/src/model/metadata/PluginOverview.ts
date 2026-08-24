@@ -1,3 +1,4 @@
+import type { AgentColor } from "../agents/AgentColor.ts";
 import type { PromptArgument } from "../mcp/McpPrompt.ts";
 
 /** A tool parameter or return slot with a type reference resolvable via `links.types`. */
@@ -88,6 +89,22 @@ export interface PluginSkillSummary {
   metadata?: Record<string, unknown>;
   /** Number of files bundled with the skill. */
   fileCount: number;
+}
+
+/** Agent summary for the plugin overview (full definition via `links.agentsCatalog`). */
+export interface PluginAgentSummary {
+  /** Agent identifier (file stem under `agents/`). */
+  name: string;
+  /** What the agent is for and when a host should delegate to it. */
+  description: string;
+  /** Canonical `provider/model` id, or `inherit`; omitted when the agent names no model. */
+  model?: string;
+  /** Accent color resolved for Claude, Bootstrap and CSS hosts. */
+  color?: AgentColor;
+  /** Number of tools the agent is limited to; omitted when it may use everything the host offers. */
+  toolCount?: number;
+  /** Skills of this plugin the agent preloads. */
+  skills?: string[];
 }
 
 /** Widget summary linked to an MCP tool. */

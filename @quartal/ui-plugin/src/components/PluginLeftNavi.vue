@@ -41,6 +41,8 @@ function isSectionActive(section: string): boolean {
       return path.startsWith("/skills");
     case "widgets":
       return path.startsWith("/widgets");
+    case "agents":
+      return path.startsWith("/agents");
     case "prompts":
       return path.startsWith("/prompts");
     case "api":
@@ -153,14 +155,31 @@ function countEnabled(count: number): boolean {
         </div>
       </div>
 
-      <RouterLink
-        to="/resources"
-        class="list-group-item list-group-item-action text-truncate d-flex justify-content-between align-items-start"
-        :class="{ disabled: !countEnabled(plugin.resources.length), active: route.path === '/resources' }"
-      >
-        Resources
-        <span v-if="plugin.resources.length" class="badge bg-primary rounded-pill">{{ plugin.resources.length }}</span>
-      </RouterLink>
+      <div class="list-group-item p-0 border-0">
+        <button
+          type="button"
+          class="list-group-item list-group-item-action w-100 d-flex justify-content-between align-items-center"
+          :class="{ active: isSectionActive('agents') }"
+          :disabled="!countEnabled(plugin.agents?.length ?? 0)"
+          @click="toggleSection('agents')"
+        >
+          <span>Agents
+            <span v-if="plugin.agents?.length" class="badge bg-primary rounded-pill ms-1">{{ plugin.agents.length }}</span>
+          </span>
+          <i class="bi" :class="isSectionOpen('agents') ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </button>
+        <div v-show="isSectionOpen('agents') && plugin.agents?.length" class="list-group list-group-flush border-start ms-2">
+          <RouterLink
+            v-for="agent in plugin.agents ?? []"
+            :key="agent.name"
+            :to="{ name: 'agent', params: { agentName: agent.name } }"
+            class="list-group-item list-group-item-action py-0 ps-3 text-truncate"
+            :class="{ active: route.params.agentName === agent.name }"
+          >
+            {{ agent.name }}
+          </RouterLink>
+        </div>
+      </div>
 
       <div class="list-group-item p-0 border-0">
         <button
@@ -187,6 +206,15 @@ function countEnabled(count: number): boolean {
           </RouterLink>
         </div>
       </div>
+
+      <RouterLink
+        to="/resources"
+        class="list-group-item list-group-item-action text-truncate d-flex justify-content-between align-items-start"
+        :class="{ disabled: !countEnabled(plugin.resources.length), active: route.path === '/resources' }"
+      >
+        Resources
+        <span v-if="plugin.resources.length" class="badge bg-primary rounded-pill">{{ plugin.resources.length }}</span>
+      </RouterLink>
 
       <div class="list-group-item p-0 border-0">
         <button

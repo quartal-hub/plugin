@@ -10,13 +10,15 @@ const props = defineProps<{
   error?: string;
 }>();
 
+// Resources come last: they are not in use yet, so they never lead the row.
 const summaryCards = computed(() => [
   { label: "Tools", count: props.plugin.tools.length, to: "/tools", bg: "text-bg-primary" },
   { label: "Skills", count: props.plugin.skills.length, to: "/skills", bg: "text-bg-secondary" },
   { label: "Widgets", count: props.plugin.widgets.length, to: "/widgets", bg: "text-bg-danger" },
-  { label: "Resources", count: props.plugin.resources.length, to: "/resources", bg: "text-bg-info" },
+  { label: "Agents", count: props.plugin.agents?.length ?? 0, to: "/agents", bg: "text-bg-info" },
   { label: "Prompts", count: props.plugin.prompts.length, to: "/prompts", bg: "text-bg-dark" },
-]);
+  { label: "Resources", count: props.plugin.resources.length, to: "/resources", bg: "text-bg-success" },
+].filter((card) => card.count > 0));
 </script>
 
 <template>
@@ -38,24 +40,17 @@ const summaryCards = computed(() => [
     </div>
     <div v-if="error" class="alert alert-warning">{{ error }}</div>
     <div class="d-none d-md-flex flex-wrap">
-      <template v-for="card in summaryCards" :key="card.label">
-        <RouterLink
-          v-if="card.count"
-          :to="card.to"
-          class="card me-2 col-2 text-decoration-none"
-        >
-          <div class="card-body text-center" :class="card.bg">
-            <h5 class="card-title my-2 text-truncate">{{ card.label }}</h5>
-            <h1 class="card-title m-1 fw-bold">{{ card.count }}</h1>
-          </div>
-        </RouterLink>
-        <div v-else class="card me-2 col-2">
-          <div class="card-body text-center" :class="card.bg">
-            <h5 class="card-title my-2 text-truncate">{{ card.label }}</h5>
-            <h1 class="card-title m-1 fw-bold">{{ card.count }}</h1>
-          </div>
+      <RouterLink
+        v-for="card in summaryCards"
+        :key="card.label"
+        :to="card.to"
+        class="card me-2 col-2 text-decoration-none"
+      >
+        <div class="card-body text-center" :class="card.bg">
+          <h5 class="card-title my-2 text-truncate">{{ card.label }}</h5>
+          <h1 class="card-title m-1 fw-bold">{{ card.count }}</h1>
         </div>
-      </template>
+      </RouterLink>
     </div>
     <hr />
     <div>

@@ -1,4 +1,5 @@
 import type {
+  AgentDefinition,
   CodeArrayType,
   CodeFile,
   CodeOrSystemType,
@@ -8,6 +9,7 @@ import type {
   McpCatalogEntry,
   McpPromptDescriptor,
   McpToolDescriptor,
+  PluginAgentSummary,
   PluginInfo,
   PluginLinks,
   PluginPromptEntry,
@@ -18,6 +20,7 @@ import type {
   PluginWidgetEntry,
   WidgetCatalogEntry,
 } from "../model/index.ts";
+import { discoverAgents, type DiscoverAgentsOptions } from "../agents/discoverAgents.ts";
 import { discoverSkills } from "./skillDiscovery.ts";
 import { resolveHomepage } from "./pluginMetadata.ts";
 
@@ -40,6 +43,8 @@ export interface BuildPluginInfoInput {
   widgetCatalog: WidgetCatalogEntry[];
   /** Skill summaries discovered under `skills/`. */
   skills: PluginSkillSummary[];
+  /** Agent summaries discovered under `agents/`. */
+  agents: PluginAgentSummary[];
   /** REST base path (e.g. `/api`). */
   basePath: string;
   /** Default HTTP method for REST routes. */
@@ -164,12 +169,39 @@ export async function buildSkillSummaries(baseDir: string, pluginName: string): 
   }));
 }
 
+/** Summarizes a resolved agent for the plugin overview. */
+export function toAgentSummary(agent: AgentDefinition): PluginAgentSummary {
+  return {
+    name: agent.name,
+    description: agent.description,
+    ...(agent.model ? { model: agent.model.id ?? agent.model.value } : {}),
+    ...(agent.color ? { color: agent.color } : {}),
+    ...(agent.tools ? { toolCount: agent.tools.length } : {}),
+    ...(agent.skills ? { skills: agent.skills } : {}),
+  };
+}
+
+/** Discovers agents under `baseDir/agents/` and summarizes them for the overview.
+ * @param baseDir Plugin root directory.
+ * @param pluginName Plugin name (for the agents catalog manifest).
+ * @param options Plugin tools/skills the agents' references resolve against.
+ */
+export async function buildAgentSummaries(
+  baseDir: string,
+  pluginName: string,
+  options?: DiscoverAgentsOptions,
+): Promise<PluginAgentSummary[]> {
+  const catalog = await discoverAgents(baseDir, pluginName, options);
+  return catalog.agents.map(toAgentSummary);
+}
+
 function defaultLinks(): PluginLinks {
   return {
     openApi: "/open-api.json",
     types: "/types.json",
     mcpServer: "/mcp-server.json",
     skillsCatalog: "/skills/catalog.json",
+    agentsCatalog: "/agents/catalog.json",
     readme: "/readme.md",
     api: "/api",
     mcp: "/mcp",
@@ -201,6 +233,7 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
     tools,
     toolGroups: buildToolGroups(tools),
     skills: input.skills,
+    agents: input.agents,
     widgets: buildWidgets(input),
     resources: input.resources,
     prompts: buildPrompts(input.prompts),

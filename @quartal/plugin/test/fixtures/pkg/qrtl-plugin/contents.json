@@ -710,6 +710,53 @@
       "fileCount": 1
     }
   ],
+  "agents": [
+    {
+      "name": "flip-reporter",
+      "description": "Use this agent to settle a 50/50 decision and write it up: it flips a virtual coin and reports the outcome in a fixed format.",
+      "model": "openai/gpt-5.1",
+      "color": {
+        "value": "#4b0082",
+        "css": "#4b0082"
+      },
+      "toolCount": 2,
+      "skills": [
+        "coin-flipper",
+        "verification-seal"
+      ]
+    },
+    {
+      "name": "greeter",
+      "description": "Use this agent when someone should be greeted through the Test 1 plugin — it always produces greetings with the plugin's own hello tools instead of writing them itself.",
+      "model": "anthropic/claude-sonnet-5",
+      "color": {
+        "value": "purple",
+        "claude": "purple",
+        "bootstrap": "secondary",
+        "css": "#6f42c1"
+      },
+      "toolCount": 3,
+      "skills": [
+        "l33t-translator"
+      ]
+    },
+    {
+      "name": "math-tutor",
+      "description": "Use this agent for arithmetic walkthroughs — it solves each step with the plugin's calculator tools and explains what it did, without touching any files.",
+      "model": "anthropic/claude-opus-5",
+      "color": {
+        "value": "primary",
+        "claude": "blue",
+        "bootstrap": "primary",
+        "css": "#0d6efd"
+      },
+      "toolCount": 6,
+      "skills": [
+        "magic-multiplier",
+        "qrtl-glossary"
+      ]
+    }
+  ],
   "widgets": [],
   "resources": [],
   "prompts": [
@@ -754,6 +801,7 @@
     "types": "/types.json",
     "mcpServer": "/mcp-server.json",
     "skillsCatalog": "/skills/catalog.json",
+    "agentsCatalog": "/agents/catalog.json",
     "readme": "/readme.md",
     "api": "/api",
     "mcp": "/mcp"

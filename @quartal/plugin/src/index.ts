@@ -35,15 +35,37 @@ export { generateTools } from "./code/generateTools.ts";
 export type { GenerateToolsOptions } from "./code/generateTools.ts";
 export { buildToolsRegistrySource } from "./code/buildToolsRegistry.ts";
 export type { ToolsRegistryOptions } from "./code/buildToolsRegistry.ts";
-export { buildPluginInfo, buildSkillSummaries } from "./hono-app/buildPluginInfo.ts";
+export {
+  buildAgentSummaries,
+  buildPluginInfo,
+  buildSkillSummaries,
+  toAgentSummary,
+} from "./hono-app/buildPluginInfo.ts";
 export type { BuildPluginInfoInput } from "./hono-app/buildPluginInfo.ts";
 export { discoverSkills, isValidSkillName, parseSkillFrontmatter } from "./hono-app/skillDiscovery.ts";
+
+// Agents: discovery from `agents/`, normalization of the Claude agent format, and serving.
+export { AGENTS_DIR, discoverAgents } from "./agents/discoverAgents.ts";
+export type { DiscoverAgentsOptions } from "./agents/discoverAgents.ts";
+export { parseAgentFile } from "./agents/parseAgentFile.ts";
+export type { ParsedAgentFile } from "./agents/parseAgentFile.ts";
+export { isValidAgentName, resolveAgent } from "./agents/resolveAgent.ts";
+export type { ResolveAgentOptions, ResolvedAgent } from "./agents/resolveAgent.ts";
+export { isBootstrapColor, isClaudeColor, resolveAgentColor } from "./agents/resolveAgentColor.ts";
+export { CLAUDE_MODEL_ALIASES, DEFAULT_MODEL_PROVIDER, resolveAgentModel } from "./agents/resolveAgentModel.ts";
+export { ENVIRONMENT_TOOLS, resolveAgentToolRef, resolveAgentTools } from "./agents/resolveAgentTools.ts";
+export type { ResolveAgentToolsOptions } from "./agents/resolveAgentTools.ts";
+export { toAgentMarkdown } from "./agents/toAgentMarkdown.ts";
+export { registerAgentRoutes } from "./agents/agentRoutes.ts";
+export type { AgentRoutesOptions } from "./agents/agentRoutes.ts";
 export { qrtlCodegenPlugin } from "./vite/qrtlCodegenPlugin.ts";
 export type { QrtlCodegenPluginOptions, VitePluginLike } from "./vite/qrtlCodegenPlugin.ts";
 export { ZodBuilder } from "./code/ZodBuilder.ts";
 export type { FunctionZodDefinition, FunctionZodList, TypeZodMap } from "./code/ZodBuilder.ts";
 export type { FunctionWithResolvedTypes } from "./code/getFunctionsWithResolvedTypes.ts";
 export { Helpers } from "./helpers/Helpers.ts";
+export { parseFrontmatter } from "./helpers/parseFrontmatter.ts";
+export type { Frontmatter } from "./helpers/parseFrontmatter.ts";
 export { defineQrtlConfig } from "./model/QrtlConfig.ts";
 export type { QrtlConfig } from "./model/QrtlConfig.ts";
 
@@ -114,7 +136,22 @@ export { registerIconRoutes } from "./hono-app/iconRoutes.ts";
 export { getCachedIcon } from "./hono-app/iconCache.ts";
 
 export type {
+  AgentCatalogEntry,
+  AgentCatalogUrls,
+  AgentColor,
+  AgentDefinition,
+  AgentEffort,
+  AgentIsolation,
+  AgentMcpServer,
+  AgentModelRef,
+  AgentPermissionMode,
+  AgentsCatalog,
+  AgentsCatalogResponse,
+  AgentToolKind,
+  AgentToolRef,
   AuthContext,
+  BootstrapColor,
+  ClaudeColor,
   Avatar,
   CodeArrayType,
   CodeClass,
@@ -130,6 +167,7 @@ export type {
   McpPromptDescriptor,
   McpPromptsDocument,
   McpToolDescriptor,
+  PluginAgentSummary,
   PluginPromptEntry,
   PromptArgument,
   PromptMessage,

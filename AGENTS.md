@@ -4,7 +4,7 @@
 
 This is [`quartal-hub/plugin`](https://github.com/quartal-hub/plugin) — the **public, open-source
 (MIT) home of Quartal Plugins**: packaged business functionality for AI agents (Tools, Widgets,
-Agent Skills — Agents are on the roadmap), served over MCP, OpenAPI/REST and as agent skills.
+Agent Skills, Agents), served over MCP, OpenAPI/REST and as agent skills.
 The `quartal-hub` GitHub organization hosts only public repositories; private Quartal repositories
 live in `quartal-accounting`. Never commit secrets or internal references here.
 
@@ -57,14 +57,15 @@ Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private
 (title/style/auth/deploy/widgets), `package.json`, `src/tools/` (tool classes analyzed by the codegen
 plugin), `src/prompts/` (optional MCP prompt classes — same convention: each function takes one object
 parameter whose properties become the prompt arguments, returns a string or `{ messages }`),
-`src/pages/widgets/` (one page per tool, any framework), `skills/`, `public/`. The generated
+`src/pages/widgets/` (one page per tool, any framework), `skills/`, `agents/` (one `.md`/`.json`
+per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 `src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts`) is gitignored.
 
 ## Run a plugin locally
 
 - Any `@samples/*`: `cd samples/<name> && pnpm install && npm run dev` → `astro dev`.
   - `POST /api/<Class>/<method>`, docs SPA at `/`, `/plugin.json`, `/skills/catalog.json`, MCP at `/mcp`,
-    widgets at `/widgets/<toolId>`.
+    widgets at `/widgets/<toolId>`, agents at `/agents/catalog.json`.
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).
 - `@quartal/ui-plugin` Storybook: `pnpm --filter @quartal/ui-plugin storybook` (port 6007).
 - Refresh the vendored docs SPA after a `ui-plugin`/SPA change: `pnpm --filter @quartal/plugin-docs-web build`.
