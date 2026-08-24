@@ -71,6 +71,16 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 - Refresh the vendored docs SPA after a `ui-plugin`/SPA change: `pnpm --filter @quartal/plugin-docs-web build`.
 - For local MCP/widget testing we recommend [MCPJam](https://www.mcpjam.com/).
 
+## Deploy a plugin
+
+`deployment/` holds one script for every hosting target; nothing deploy-related lives in the
+plugins themselves. `pnpm deploy-plugin <target> <project>` (i.e. `node deployment/deploy.mjs`)
+stages the plugin as a standalone npm package under `.deploy/<target>/<project>/` (rewriting
+`workspace:*`, swapping in the target's Astro adapter) and hands it to the platform CLI. Targets:
+`railway` (works), `deno` (Deno Deploy), `cloudflare` (blocked — a Worker has no filesystem, and the
+runtime reads skills/agents/artifacts from disk). `--dry-run` prints every command without running
+it. Full docs: [deployment/README.md](./deployment/README.md).
+
 ## UI styling (Bootstrap skins)
 
 White-label products use Bootstrap-based **skins** (CSS from CDN). See `.cursor/rules/ui-styling.mdc`.

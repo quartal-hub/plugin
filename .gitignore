@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 .vite/
 
 .tmp
+
+# Deployment staging trees (deployment/deploy.mjs)
+.deploy/
