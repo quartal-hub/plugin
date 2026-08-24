@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import type { SkillEntry, SkillFileEntry, SkillFrontmatter, SkillsCatalog } from "@quartal/plugin-core";
 import { Helpers } from "../helpers/Helpers.ts";
+import { parseFrontmatter } from "../helpers/parseFrontmatter.ts";
 
 const SKILL_NAME_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
@@ -36,36 +37,46 @@ function guessMimeType(path: string): string {
   return MIME_BY_EXT[path.slice(dot).toLowerCase()] ?? "application/octet-stream";
 }
 
-/** Parses YAML frontmatter between leading `---` fences. */
+/**
+ * Parses the YAML frontmatter of a `SKILL.md`.
+ *
+ * Shares {@link parseFrontmatter} with agent files, so both primitives read the same dialect:
+ * real YAML, including the nested `metadata` map that the Agent Skills spec allows.
+ * @param content SKILL.md contents.
+ * @returns The skill metadata, or null when there is no frontmatter or it lacks name/description.
+ * @throws {Error} When the frontmatter is present but not valid YAML.
+ */
 export function parseSkillFrontmatter(content: string): SkillFrontmatter | null {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) return null;
+  const parsed = parseFrontmatter(content);
+  if (!parsed) return null;
 
-  const yaml = match[1];
-  const name = readYamlScalar(yaml, "name");
-  const description = readYamlScalar(yaml, "description");
+  const { fields } = parsed;
+  const name = asString(fields.name);
+  const description = asString(fields.description);
   if (!name || !description) return null;
 
-  const license = readYamlScalar(yaml, "license");
-  const compatibility = readYamlScalar(yaml, "compatibility");
+  const license = asString(fields.license);
+  const compatibility = asString(fields.compatibility);
+  const metadata = asRecord(fields.metadata);
 
   return {
     name,
     description,
     ...(license ? { license } : {}),
     ...(compatibility ? { compatibility } : {}),
+    ...(metadata ? { metadata } : {}),
   };
 }
 
-function readYamlScalar(yaml: string, key: string): string | undefined {
-  const re = new RegExp(`^${key}:\\s*(.+)$`, "m");
-  const m = yaml.match(re);
-  if (!m) return undefined;
-  let v = m[1].trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    v = v.slice(1, -1);
-  }
-  return v;
+function asString(value: unknown): string | undefined {
+  if (typeof value === "string") return value.trim() || undefined;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
 }
 
 /** Recursively yields absolute file paths under `dir` (files only). */
@@ -126,7 +137,14 @@ export async function discoverSkills(baseDir: string, pluginName: string): Promi
     const raw = await Helpers.readIfExists(skillMdPath);
     if (!raw) continue;
 
-    const fm = parseSkillFrontmatter(raw);
+    let fm: SkillFrontmatter | null;
+    try {
+      fm = parseSkillFrontmatter(raw);
+    } catch (e) {
+      // A YAML error carries the offending line and column — pass it through verbatim.
+      console.warn(`[skillDiscovery] ${dirName}: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
     if (!fm) {
       console.warn(`[skillDiscovery] ${dirName}: missing or invalid SKILL.md frontmatter`);
       continue;

@@ -75,6 +75,10 @@ You draft invoices. …
 | `isolation` | `worktree`, `none` | unchanged |
 | `color` | Claude color, Bootstrap theme color, or raw CSS | `AgentColor` with `claude`, `bootstrap` and `css` where derivable |
 
+Frontmatter is parsed with the `yaml` package — the same parser skills use for `SKILL.md` — so
+block scalars, nested maps, comments, quoting and escaping all behave as written, and a syntax
+slip is reported with its line and column instead of quietly producing the wrong value.
+
 Anything unusable — an unknown `effort`, a `stdio` MCP server, a skill this plugin does not ship —
 is dropped with a warning rather than failing the agent, so one bad line never takes an agent out
 of the catalog.

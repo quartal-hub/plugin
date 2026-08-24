@@ -49,8 +49,6 @@ export { AGENTS_DIR, discoverAgents } from "./agents/discoverAgents.ts";
 export type { DiscoverAgentsOptions } from "./agents/discoverAgents.ts";
 export { parseAgentFile } from "./agents/parseAgentFile.ts";
 export type { ParsedAgentFile } from "./agents/parseAgentFile.ts";
-export { parseYamlSubset } from "./agents/parseYamlSubset.ts";
-export type { YamlValue } from "./agents/parseYamlSubset.ts";
 export { isValidAgentName, resolveAgent } from "./agents/resolveAgent.ts";
 export type { ResolveAgentOptions, ResolvedAgent } from "./agents/resolveAgent.ts";
 export { isBootstrapColor, isClaudeColor, resolveAgentColor } from "./agents/resolveAgentColor.ts";
@@ -66,6 +64,8 @@ export { ZodBuilder } from "./code/ZodBuilder.ts";
 export type { FunctionZodDefinition, FunctionZodList, TypeZodMap } from "./code/ZodBuilder.ts";
 export type { FunctionWithResolvedTypes } from "./code/getFunctionsWithResolvedTypes.ts";
 export { Helpers } from "./helpers/Helpers.ts";
+export { parseFrontmatter } from "./helpers/parseFrontmatter.ts";
+export type { Frontmatter } from "./helpers/parseFrontmatter.ts";
 export { defineQrtlConfig } from "./model/QrtlConfig.ts";
 export type { QrtlConfig } from "./model/QrtlConfig.ts";
 

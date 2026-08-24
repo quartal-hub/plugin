@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import type { AgentDefinition, AgentsCatalog } from "../model/index.ts";
 import { Helpers } from "../helpers/Helpers.ts";
-import { parseAgentFile } from "./parseAgentFile.ts";
+import { parseAgentFile, type ParsedAgentFile } from "./parseAgentFile.ts";
 import { resolveAgent, type ResolveAgentOptions } from "./resolveAgent.ts";
 
 /** Directory (under the plugin root) agents are discovered from. */
@@ -68,9 +68,16 @@ export async function discoverAgents(
     const raw = await Helpers.readIfExists(join(agentsRoot, fileName));
     if (!raw) continue;
 
-    const parsed = parseAgentFile(raw, fileName);
+    let parsed: ParsedAgentFile | null;
+    try {
+      parsed = parseAgentFile(raw, fileName);
+    } catch (e) {
+      // Malformed YAML/JSON: the parser message names the line and column that broke.
+      warn(`${source}: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
     if (!parsed) {
-      warn(`${source}: not an agent file (missing frontmatter or invalid JSON)`);
+      warn(`${source}: not an agent file (no frontmatter block)`);
       continue;
     }
 

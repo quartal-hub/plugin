@@ -10,7 +10,7 @@ import {
   discoverAgents,
   getAnonApp,
   parseAgentFile,
-  parseYamlSubset,
+  parseFrontmatter,
   type PluginInfo,
   resolveAgent,
   resolveAgentColor,
@@ -33,9 +33,13 @@ function agentByName(agents: AgentDefinition[], name: string): AgentDefinition {
   return agent;
 }
 
-describe("parseYamlSubset", () => {
+describe("parseFrontmatter", () => {
+  function fields(...lines: string[]): Record<string, unknown> {
+    return parseFrontmatter(["---", ...lines, "---", "Body."].join("\n"))!.fields;
+  }
+
   it("reads scalars, flow lists, block lists and nested maps", () => {
-    const parsed = parseYamlSubset([
+    expect(fields(
       "name: greeter",
       "maxTurns: 12",
       "isolation: worktree",
@@ -49,9 +53,7 @@ describe("parseYamlSubset", () => {
       "  remote:",
       "    type: http",
       "    url: https://example.com/mcp",
-    ].join("\n"));
-
-    expect(parsed).toEqual({
+    )).toEqual({
       name: "greeter",
       maxTurns: 12,
       isolation: "worktree",
@@ -62,23 +64,67 @@ describe("parseYamlSubset", () => {
     });
   });
 
-  it("reads a list of maps and block scalars", () => {
-    const parsed = parseYamlSubset([
+  it("keeps nesting inside a list of maps", () => {
+    expect(fields(
       "servers:",
-      "  - name: first",
+      "  - name: remote",
       "    url: https://one.example.com/mcp",
+      "    headers:",
+      "      Authorization: Bearer x",
       "  - name: second",
       "    url: https://two.example.com/mcp",
-      "initialPrompt: |-",
-      "  line one",
-      "  line two",
-    ].join("\n"));
-
-    expect(parsed.servers).toEqual([
-      { name: "first", url: "https://one.example.com/mcp" },
+    ).servers).toEqual([
+      { name: "remote", url: "https://one.example.com/mcp", headers: { Authorization: "Bearer x" } },
       { name: "second", url: "https://two.example.com/mcp" },
     ]);
-    expect(parsed.initialPrompt).toBe("line one\nline two");
+  });
+
+  it("reads block scalars, including the indent-indicator form", () => {
+    expect(fields("initialPrompt: |-", "  line one", "  line two").initialPrompt).toBe("line one\nline two");
+    expect(fields("description: >-", "  folded over", "  two lines").description).toBe("folded over two lines");
+    expect(fields("prompt: |2", "   hello").prompt).toBe(" hello\n");
+  });
+
+  it("strips trailing comments and folds wrapped plain scalars", () => {
+    expect(fields("name: greeter # the greeter", "model: sonnet")).toEqual({ name: "greeter", model: "sonnet" });
+    expect(fields("description: wrapped over", "  two lines", "model: sonnet")).toEqual({
+      description: "wrapped over two lines",
+      model: "sonnet",
+    });
+  });
+
+  it("reads nested flow collections and keeps escapes literal", () => {
+    expect(fields("matrix: [[a, b], [c]]", "obj: {a: [1, 2]}")).toEqual({
+      matrix: [["a", "b"], ["c"]],
+      obj: { a: [1, 2] },
+    });
+    expect(fields(String.raw`path: "C:\\src\\plugin"`).path).toBe(String.raw`C:\src\plugin`);
+  });
+
+  it("distinguishes an empty value from an empty string", () => {
+    expect(fields("tools:", "model: sonnet")).toEqual({ tools: null, model: "sonnet" });
+  });
+
+  it("throws with a line and column on malformed frontmatter", () => {
+    // A missing colon no longer swallows the line: it names where the author slipped.
+    expect(() => fields("name: greeter", "tools Read, Write")).toThrow(/line 2, column 1/);
+    expect(() => fields('name: "greeter')).toThrow(/Missing closing .*at line \d+, column \d+/);
+  });
+
+  it("throws on duplicate keys instead of silently taking the last", () => {
+    expect(() => fields("model: sonnet", "model: opus")).toThrow(/unique/i);
+  });
+
+  it("rejects frontmatter that is not a mapping", () => {
+    expect(() => fields("just a bare scalar")).toThrow(/must be a mapping/);
+  });
+
+  it("returns null when there is no frontmatter block", () => {
+    expect(parseFrontmatter("Just a prompt.\n")).toBeNull();
+  });
+
+  it("treats an empty frontmatter block as no fields", () => {
+    expect(parseFrontmatter("---\n---\nBody.")).toEqual({ fields: {}, body: "Body." });
   });
 });
 
@@ -309,6 +355,43 @@ describe("toAgentMarkdown", () => {
     // The markdown export is the Claude interchange format, so a Bootstrap color is written as its
     // Claude equivalent — the only field the round-trip does not reproduce verbatim.
     expect(reparsed.agent).toEqual({ ...original, color: { ...original.color!, value: "blue" } });
+  });
+
+  it("survives a description with backslashes and colons", () => {
+    const description = String.raw`Use for C:\src\plugin: the Windows checkout.`;
+    const source = ["---", "name: path-agent", `description: ${JSON.stringify(description)}`, "---", "Body."]
+      .join("\n");
+    const first = resolveAgent(parseAgentFile(source, "path-agent.md")!, {
+      name: "path-agent",
+      source: "agents/path-agent.md",
+    }).agent!;
+    expect(first.description).toBe(description);
+
+    // Two more trips: escaping that is not lossless degrades a little further each time.
+    let current = first;
+    for (let i = 0; i < 2; i++) {
+      current = resolveAgent(parseAgentFile(toAgentMarkdown(current), "path-agent.md")!, {
+        name: "path-agent",
+        source: "agents/path-agent.md",
+      }).agent!;
+    }
+    expect(current).toEqual(first);
+  });
+
+  it("round-trips every agent of both sample plugins", async () => {
+    for (const dir of ["../../../samples/test1", "../../../samples/salaxy-anon"]) {
+      const root = fileURLToPath(new URL(`${dir}/`, import.meta.url));
+      const catalog = await discoverAgents(root, "@samples/sample", { onWarning: () => {} });
+      expect(catalog.agents.length).toBeGreaterThan(0);
+      for (const agent of catalog.agents) {
+        const reparsed = resolveAgent(parseAgentFile(toAgentMarkdown(agent), `${agent.name}.md`)!, {
+          name: agent.name,
+          source: agent.source,
+        }).agent;
+        // Color is written in its Claude notation, so `value` can differ; everything else is exact.
+        expect({ ...reparsed, color: undefined }).toEqual({ ...agent, color: undefined });
+      }
+    }
   });
 });
 

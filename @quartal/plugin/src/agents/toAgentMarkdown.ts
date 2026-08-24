@@ -1,19 +1,13 @@
+import { stringify } from "yaml";
+
 import type { AgentDefinition } from "../model/index.ts";
 
-/** Quotes a scalar when plain YAML would misread it. */
-function scalar(value: string): string {
-  const needsQuotes = value === "" ||
-    /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
-    /:\s|\s#|^\s|\s$/.test(value) ||
-    /^(true|false|null|~|-?\d+(\.\d+)?)$/i.test(value);
-  return needsQuotes ? `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"` : value;
-}
-
-/** Writes a possibly multi-line value as either a scalar or a `|-` block. */
-function multiline(key: string, value: string, indent = ""): string {
-  if (!value.includes("\n")) return `${indent}${key}: ${scalar(value)}\n`;
-  const body = value.split("\n").map((line) => `${indent}  ${line}`.trimEnd()).join("\n");
-  return `${indent}${key}: |-\n${body}\n`;
+/** One MCP server as it appears in the frontmatter (the name is the map key). */
+interface McpServerFields {
+  type: string;
+  url: string;
+  description?: string;
+  headers?: Record<string, string>;
 }
 
 /**
@@ -26,36 +20,33 @@ function multiline(key: string, value: string, indent = ""): string {
  * @param agent Resolved agent definition.
  */
 export function toAgentMarkdown(agent: AgentDefinition): string {
-  let out = "---\n";
-  out += `name: ${scalar(agent.name)}\n`;
-  out += multiline("description", agent.description);
-  if (agent.model) out += `model: ${scalar(agent.model.value)}\n`;
-  if (agent.tools?.length) out += `tools: ${agent.tools.map((t) => t.name).join(", ")}\n`;
-  if (agent.disallowedTools?.length) {
-    out += `disallowedTools: ${agent.disallowedTools.map((t) => t.name).join(", ")}\n`;
-  }
-  if (agent.skills?.length) out += `skills: [${agent.skills.map(scalar).join(", ")}]\n`;
-  if (agent.permissionMode) out += `permissionMode: ${agent.permissionMode}\n`;
-  if (agent.maxTurns !== undefined) out += `maxTurns: ${agent.maxTurns}\n`;
-  if (agent.effort) out += `effort: ${agent.effort}\n`;
-  if (agent.isolation && agent.isolation !== "none") out += `isolation: ${agent.isolation}\n`;
-  if (agent.color) out += `color: ${scalar(agent.color.claude ?? agent.color.value)}\n`;
-  if (agent.initialPrompt) out += multiline("initialPrompt", agent.initialPrompt);
+  // Key order is the authoring order documented in docs/agents.md; `yaml` keeps insertion order.
+  const fields: Record<string, unknown> = { name: agent.name, description: agent.description };
+  if (agent.model) fields.model = agent.model.value;
+  // Tool lists stay comma-separated strings: that is the Claude agent-format convention, and
+  // `resolveAgent` splits them back apart on the way in.
+  if (agent.tools?.length) fields.tools = agent.tools.map((t) => t.name).join(", ");
+  if (agent.disallowedTools?.length) fields.disallowedTools = agent.disallowedTools.map((t) => t.name).join(", ");
+  if (agent.skills?.length) fields.skills = agent.skills;
+  if (agent.permissionMode) fields.permissionMode = agent.permissionMode;
+  if (agent.maxTurns !== undefined) fields.maxTurns = agent.maxTurns;
+  if (agent.effort) fields.effort = agent.effort;
+  if (agent.isolation && agent.isolation !== "none") fields.isolation = agent.isolation;
+  if (agent.color) fields.color = agent.color.claude ?? agent.color.value;
+  if (agent.initialPrompt) fields.initialPrompt = agent.initialPrompt;
   if (agent.mcpServers?.length) {
-    out += "mcpServers:\n";
+    const servers: Record<string, McpServerFields> = {};
     for (const server of agent.mcpServers) {
-      out += `  ${scalar(server.name)}:\n`;
-      out += `    type: ${server.type}\n`;
-      out += `    url: ${scalar(server.url)}\n`;
-      if (server.description) out += multiline("description", server.description, "    ");
-      if (server.headers && Object.keys(server.headers).length > 0) {
-        out += "    headers:\n";
-        for (const [key, value] of Object.entries(server.headers)) {
-          out += `      ${scalar(key)}: ${scalar(value)}\n`;
-        }
-      }
+      servers[server.name] = {
+        type: server.type,
+        url: server.url,
+        ...(server.description ? { description: server.description } : {}),
+        ...(server.headers && Object.keys(server.headers).length > 0 ? { headers: server.headers } : {}),
+      };
     }
+    fields.mcpServers = servers;
   }
-  out += "---\n";
-  return agent.prompt ? `${out}\n${agent.prompt}\n` : out;
+
+  const frontmatter = stringify(fields, { lineWidth: 0 });
+  return agent.prompt ? `---\n${frontmatter}---\n\n${agent.prompt}\n` : `---\n${frontmatter}---\n`;
 }

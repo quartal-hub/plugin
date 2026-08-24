@@ -6,7 +6,6 @@ import type {
   AgentPermissionMode,
 } from "../model/index.ts";
 import type { ParsedAgentFile } from "./parseAgentFile.ts";
-import type { YamlValue } from "./parseYamlSubset.ts";
 import { resolveAgentColor } from "./resolveAgentColor.ts";
 import { resolveAgentModel } from "./resolveAgentModel.ts";
 import { resolveAgentTools, type ResolveAgentToolsOptions } from "./resolveAgentTools.ts";
@@ -50,14 +49,14 @@ export function isValidAgentName(name: string): boolean {
   return AGENT_NAME_RE.test(name);
 }
 
-function asString(value: YamlValue | undefined): string | undefined {
+function asString(value: unknown): string | undefined {
   if (typeof value === "string") return value.trim() || undefined;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   return undefined;
 }
 
 /** Reads a list field written either as a YAML sequence or as a comma/space separated string. */
-function asStringList(value: YamlValue | undefined): string[] {
+function asStringList(value: unknown): string[] {
   if (value === undefined || value === null) return [];
   if (Array.isArray(value)) return value.map((v) => asString(v) ?? "").filter(Boolean);
   const text = asString(value);
@@ -65,21 +64,21 @@ function asStringList(value: YamlValue | undefined): string[] {
   return text.split(/[,\s]+/).map((v) => v.trim()).filter(Boolean);
 }
 
-function asPositiveInteger(value: YamlValue | undefined): number | undefined {
+function asPositiveInteger(value: unknown): number | undefined {
   const num = typeof value === "number" ? value : Number(asString(value));
   return Number.isInteger(num) && num > 0 ? num : undefined;
 }
 
-function asEnum<T extends string>(value: YamlValue | undefined, allowed: T[]): T | undefined {
+function asEnum<T extends string>(value: unknown, allowed: T[]): T | undefined {
   const text = asString(value);
   if (!text) return undefined;
   return allowed.find((a) => a.toLowerCase() === text.toLowerCase());
 }
 
 /** Reads `mcpServers` as either a list of definitions or a name-keyed map (the Claude shape). */
-function resolveMcpServers(value: YamlValue | undefined, warnings: string[]): AgentMcpServer[] {
+function resolveMcpServers(value: unknown, warnings: string[]): AgentMcpServer[] {
   if (!value || typeof value !== "object") return [];
-  const raw: Array<[string | undefined, YamlValue]> = Array.isArray(value)
+  const raw: Array<[string | undefined, unknown]> = Array.isArray(value)
     ? value.map((v) => [undefined, v])
     : Object.entries(value);
 
@@ -89,7 +88,7 @@ function resolveMcpServers(value: YamlValue | undefined, warnings: string[]): Ag
       warnings.push(`mcpServers: entry "${key ?? "?"}" is not a server definition`);
       continue;
     }
-    const fields = entry as Record<string, YamlValue>;
+    const fields = entry as Record<string, unknown>;
     const name = asString(fields.name) ?? key;
     const url = asString(fields.url);
     const type = (asString(fields.type) ?? "http").toLowerCase();
@@ -130,7 +129,7 @@ function isRemoteHttpUrl(url: string): boolean {
   return parsed.protocol === "http:" && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
 }
 
-function asHeaders(value: YamlValue | undefined): Record<string, string> | undefined {
+function asHeaders(value: unknown): Record<string, string> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const headers: Record<string, string> = {};
   for (const [key, item] of Object.entries(value)) {
