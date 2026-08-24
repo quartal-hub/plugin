@@ -8,6 +8,8 @@ export interface PluginLinks {
   mcpServer: string;
   /** URL path to the skills catalog. */
   skillsCatalog: string;
+  /** URL path to the agents catalog. */
+  agentsCatalog: string;
   /** URL path to the plugin readme. */
   readme: string;
   /** URL path to the API docs SPA. */

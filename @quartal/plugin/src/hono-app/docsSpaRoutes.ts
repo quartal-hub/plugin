@@ -47,4 +47,9 @@ export function registerDocsSpaRoutes(app: Hono, options?: DocsSpaRouteOptions):
     const dest = skill ? `/#/skills/${encodeURIComponent(skill)}` : "/#/skills";
     return c.redirect(dest, 302);
   });
+  app.get("/agents.html", (c) => {
+    const agent = new URL(c.req.url).searchParams.get("agent");
+    const dest = agent ? `/#/agents/${encodeURIComponent(agent)}` : "/#/agents";
+    return c.redirect(dest, 302);
+  });
 }

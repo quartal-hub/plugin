@@ -1,4 +1,10 @@
-import type { CodeType, McpServerInfo, PluginInfo, SkillsCatalogResponse } from "../model/index.ts";
+import type {
+  AgentsCatalogResponse,
+  CodeType,
+  McpServerInfo,
+  PluginInfo,
+  SkillsCatalogResponse,
+} from "../model/index.ts";
 
 /** Options for {@link PluginClient}. */
 export interface PluginClientOptions {
@@ -65,6 +71,11 @@ export class PluginClient {
   /** Fetches `GET /skills/catalog.json`. */
   getSkillsCatalog(): Promise<SkillsCatalogResponse> {
     return this.#fetchJson<SkillsCatalogResponse>("/skills/catalog.json");
+  }
+
+  /** Fetches `GET /agents/catalog.json`. */
+  getAgentsCatalog(): Promise<AgentsCatalogResponse> {
+    return this.#fetchJson<AgentsCatalogResponse>("/agents/catalog.json");
   }
 
   /** Fetches `GET /types.json`. */

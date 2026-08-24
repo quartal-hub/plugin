@@ -6,7 +6,8 @@ import type { WidgetCatalogEntry } from "../model/index.ts";
 import { buildPluginArtifacts, writePluginArtifacts, writeJsonToFile } from "./buildPluginArtifacts.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { buildToolsRegistrySource } from "./buildToolsRegistry.ts";
-import { buildPluginInfo, buildSkillSummaries } from "../hono-app/buildPluginInfo.ts";
+import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "../hono-app/buildPluginInfo.ts";
+import { mcpServerDisplayName } from "../hono-app/pluginMetadata.ts";
 
 /**
  * Options for generating the `qrtl-plugin/` artifacts.
@@ -104,6 +105,11 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   const basePath = options?.basePath ?? "/api";
   const defaultMethod = options?.defaultMethod ?? "post";
   const skills = await buildSkillSummaries(cwd, manifest.name);
+  const agents = await buildAgentSummaries(cwd, manifest.name, {
+    pluginTools: artifacts.mcpTools.map((t) => t.id),
+    pluginServer: mcpServerDisplayName(manifest.name),
+    pluginSkills: skills.map((s) => s.name),
+  });
   const hasReadme = !!(await Helpers.readIfExists(join(cwd, "README.md")));
   const contents = buildPluginInfo({
     manifest,
@@ -113,6 +119,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     prompts: artifacts.mcpPrompts,
     widgetCatalog: widgets,
     skills,
+    agents,
     basePath,
     defaultMethod,
     hasReadme,

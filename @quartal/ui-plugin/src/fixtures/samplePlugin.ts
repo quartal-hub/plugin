@@ -92,6 +92,16 @@ export const samplePlugin: PluginInfo = {
     { name: "coin-flipper", description: "Flip a coin.", fileCount: 1 },
     { name: "letterhead-stamp", description: "Stamp letterhead.", fileCount: 2 },
   ],
+  agents: [
+    {
+      name: "hello-agent",
+      description: "Greets people using the plugin's own tools.",
+      model: "anthropic/claude-sonnet-5",
+      color: { value: "purple", claude: "purple", bootstrap: "secondary", css: "#6f42c1" },
+      toolCount: 2,
+      skills: ["coin-flipper"],
+    },
+  ],
   widgets: [
     {
       name: "CalculatorWidget",
@@ -108,6 +118,7 @@ export const samplePlugin: PluginInfo = {
     types: "/types.json",
     mcpServer: "/mcp-server.json",
     skillsCatalog: "/skills/catalog.json",
+    agentsCatalog: "/agents/catalog.json",
     readme: "/readme.md",
     api: "/api",
     mcp: "/mcp",

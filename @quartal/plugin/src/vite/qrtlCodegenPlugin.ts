@@ -42,7 +42,7 @@ export interface ViteDevServerLike {
 export interface QrtlCodegenPluginOptions extends GenerateToolsOptions {
   /**
    * Directories (relative to `cwd`) whose changes re-run codegen in dev. Default:
-   * `["src/tools", "src/prompts", "skills"]`.
+   * `["src/tools", "src/prompts", "skills", "agents"]`.
    */
   watchDirs?: string[];
 }
@@ -56,7 +56,7 @@ export interface QrtlCodegenPluginOptions extends GenerateToolsOptions {
  */
 export function qrtlCodegenPlugin(options?: QrtlCodegenPluginOptions): VitePluginLike {
   const cwd = options?.cwd ?? process.cwd();
-  const watchDirs = (options?.watchDirs ?? ["src/tools", "src/prompts", "skills"]).map((d) => resolve(cwd, d));
+  const watchDirs = (options?.watchDirs ?? ["src/tools", "src/prompts", "skills", "agents"]).map((d) => resolve(cwd, d));
 
   const run = () => generateTools(options);
 

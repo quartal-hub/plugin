@@ -21,7 +21,12 @@ class Calculator {
 
 describe("isServerPath", () => {
   it("matches Hono server routes", () => {
-    for (const p of ["/", "/api/Calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/icons/0", "/plugin.json", "/assets/x.js", "/widget-assets/_astro/x.js", "/.well-known/oauth-protected-resource"]) {
+    const paths = [
+      "/", "/api/Calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
+      "/agents/greeter.md", "/icons/0", "/plugin.json", "/assets/x.js", "/widget-assets/_astro/x.js",
+      "/.well-known/oauth-protected-resource",
+    ];
+    for (const p of paths) {
       expect(isServerPath(p), p).toBe(true);
     }
   });

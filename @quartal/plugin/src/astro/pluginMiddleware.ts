@@ -15,7 +15,16 @@ export type MiddlewareOnRequest = (
 ) => Promise<Response>;
 
 /** Server-route prefixes handled by the Hono app (delegated); everything else falls through to Astro. */
-const SERVER_PREFIXES = ["/api", "/mcp", "/skills", "/icons", "/assets", "/widget-assets", "/.well-known"];
+const SERVER_PREFIXES = [
+  "/api",
+  "/mcp",
+  "/skills",
+  "/agents",
+  "/icons",
+  "/assets",
+  "/widget-assets",
+  "/.well-known",
+];
 
 /** Exact server paths handled by the Hono app (docs SPA shell, generated docs, legacy redirects). */
 const SERVER_EXACT = new Set([
@@ -30,10 +39,11 @@ const SERVER_EXACT = new Set([
   "/swagger.html",
   "/docs.html",
   "/skills.html",
+  "/agents.html",
 ]);
 
 /**
- * Whether a request path is served by the Hono app (REST/MCP/skills/icons/docs-SPA/…)
+ * Whether a request path is served by the Hono app (REST/MCP/skills/agents/icons/docs-SPA/…)
  * rather than by an Astro page. Astro keeps everything else — widget pages (`/widgets/*`), its own
  * assets (`/_astro/*`, `/_image`), user pages, etc.
  * @param pathname URL pathname.

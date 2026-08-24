@@ -2,6 +2,7 @@ import type { PluginLinks } from "./PluginLinks.ts";
 import type { PluginManifest } from "./PluginManifest.ts";
 import type { McpCatalogEntry } from "../mcp/McpCatalog.ts";
 import type {
+  PluginAgentSummary,
   PluginPromptEntry,
   PluginSkillSummary,
   PluginToolEntry,
@@ -21,6 +22,8 @@ export interface PluginInfo extends PluginManifest {
   toolGroups: PluginToolGroup[];
   /** Agent skills shipped with the plugin (details via {@link PluginLinks.skillsCatalog}). */
   skills: PluginSkillSummary[];
+  /** Agents shipped with the plugin (details via {@link PluginLinks.agentsCatalog}). */
+  agents: PluginAgentSummary[];
   /** MCP widget UIs registered for tools. */
   widgets: PluginWidgetEntry[];
   /** MCP resources exposed by this plugin (currently often empty). */

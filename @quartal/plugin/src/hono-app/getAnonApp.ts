@@ -5,15 +5,17 @@ import { PluginApiHelper } from "./PluginApiHelper.ts";
 import { PluginMcpHelper } from "./PluginMcpHelper.ts";
 import type { PluginAppConfig } from "../model/index.ts";
 import { registerSkillRoutes } from "./skillRoutes.ts";
+import { registerAgentRoutes } from "../agents/agentRoutes.ts";
 import { registerPluginInfoRoutes } from "./pluginInfoRoutes.ts";
 import { registerDocsSpaRoutes } from "./docsSpaRoutes.ts";
 import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
+import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
 
 /**
  * Returns a Hono app with all standard routes mounted, anonymous (no auth): REST API + OpenAPI,
- * docs SPA, skills, plugin info, MCP, icons, and the public-folder catch-all.
+ * docs SPA, skills, agents, plugin info, MCP, icons, and the public-folder catch-all.
  *
  * Widget MCP resources are discovered from `src/pages/widgets/` at startup (or supplied via
  * `config.widgetResources`) and served live on `resources/read`.
@@ -28,6 +30,10 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
 
   registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
+  registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
+    pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
+    pluginServer: mcpServerDisplayName(helper.manifest!.name),
+  });
   registerPluginInfoRoutes(
     app as Hono,
     helper,

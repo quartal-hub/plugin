@@ -9,10 +9,10 @@ import { buildOpenApiTags } from "../code/buildOpenApiTags.ts";
 import { loadCodeFiles } from "../code/loadCodeFiles.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
-import { buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
+import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
-import { buildOpenApiInfo } from "./pluginMetadata.ts";
+import { buildOpenApiInfo, mcpServerDisplayName } from "./pluginMetadata.ts";
 import type {
   AuthContext,
   CodeFile,
@@ -121,14 +121,21 @@ export class PluginApiHelper {
       return base;
     }
     const catalog = this.getMcpCatalog();
+    const mcpTools = this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+    const skills = await buildSkillSummaries(this.baseDir, this.manifest!.name);
     return buildPluginInfo({
       manifest: this.manifest!,
       codeFiles: this.codeFiles,
-      mcpTools: this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles),
+      mcpTools,
       resources: catalog.resources,
       prompts: this.mcpPrompts,
       widgetCatalog: this.widgetEntries,
-      skills: await buildSkillSummaries(this.baseDir, this.manifest!.name),
+      skills,
+      agents: await buildAgentSummaries(this.baseDir, this.manifest!.name, {
+        pluginTools: mcpTools.map((t) => t.id),
+        pluginServer: mcpServerDisplayName(this.manifest!.name),
+        pluginSkills: skills.map((s) => s.name),
+      }),
       basePath: this.basePath,
       defaultMethod: this.defaultMethod,
       hasReadme: !!this.readmeContent && this.readmeContent !== "No README.md found in the plugin.",
