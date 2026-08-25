@@ -8,8 +8,8 @@ import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/cli
 import { PluginApiHelper, PluginMcpHelper } from "../src/index.ts";
 import type { PluginAppConfig } from "../src/index.ts";
 
-// End-to-end MCP test: serve the ported Hono app (API + MCP) via @hono/node-server under Node and
-// drive it with the real MCP SDK client — the same shape as the original Deno test, no Deno.
+// End-to-end MCP test: serve the Hono app (API + MCP) via @hono/node-server and drive it with the
+// real MCP SDK client.
 
 const test1Dir = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
 

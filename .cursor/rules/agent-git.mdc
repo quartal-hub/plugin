@@ -8,5 +8,5 @@ alwaysApply: true
 - Do not merge locally. Open a PR with `gh pr create` when work is done.
 - Run `pnpm install && pnpm run build && pnpm run test` before pushing.
 - Do not commit secrets, `.env` files, or credentials — this is a **public** repository.
-- Do not publish to npm/JSR or deploy anywhere unless explicitly asked.
+- Do not publish to npm or deploy anywhere unless explicitly asked.
 - Do not force-push, hard-reset, or rewrite history unless explicitly asked.

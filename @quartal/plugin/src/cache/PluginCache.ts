@@ -1,12 +1,12 @@
 /**
- * Pluggable key-value cache — the Node/edge replacement for the former Deno KV singleton.
+ * Pluggable key-value cache for Node and edge runtimes.
  *
  * The default {@link MemoryCache} is per-process (values do not survive a restart), which is fine
  * for edge/serverless where each instance re-verifies on demand. Durable/shared backends
- * (Cloudflare KV, Redis, Deno KV, …) can be injected with {@link setPluginCache}.
+ * (Cloudflare KV, Redis, …) can be injected with {@link setPluginCache}.
  */
 
-/** A structured cache key (array of path segments), mirroring Deno KV's key shape. */
+/** A structured cache key: an array of path segments. */
 export type CacheKey = readonly (string | number)[];
 
 /** Minimal cache contract used by the framework (auth-context cache, icon cache, plugin caches). */

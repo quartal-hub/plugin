@@ -17,8 +17,8 @@ export type PrhCodeLang = "fi" | "sv" | "en";
 
 /**
  * Returns a `code → description` map for one PRH code set in one language. Cached
- * for 90 days in Deno KV; first miss takes ~1 PRH call, every subsequent call across
- * the whole process (and process restarts) is a memory + KV hit.
+ * for 90 days in the plugin cache; first miss takes ~1 PRH call, every subsequent call
+ * across the whole process (and process restarts) is a memory + cache hit.
  *
  * Used internally by the tool classes to enrich opaque codes (e.g. KREK
  * `entryCodes` = `["NIMP", "TILTAR"]` → "Toiminimen muutos" / "Tilinpäätös, tarkennus")

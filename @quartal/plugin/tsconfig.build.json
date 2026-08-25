@@ -9,7 +9,7 @@
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    // Sources keep Deno-style explicit `.ts` import extensions; TS 5.7+ rewrites them to `.js` on emit.
+    // Sources use explicit `.ts` import extensions; TS 5.7+ rewrites them to `.js` on emit.
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     "strict": true,

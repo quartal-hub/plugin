@@ -50,7 +50,7 @@ export interface GenerateToolsOptions {
  * - tools.registry.ts (static tool-module import map for runtime execution)
  * - prompts.registry.ts (static prompt-module import map; empty when the plugin has no prompts)
  *
- * Pure Node (no Deno). Type introspection is done with the TypeScript compiler via ts-morph — see
+ * Type introspection is done with the TypeScript compiler via ts-morph — see
  * {@link TsMorphAnalyzer}.
  * @param options Generation options (plugin root, entry module, output directory, widgets, etc.).
  */

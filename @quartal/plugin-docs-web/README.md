@@ -1,8 +1,8 @@
 # @quartal/plugin-docs-web
 
-The Vue SPA for Quartal plugin documentation (API / MCP / Skills / Widgets overview). A pnpm workspace
-package. Its `build` **builds and vendors** the SPA into `@quartal/plugin/static/plugin-docs-web`, which the
-hub serves from the plugin's `/` route (from the generated `contents.json`). Node only — no Deno.
+The Vue SPA for Quartal plugin documentation (API / MCP / Skills / Widgets overview). 
+Its `build` **builds and vendors** the SPA into `@quartal/plugin/static/plugin-docs-web`, which the
+hub serves from the plugin's `/` route (from the generated `contents.json`).
 
 ## Propagation chain
 
