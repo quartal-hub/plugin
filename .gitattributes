@@ -1,0 +1,27 @@
+# Line endings.
+#
+# No repo-wide normalization on purpose: flipping every file would rewrite the
+# working tree for existing clones. Only the paths below are pinned, because
+# their content is compared byte-for-byte and CRLF breaks them.
+#
+# These use explicit `text` rather than `text=auto`: with `auto`, git declined to
+# normalize CRLF on checkin here, so the churn survived. Patterns are scoped by
+# extension instead of by directory so a binary asset dropped into one of these
+# trees later is not mangled.
+
+# Read as raw text and asserted verbatim -- agents.test.ts checks that a served
+# agent starts with "---\nname: greeter\n", which a CRLF checkout fails.
+@quartal/plugin/test/fixtures/**/*.md   text eol=lf
+@quartal/plugin/test/fixtures/**/*.ts   text eol=lf
+@quartal/plugin/test/fixtures/**/*.json text eol=lf
+@quartal/plugin/test/fixtures/**/*.txt  text eol=lf
+
+# Committed build output, vendored in from the plugin-docs-web build. The source
+# index.html is pinned too because it is vite's input: with a CRLF input, vite
+# emits CRLF and leaves a stray CR at its script-injection point, so every
+# Windows build produced a diff against identical content.
+@quartal/plugin-docs-web/index.html     text eol=lf
+@quartal/plugin/static/**/*.html        text eol=lf
+@quartal/plugin/static/**/*.js          text eol=lf
+@quartal/plugin/static/**/*.css         text eol=lf
+@quartal/plugin/static/**/*.json        text eol=lf

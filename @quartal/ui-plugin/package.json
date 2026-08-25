@@ -25,16 +25,15 @@
     "typecheck": "vue-tsc --noEmit",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build -o dist-storybook",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.7.5",
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "vue": "^3.5.0",
-    "vue-router": "^4.6.4"
+    "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "peerDependencies": {
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@quartal/plugin-core": "workspace:*",
@@ -46,6 +45,17 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
     "vite-plugin-dts": "^4.5.0",
+    "vue": "^3.5.0",
+    "vue-router": "^4.6.4",
     "vue-tsc": "^2.2.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "@quartal/ui-plugin"
   }
 }
