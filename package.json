@@ -16,7 +16,8 @@
     "lint:fix": "eslint . --fix",
     "changeset": "changeset",
     "version:packages": "changeset version && pnpm install --lockfile-only",
-    "release": "pnpm run build && changeset publish"
+    "release": "pnpm run build && changeset publish",
+    "local-git-clean-up": "node scripts/local-git-clean-up.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
