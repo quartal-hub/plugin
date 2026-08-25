@@ -31,9 +31,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # Gates. npm versions are immutable, so a bad publish is permanent.
+      #
+      # build runs before typecheck and test on purpose: plugin-core exposes its
+      # types via dist/mod.d.ts, so on a clean checkout every package importing
+      # @quartal/plugin-core fails to resolve it until dist/ exists.
       - run: pnpm run lint
-      - run: pnpm run typecheck
       - run: pnpm run build
+      - run: pnpm run typecheck
       - run: pnpm run test
 
       - uses: changesets/action@v1
