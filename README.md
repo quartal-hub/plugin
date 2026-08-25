@@ -4,7 +4,7 @@
   Regenerate with: pnpm export:plugin-readme (in the docs repository root)
 -->
 
-<img src="docs/img/quartal-plugins.png" style="margin-left: -14px" alt="Quartal Plugins">
+<img src="docs/img/quartal-plugin-cropped.png" alt="Quartal Plugins">
 
 Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
 
@@ -13,7 +13,7 @@ The basic idea is that you can create a Quartal **Plugins** package once contain
 
 > [!NOTE]
 > **Under construction**
-> We are currently pushing Quartal **Plugins** to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version.
+> We are currently pushing Quartal **Plugins** to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version and we do not guarantee that all of these features make the final cut.
 
 ## Getting Started
 Requirements:
@@ -114,7 +114,7 @@ You can easily add custom user interface to interact with any of your tools. Thi
 
 [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) standard is supported by the state-of-the-art chatbots, namely Anthropic Claude, OpenAI ChatGPT and M365 Copilot as well as Quartal **Hub** and Quartal **Messages** / Quartal **Harness** embeddable user interfaces. Other chat clients not supporting Widgets fall back to rendering UI by the AI model.
 
-Quartal **Plugins** is based an Astro so you can use basically any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/). See our `quartal-hub/plugin-template` repository for an example in Vue: Creating a widget is as easy as creating a Vue page in Vue / Astro project. We will be providing more examples in other frameworks later.
+Quartal **Plugins** is based an Astro so you can use basically any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/). See our [Plugin template repository](https://github.com/quartal-hub/plugin-template) for an example in Vue: Creating a widget is as easy as creating a Vue page in Vue / Astro project. We will be providing more examples in other frameworks later.
 
 ## Everything the AI Agents need in one package
 For example, if you create a plugin for integrating with an invoicing SaaS software that you provide, you might build:
@@ -128,12 +128,14 @@ For example, if you create a plugin for integrating with an invoicing SaaS softw
 - Couple of **Agents**
 	- One that creates an invoice based on text or voice input in **interactive chat**
 	- Another as an **autonomous agent** that monitors invoices and sends a report for those that have not been paid by the due date
+- A **prompt** that asks the user in interactive chat the minimum questions for creating a new invoice instead of user writing the initial text without any guidance.
 
 We make creating these artifacts very easy:
 - A **Tool** is just a **TypeScript function**, we will automatically create **Model Context Protocol Service (MCP)** and wire the function as an **MCP Tool**
 - A **Widget** is just an Single Page Application with your favourite framework: **Vue, React, Svelte** etc.
 - An **Agent** is just a markdown or JSON file.
 - A **Skill** is just a folder with markdown files with other assets.
+- A **prompt** is a very simple TypeScript function where all input parameters are just text returning the instruction text to the agent.
 
 Basically all AI agents now consume MCP Tools, so that is all good, but support for MCP Apps widgets is still limited and even with skills, you have an issue that there is no consistent way of updating them as you make changes and fixes.
 
@@ -182,26 +184,13 @@ We make it as easy as possible to provide a set of business functionality in one
     - Provide user interfaces to interactive chat agents like Claude or Chat GPT
     - We will probably provide a way to use them from React and Vue etc. apps as well
 - **Agent Skills** that guide AI agents on how to use these tools and other business logic
+- **Agents** as defined by [Claude plugins](https://code.claude.com/docs/en/plugins-reference#agents).
+	- Currently supported for Claude and our internal Quartal **Hub** product only
+	- We try to add support for other platforms later (PRs are welcome)
+- **Prompts** as defined in MCP
 
 We create extensive documentation pages for all the above services. As part of that process, we also serve all the files and folders in the `/public` folder the same way as public folder is shown in Vue apps.
-## Getting Started
-Requirements:
-- Node, version 20+
-- We recommend using [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets
-
-With PNPM:
-```bash
-pnpm create @quartal/plugin
-```
-
-With NPM:
-```bash
-npm create @quartal/plugin
-```
-
-Alternatively, you may also just fork the template repository in [https://github.com/quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template)
-
-Once you have run the template / starter-kit, follow the instructions in the `README.md` or use your favourite development agent to modify your project.
-
 ## Contributing
-As we are still publishing the first v01 version, we do not accept any PRs or feedback at this time. This will change as we get the first version up-and-running. Check back in September - October 2026 timeline or you can already look at the [Contributing guideline](./CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/quartal-hub/plugin/blob/main/CONTRIBUTING.md) for instructions if you wish to contribute to our project.
+
+As we are early in the release cycle we only take issues and bug reports from partners that work directly with us. We expect this to change by the end of 2026.
