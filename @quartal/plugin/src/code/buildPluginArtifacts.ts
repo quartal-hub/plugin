@@ -64,7 +64,7 @@ export function buildPluginArtifacts(
   return { files: codeFiles, openApi, mcpTools, mcpPrompts, mcpCatalog, types };
 }
 
-/** Writes pretty-printed JSON (matches `deno fmt`: 2-space indent + trailing newline).
+/** Writes pretty-printed JSON: 2-space indent + trailing newline.
  * @param path Output file path.
  * @param value JSON-serializable value to write.
  */

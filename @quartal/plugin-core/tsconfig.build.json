@@ -7,8 +7,8 @@
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    // Source uses Deno-style explicit `.ts` import extensions. TS 5.7+ rewrites those to `.js`
-    // in the emitted JS + declarations, so the same sources publish cleanly to npm.
+    // Sources use explicit `.ts` import extensions; TS 5.7+ rewrites them to `.js` in the
+    // emitted JS and declarations.
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     "strict": true,

@@ -2,7 +2,10 @@
 
 Vue components for visualizing Quartal plugin artifacts — tools, skills, and plugin metadata. Intended for agent-configuration UIs where users pick services, tools, and skills.
 
-Standalone npm project (own lockfile). Will move to the quartal-salaxy monorepo later.
+This library is mainly used by `plugin-docs-web` Single-Page Application that is embedded into `@quartal/plugin` package.
+It is currently not yet designed to be used completely independently, though there should be no technical problem if you need to.
+
+We may later use these component as part of Quartal Hub product at which point, the library may be upgraded as more generic library.
 
 ## Styling
 
@@ -47,24 +50,6 @@ import { McpToolTester } from "@quartal/ui-plugin";
 
 ```bash
 cd @quartal/ui-plugin
-npm install
-npm run storybook
+pnpm install
+pnpm dev
 ```
-
-## Build
-
-```bash
-npm run build
-```
-
-## npm publish
-
-Run from `@quartal/plugin-core` first if publishing both packages:
-
-```bash
-cd ../plugin-core && npm run build
-cd ../ui-plugin && npm run build
-# npm publish when ready
-```
-
-During local development, `@quartal/plugin-core` is resolved via Vite alias to the Deno workspace source.

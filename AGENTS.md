@@ -19,7 +19,7 @@ from this repo.
 > `README.md` is a **generated file** (exported from the quartal docs repository) and describes the
 > product's target state — some described features may not exist yet. Do not edit it directly.
 
-**pnpm workspace** (Node 20+, no Deno). A Quartal Plugin is an **Astro project** that adds the
+**pnpm workspace** (Node 22+). A Quartal Plugin is an **Astro project** that adds the
 `qrtlPlugin()` integration. Install with `pnpm install` at the root.
 
 - No custom registry needed — everything installs from npm. Tool type-introspection uses the

@@ -26,9 +26,8 @@ type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
  * logical tree of {@link CodeFile}, {@link CodeClass}, and {@link CodeType} with all the information
  * needed to build Zod schemas, OpenAPI, MCP, RPC, and HTML documentation.
  *
- * Replaces the former `@deno/doc` (WASM) + `CodeAnalyzer` (deno-doc "V2" JSON) pipeline: the TS type
- * checker resolves the import graph natively, so there is no custom registry/WASM and no JSR dependency.
- * The emitted `CodeFile[]` model is unchanged, so every downstream builder is untouched.
+ * The TypeScript type checker resolves the import graph natively, so no custom module registry is
+ * needed.
  */
 export class TsMorphAnalyzer {
   /** Types collected from the transitive closure of imported (non-`tools/`) modules, keyed by name. */
@@ -48,7 +47,7 @@ export class TsMorphAnalyzer {
       ...(tsConfigFilePath ? { tsConfigFilePath } : {}),
       skipAddingFilesFromTsConfig: true,
       compilerOptions: {
-        // Forced regardless of the project's tsconfig so analysis is consistent and Deno-style `.ts`
+        // Forced regardless of the project's tsconfig so analysis is consistent and explicit `.ts`
         // import specifiers resolve. `allowJs` keeps the door open for future JS ("formula") analysis.
         allowImportingTsExtensions: true,
         allowJs: true,
@@ -69,7 +68,7 @@ export class TsMorphAnalyzer {
    * Analyze an already-constructed ts-morph {@link Project}. Tool files are the `/tools/` source files
    * reachable from the entry's export graph (`export *` chains); every other referenced type is
    * gathered into `imported-types.ts`. Utilities imported only for implementation (not re-exported
-   * from the entry) are excluded — matching the former `@deno/doc` graph semantics.
+   * from the entry) are excluded.
    * @param project A ts-morph project with the tool sources (and their dependencies) added.
    * @param options `entry` is the tool barrel (`tools/mod.ts`); its exports define the tool surface.
    *   When omitted, every `/tools/` source file is treated as a tool file (legacy fallback).
@@ -182,7 +181,7 @@ export class TsMorphAnalyzer {
     if (node && Node.isTypeLiteral(node)) {
       return { ...base, properties: node.getProperties().map((p) => this.parseProperty(p, fileTypes)) };
     }
-    // `type X = SomeImported` — copy the resolved shape under the alias name (deno-doc parity).
+    // `type X = SomeImported` — copy the resolved shape under the alias name.
     if (node && Node.isTypeReference(node)) {
       const target = resolveTypeDecl(node);
       if (target && Node.isInterfaceDeclaration(target)) {
@@ -436,7 +435,7 @@ function jsDocsOf(node: JSDocableNode): ReturnType<JSDocableNode["getJsDocs"]> {
 
 /**
  * The TS JSDoc parser treats a mid-sentence `@word` (e.g. prose mentioning "@format") as a tag and
- * truncates `getDescription()` there; deno-doc kept it inline. Reconstruct the description from the raw
+ * truncates `getDescription()` there. Reconstruct the description from the raw
  * comment text so only real line-start block tags terminate it, and trim each line (blank lines stay).
  */
 function description(node: JSDocableNode): string {

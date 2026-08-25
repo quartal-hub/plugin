@@ -78,7 +78,7 @@ export interface OAuthOptions {
   /** Allowed JWS algorithms. Defaults to `["RS256", "ES256"]`. */
   algorithms?: string[];
 
-  /** Max cache TTL in milliseconds for a verified context in Deno KV. Clamped to token `exp`. Defaults to 1 hour. */
+  /** Max cache TTL in milliseconds for a verified context in the plugin cache. Clamped to token `exp`. Defaults to 1 hour. */
   cacheTtlMs?: number;
 
   /** Custom mapping from JWT claims to QuartalPluginContext. Defaults to sub→uid, email→email etc. */
@@ -101,7 +101,7 @@ export interface ResolvedOAuthOptions {
   jwksUri?: string;
   /** Allowed JWT signing algorithms (default: `["RS256", "ES256"]`). */
   algorithms: string[];
-  /** Max cache TTL in milliseconds for a verified context in Deno KV. */
+  /** Max cache TTL in milliseconds for a verified context in the plugin cache. */
   cacheTtlMs: number;
   /** Mapper from JWT claims to the QuartalPluginContext stored on `c.var.context`. */
   claimsToContext: (claims: JWTPayload, token: string) => QuartalPluginContext;
@@ -131,7 +131,7 @@ const DEFAULT_HOST_SUFFIX = "quartal.deno.net";
  */
 const DEFAULT_ADDITIONAL_SCOPES = ["profile", "email"];
 
-/** Strips the `@org/` prefix from a JSR/npm-style plugin name (e.g. `@samples/auth-agent` → `auth-agent`). */
+/** Strips the `@org/` prefix from a scoped npm-style plugin name (e.g. `@samples/auth-agent` → `auth-agent`). */
 function stripOrgPrefix(pluginName: string | undefined): string | undefined {
   if (!pluginName) return undefined;
   return pluginName.replace(/^@[^/]+\//, "");
@@ -368,7 +368,7 @@ function computeExpireIn(claims: JWTPayload, cacheTtlMs: number): number {
 /**
  * Creates a Hono middleware that verifies OAuth JWT bearer tokens using the issuer's JWKS.
  *
- * On success the middleware sets `c.var.context` to a QuartalPluginContext and caches it in Deno KV keyed by the token.
+ * On success the middleware sets `c.var.context` to a QuartalPluginContext and caches it in the plugin cache keyed by the token.
  * On failure (missing header, bad token, failed verification) it responds with 401.
  *
  * @param opts OAuth options. Any unset field falls back to env vars (OAUTH_ISSUER / OAUTH_AUDIENCE / OAUTH_JWKS_URI).
@@ -417,7 +417,7 @@ export function oauthAuthMiddleware(
 }
 
 /**
- * Gets the cached QuartalPluginContext from Deno KV using the token in the AuthContext headers.
+ * Gets the cached QuartalPluginContext from the plugin cache using the token in the AuthContext headers.
  * Used by the `execute` callback, which does not have access to Hono's `c.var` (MCP call path).
  * @param authContext The authentication context containing the headers with the Authorization token.
  * @returns The cached QuartalPluginContext if found and valid, otherwise undefined.

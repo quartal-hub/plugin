@@ -1,6 +1,5 @@
 // Copies `dist/` into `@quartal/plugin/static/plugin-docs-web/` so the plugin ships the docs SPA
-// without a runtime dependency on this plugin. Runs at the tail of `npm run build`. Node ESM — no
-// Deno.
+// without a runtime dependency on this plugin. Runs at the tail of `pnpm run build`.
 import { cp, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
