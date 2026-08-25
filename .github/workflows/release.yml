@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: write # create the version PR branch and push git tags
       pull-requests: write # open/update the "Version Packages" PR
-      id-token: write # npm provenance attestation (sigstore)
+      id-token: write # the npm publish credential itself (trusted publishing) + provenance
     steps:
       - uses: actions/checkout@v6
         with:
@@ -26,7 +26,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
+          # No registry-url on purpose: it exists to write an .npmrc with
+          # _authToken=${NODE_AUTH_TOKEN}, and publishing now uses trusted
+          # publishing (OIDC) with no token. An .npmrc carrying an empty token
+          # surfaces as a 401 instead of falling through to OIDC.
 
       - run: pnpm install --frozen-lockfile
 
@@ -48,5 +51,4 @@ jobs:
           title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
