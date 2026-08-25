@@ -29,18 +29,12 @@ In the opening dialog, write some descriptive name, e.g. "Salaxy Anonymous tools
 
 ## Developer use
 
-To develop MCP widgets (the UI for MCP tools)
+To run the package locally
 
-- Run `deno task dev` for the server
-  - Changes to server-side Deno code are applied immediately
-- Run `deno task watch:vue` for the Vue UI application in watch mode
-  - Run this in a separate terminal
-  - If you choose not to run this, run `deno task build:vue` to build the changes in vue app to `vue/dist`.
+```sh
+cd samples/salaxy-anon
+pnpm dev
+```
 
 For developing the Widgets developed Vue, we strongly recommend using [[https://www.mcpjam.com/]] either by installing it or simply running
 `npx @mcpjam/inspector@latest`. Only when the widgets are ready in MCPJam, test them out in Claude.
-
-Before commit / deployment:
-
-- run `deno task build:vue` if there are any changes on vue side.
-- run `deno task check` in the monorepo root

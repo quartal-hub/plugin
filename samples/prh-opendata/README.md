@@ -40,19 +40,5 @@ Two MCP widgets ship with the plugin:
 
 ```sh
 cd samples/prh-opendata
-deno task build:vue   # one-time / after Vue changes
-deno task dev         # starts the server on :8000
+pnpm dev
 ```
-
-## Tests
-
-Live tests hit `avoindata.prh.fi` and are **opt-in only** — they don't run under the root `deno task check`. Run them manually before larger
-changes:
-
-```sh
-cd samples/prh-opendata
-deno task test
-```
-
-`tests/validation_unit.ts` is a pure unit test (no network) but is also gated behind the plugin's `test` task to keep all PRH tests in one
-place. File names intentionally don't match Deno's default `*_test.ts` discovery so that `deno test -A` from the workspace root skips them.
