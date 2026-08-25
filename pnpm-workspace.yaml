@@ -7,12 +7,8 @@ allowBuilds:
   core-js: false
   unrs-resolver: true
   vue-demi: true
-# pnpm defaults minimumReleaseAge to 1440 minutes, so a freshly published
-# version is unresolvable for 24h. First-party packages are exempt: we control
-# what goes out, and the cooldown only buys us a delay on our own releases.
-#
-# A bare pattern (no @version) excludes every version, and '*' is a glob, so
-# this supersedes the previous '@quartal/ui-core@1.4.2' pin and removes the need
-# to add a new entry per release.
+# pnpm's minimumReleaseAge default of 1440 minutes makes a freshly published
+# version unresolvable for 24h; first-party packages are exempt. A bare pattern
+# with no @version covers every version, and '*' is a glob.
 minimumReleaseAgeExclude:
   - '@quartal/*'
