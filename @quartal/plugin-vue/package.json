@@ -1,6 +1,6 @@
 {
   "name": "@quartal/plugin-vue",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Vue bindings for Quartal Plugin widgets (composables over @quartal/plugin/widget)",
   "type": "module",
   "license": "MIT",

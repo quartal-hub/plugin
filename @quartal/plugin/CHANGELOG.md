@@ -1,5 +1,11 @@
 # @quartal/plugin
 
+## 0.5.2
+
+### Patch Changes
+
+- 844f6df: Readme images updated
+
 ## 0.5.1
 
 ### Patch Changes
