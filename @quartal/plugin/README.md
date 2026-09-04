@@ -4,8 +4,7 @@
   Regenerate with: pnpm export:plugin-readme (in the docs repository root)
 -->
 
-<img src="https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/quartal-plugin-cropped.png" alt="Quartal Plugins">
-
+![quartal-plugin](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/quartal-plugin.svg)
 Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
 
 ![Plugins overview](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/plugins-overview.svg)
