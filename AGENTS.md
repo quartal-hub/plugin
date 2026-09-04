@@ -43,6 +43,7 @@ folders.
 
 | Package                    | Role                                                                                         |
 | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `@quartal/create-plugin`   | Starter kit: `pnpm create @quartal/plugin` scaffolds a new plugin project (npm)              |
 | `@quartal/plugin-core`     | Core types + HTTP client for connecting to a published plugin (npm)                           |
 | `@quartal/plugin`          | The Astro integration + Vite codegen plugin + Hono runtime for creating plugins (npm)         |
 | `@quartal/plugin-vue`      | Vue bindings for widgets (composables over the framework-agnostic `@quartal/plugin/widget`)   |
