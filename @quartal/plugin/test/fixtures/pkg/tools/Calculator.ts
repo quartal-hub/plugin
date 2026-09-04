@@ -30,6 +30,7 @@ export class Calculator {
    * console.log(result); // 15
    * ```
    * @returns The product of the two numbers.
+   * @visibility app
    */
   multiply(input: MultiplyThese): number {
     return input.first * input.second;

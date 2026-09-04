@@ -1,0 +1,19 @@
+{
+  "name": "@quartal/website",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "quartal-plugins.com — marketing and documentation web site for Quartal Plugins.",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/quartal-hub/plugin.git", "directory": "website" },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/vue": "^7.0.0",
+    "astro": "^7.0.0",
+    "vue": "^3.5.0"
+  }
+}

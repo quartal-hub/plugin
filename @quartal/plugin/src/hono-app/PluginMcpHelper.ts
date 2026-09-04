@@ -193,15 +193,20 @@ export class PluginMcpHelper {
     // McpToolDescriptor cannot express — hence the cast.
     type ObjectSchema = { type: "object"; [key: string]: unknown };
     mcpServer.setRequestHandler("tools/list", () => ({
-      tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema }) => {
+      tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema, visibility }) => {
         const widgetEntry = this.widgetsByToolId.get(id);
+        // MCP Apps `_meta.ui` (SEP-1865): the tool's UI resource and its visibility scopes.
+        const ui = {
+          ...(widgetEntry ? { resourceUri: widgetEntry.uri } : {}),
+          ...(visibility ? { visibility } : {}),
+        };
         return {
           name: id,
           ...(title ? { title } : {}),
           description,
           inputSchema: inputSchema as ObjectSchema,
           ...(outputSchema ? { outputSchema: outputSchema as ObjectSchema } : {}),
-          ...(widgetEntry ? { _meta: { ui: { resourceUri: widgetEntry.uri } } } : {}),
+          ...(Object.keys(ui).length > 0 ? { _meta: { ui } } : {}),
         };
       }),
     }));

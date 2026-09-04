@@ -11,6 +11,7 @@ When you write a tool class in `tools/`, `@quartal/plugin` analyzes your TypeScr
 | `description` | JSDoc body of the method | The full comment text above the tags; paragraphs are kept. |
 | `inputSchema` | The method's **first parameter** | See below. Any further parameters are treated as injected context (auth, request, …) and never appear in the schema. |
 | `outputSchema` | The method's return type | `Promise<T>` is unwrapped to `T`. See below. |
+| `_meta.ui.visibility` | `@visibility` JSDoc tag on the method | MCP Apps visibility scopes: `model` (callable by the agent) and/or `app` (callable by this plugin's widgets only), space- or comma-separated. Unknown words are ignored; omitted = host default `["model", "app"]`. |
 
 ## Input schema
 

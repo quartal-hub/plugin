@@ -75,6 +75,13 @@ describe("PluginMcpHelper — MCP over Streamable HTTP (SDK client)", () => {
       expect(outputSchema?.required).toBeUndefined();
       expect(outputSchema?.additionalProperties).toBe(true);
 
+      // `@visibility app` on Calculator.multiply is advertised as MCP Apps `_meta.ui.visibility`;
+      // an untagged tool without a widget gets no `_meta` at all.
+      const multiplyToolId = mcpTools.tools.find((t) => t.className === "Calculator" && t.methodName === "multiply")!.id;
+      const multiplyTool = list.tools.find((t) => t.name === multiplyToolId);
+      expect((multiplyTool?._meta as { ui?: { visibility?: string[] } } | undefined)?.ui?.visibility).toEqual(["app"]);
+      expect(addTool!._meta).toBeUndefined();
+
       // The SDK client validates structuredContent against the advertised outputSchema, so a
       // successful call also proves the schema and the wrapped `{ value }` result agree.
       const call = await client.callTool({ name: addToolId, arguments: { first: 2, second: 3 } });

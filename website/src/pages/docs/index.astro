@@ -1,0 +1,37 @@
+---
+import { getCollection } from "astro:content";
+import { SECTIONS } from "../../lib/sections.ts";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+
+const all = await getCollection("docs");
+const bySection = SECTIONS.map((section) => ({
+  ...section,
+  entries: all
+    .filter((e) => e.data.section === section.key)
+    .sort((a, b) => a.data.order - b.data.order),
+})).filter((s) => s.entries.length > 0);
+---
+<DocsLayout title="Documentation" description="Quartal Plugins documentation for plugin creators.">
+  <h1>Documentation</h1>
+  <p class="lead">
+    Everything you need to build a plugin: tools, widgets, skills, prompts and agents.
+    New here? Start with <a href="/docs/getting-started/">Getting started</a>.
+  </p>
+  {bySection.map((section) => (
+    <section class="mb-4">
+      <h2 class="h4">{section.title}</h2>
+      <div class="row g-3">
+        {section.entries.map((entry) => (
+          <div class="col-md-6">
+            <a class="card h-100 text-decoration-none" href={`/docs/${entry.id}/`}>
+              <div class="card-body">
+                <div class="card-title fw-semibold">{entry.data.title}</div>
+                <div class="card-text text-secondary small">{entry.data.description}</div>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+    </section>
+  ))}
+</DocsLayout>

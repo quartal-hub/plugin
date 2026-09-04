@@ -271,6 +271,18 @@ importers:
         specifier: ^3.5.0
         version: 3.5.39(typescript@5.9.3)
 
+  website:
+    dependencies:
+      '@astrojs/vue':
+        specifier: ^7.0.0
+        version: 7.0.1(@types/node@22.20.1)(astro@7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0))(esbuild@0.28.1)(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)
+      astro:
+        specifier: ^7.0.0
+        version: 7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0)
+      vue:
+        specifier: ^3.5.0
+        version: 3.5.39(typescript@5.9.3)
+
 packages:
 
   '@adobe/css-tools@4.5.0':

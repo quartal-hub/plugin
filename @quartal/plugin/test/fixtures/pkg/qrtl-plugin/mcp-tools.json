@@ -78,7 +78,10 @@
         },
         "additionalProperties": true,
         "description": "The product of the two numbers."
-      }
+      },
+      "visibility": [
+        "app"
+      ]
     },
     {
       "id": "sayHello",

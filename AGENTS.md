@@ -12,7 +12,7 @@ Related products (context for naming): **Quartal Plugins** (this repo) is the op
 for *creating* plugins. **Quartal Hub** is the separate commercial registry where plugins can be
 published and discovered; a future `@quartal/hub` client library will cover Hub-specific concerns
 (auth, user management, reports). Plugin authors scaffold new plugins with the
-`@quartal-hub/create-plugin` starter kit (`pnpm create @quartal-hub/plugin`) or the
+`@quartal/create-plugin` starter kit (`pnpm create @quartal/plugin`) or the
 [`quartal-hub/plugin-template`](https://github.com/quartal-hub/plugin-template) repository — not
 from this repo.
 
@@ -48,6 +48,7 @@ folders.
 | `@quartal/plugin-vue`      | Vue bindings for widgets (composables over the framework-agnostic `@quartal/plugin/widget`)   |
 | `@quartal/ui-plugin`       | Vue artifact UI components (workspace pkg; Storybook here)                                    |
 | `@quartal/plugin-docs-web` | Docs SPA; its `build` vendors into `@quartal/plugin/static/plugin-docs-web` (see its README)  |
+| `@quartal/website`         | Marketing + docs web site for the product (`website/`, Astro + Vue, static; not published)   |
 
 Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private, not published).
 

@@ -1,0 +1,53 @@
+---
+import { getCollection } from "astro:content";
+import { SECTIONS } from "../lib/sections.ts";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Collection id of the page being shown (highlights it in the sidebar). */
+  currentId?: string;
+}
+const { title, description, currentId } = Astro.props;
+
+const all = await getCollection("docs");
+const bySection = SECTIONS.map((section) => ({
+  ...section,
+  entries: all
+    .filter((e) => e.data.section === section.key)
+    .sort((a, b) => a.data.order - b.data.order),
+})).filter((s) => s.entries.length > 0);
+---
+<BaseLayout title={`${title} — Quartal Plugins`} description={description}>
+  <div class="container py-4">
+    <div class="row g-5">
+      <aside class="col-md-3">
+        <nav class="sticky-md-top" style="top: 1rem;">
+          {bySection.map((section) => (
+            <div class="mb-4">
+              <div class="text-uppercase text-secondary small fw-semibold mb-2">{section.title}</div>
+              <ul class="nav flex-column">
+                {section.entries.map((entry) => (
+                  <li class="nav-item">
+                    <a
+                      class:list={["nav-link px-0 py-1", entry.id === currentId ? "fw-semibold text-primary" : "link-body-emphasis"]}
+                      href={`/docs/${entry.id}/`}
+                    >
+                      {entry.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </aside>
+      <div class="col-md-9">
+        <article class="qp-doc">
+          <slot />
+        </article>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
