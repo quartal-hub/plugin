@@ -1,5 +1,14 @@
 # @quartal/plugin-vue
 
+## 0.5.4
+
+### Patch Changes
+
+- 97dc6c5: Baseline release of every published package to verify the upgraded release pipeline
+  (changesets/action v2) pushes git tags and creates GitHub Releases on publish.
+- Updated dependencies [97dc6c5]
+  - @quartal/plugin@0.6.1
+
 ## 0.5.3
 
 ### Patch Changes

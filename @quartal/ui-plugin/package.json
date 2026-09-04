@@ -1,6 +1,6 @@
 {
   "name": "@quartal/ui-plugin",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Vue components for visualizing Quartal plugin artifacts (tools, skills, services)",
   "type": "module",
   "license": "MIT",
