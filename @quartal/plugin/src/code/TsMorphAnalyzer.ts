@@ -16,7 +16,7 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType } from "../model/index.ts";
+import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolVisibility } from "../model/index.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -212,6 +212,8 @@ export class TsMorphAnalyzer {
     };
     const summary = summaryTag(method);
     if (summary) fn.summary = summary;
+    const visibility = visibilityTag(method);
+    if (visibility) fn.visibility = visibility;
     return fn;
   }
 
@@ -465,6 +467,19 @@ function summaryTag(node: JSDocableNode): string | undefined {
   const t = tags(node).find((x) => x.getTagName() === "summary");
   const v = t ? tagText(t).trim() : "";
   return v || undefined;
+}
+const VISIBILITY_VALUES: McpToolVisibility[] = ["model", "app"];
+/**
+ * Reads the `@visibility` JSDoc tag: space- or comma-separated scopes (`model`, `app`).
+ * Unknown words are ignored; an empty or all-unknown tag yields `undefined` (host default
+ * `["model", "app"]` applies).
+ */
+function visibilityTag(node: JSDocableNode): McpToolVisibility[] | undefined {
+  const t = tags(node).find((x) => x.getTagName() === "visibility");
+  if (!t) return undefined;
+  const words = tagText(t).split(/[\s,]+/).map((w) => w.trim().toLowerCase()).filter(Boolean);
+  const values = VISIBILITY_VALUES.filter((v) => words.includes(v));
+  return values.length ? values : undefined;
 }
 function exampleTag(node: JSDocableNode): unknown | undefined {
   const t = tags(node).find((x) => x.getTagName() === "example");

@@ -1,3 +1,4 @@
+import type { McpToolVisibility } from "../mcp/McpTool.ts";
 import type { CodePropOrParam } from "./CodePropOrParam.ts";
 
 /** A function parsed from a CodeFile */
@@ -10,6 +11,9 @@ export interface CodeFunction {
 
   /** Short summary from `@summary` JSDoc (OpenAPI `summary` / MCP `title`). */
   summary?: string;
+
+  /** Visibility scopes from `@visibility` JSDoc (MCP Apps `_meta.ui.visibility`). */
+  visibility?: McpToolVisibility[];
 
   /** Parameters of the function. */
   parameters: CodePropOrParam[];

@@ -1,6 +1,7 @@
 packages:
   - "@quartal/*"
   - "samples/*"
+  - "website"
 allowBuilds:
   esbuild: true
   "@scarf/scarf": false

@@ -1,0 +1,124 @@
+---
+import CodeCompare from "../components/CodeCompare.vue";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const features = [
+  {
+    title: "Tools",
+    text: "Plain TypeScript functions become MCP tools, an OpenAPI/REST service, and (optionally) an npm/JSR package — schemas generated from your types and JSDoc.",
+    href: "/docs/tools/creating-tools/",
+  },
+  {
+    title: "Widgets (MCP Apps)",
+    text: "Give any tool a real UI, rendered inside Claude, ChatGPT, M365 Copilot and other MCP Apps hosts. Build it in Vue, React, Svelte — any framework.",
+    href: "/docs/widgets/mcp-apps-widgets/",
+  },
+  {
+    title: "Agent Skills",
+    text: "Ship the know-how next to the tools: markdown skills (agentskills.io standard) that update automatically when you deploy.",
+    href: "/docs/skills/agent-skills/",
+  },
+  {
+    title: "Prompts",
+    text: "Guided starting points for interactive chat — a prompt is just a simple TypeScript function.",
+    href: "/docs/more/prompts/",
+  },
+  {
+    title: "Agents",
+    text: "Interactive and autonomous agent definitions as markdown or JSON files, packaged as Claude plugins.",
+    href: "/docs/more/agents/",
+  },
+  {
+    title: "Auth built in",
+    text: "Anonymous by default; standard OAuth2 when you need it — wired through MCP, REST, web components and the test UIs.",
+    href: "/docs/getting-started/",
+  },
+];
+---
+<BaseLayout title="Quartal Plugins — package your business logic for AI agents">
+  <section class="bg-dark text-light py-5">
+    <div class="container py-4 text-center">
+      <h1 class="display-5 fw-bold">
+        Package your business logic<br />for <span class="text-info">AI agents</span>
+      </h1>
+      <p class="lead mx-auto mt-3" style="max-width: 44rem;">
+        Write plain TypeScript once — get MCP tools, chat widgets, agent skills, agents,
+        prompts and a documented REST API from the same package. Open source, MIT, zero lock-in.
+      </p>
+      <div class="d-flex justify-content-center gap-3 mt-4">
+        <a class="btn btn-info btn-lg fw-semibold" href="/docs/getting-started/">Get started</a>
+        <a class="btn btn-outline-light btn-lg" href="https://github.com/quartal-hub/plugin">GitHub</a>
+      </div>
+      <div class="mt-4 text-secondary">
+        <code class="bg-black px-3 py-2 rounded d-inline-block text-info">pnpm create @quartal/plugin</code>
+      </div>
+    </div>
+  </section>
+
+  <section class="container py-5">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <h2 class="fw-bold">No hand-written schemas.<br />Just TypeScript.</h2>
+        <p class="text-secondary">
+          Most MCP frameworks make you describe every input and output twice — once for the
+          compiler, once for the schema library. In a Quartal Plugin your interfaces, JSDoc
+          comments and tags like <code>@format</code>, <code>@example</code> and
+          <code>@visibility</code> <em>are</em> the schema. Real types, real reuse, nothing to
+          keep in sync.
+        </p>
+        <a class="btn btn-outline-primary" href="/docs/tools/creating-tools/">Read the tool guide</a>
+      </div>
+      <div class="col-lg-7">
+        <CodeCompare client:visible />
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-body-tertiary py-5">
+    <div class="container">
+      <h2 class="fw-bold text-center mb-2">Everything an AI agent needs, in one package</h2>
+      <p class="text-secondary text-center mx-auto mb-5" style="max-width: 40rem;">
+        Build it once; serve it to chatbots, autonomous agents, vibe-coding tools and traditional
+        software — over MCP, OpenAPI/REST, Claude plugins and Agent Skills.
+      </p>
+      <div class="row g-4">
+        {features.map((f) => (
+          <div class="col-md-6 col-lg-4">
+            <a class="card h-100 text-decoration-none shadow-sm" href={f.href}>
+              <div class="card-body">
+                <h3 class="h5 card-title">{f.title}</h3>
+                <p class="card-text text-secondary">{f.text}</p>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="container py-5">
+    <div class="row g-4 text-center">
+      <div class="col-md-4">
+        <h3 class="h5 fw-bold">Deploy anywhere</h3>
+        <p class="text-secondary">
+          A plugin is a dynamic Astro site — deploy it to any modern hosting platform, then
+          optionally publish the package to npm or JSR.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h3 class="h5 fw-bold">Docs generated for you</h3>
+        <p class="text-secondary">
+          Every plugin ships its own documentation site, Swagger UI, widget tester and an
+          integration skill for coding agents.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h3 class="h5 fw-bold">Open source, zero lock-in</h3>
+        <p class="text-secondary">
+          MIT licensed, built on Astro (MIT) and open standards: MCP, MCP Apps, OpenAPI and
+          Agent Skills.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

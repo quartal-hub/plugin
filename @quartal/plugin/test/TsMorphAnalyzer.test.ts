@@ -92,6 +92,40 @@ describe("TsMorphAnalyzer private members", () => {
   });
 });
 
+describe("TsMorphAnalyzer @visibility tag", () => {
+  const SOURCE = `
+    /** Visibility tags. */
+    export class VisibilityTags {
+      /** App-only tool.
+       * @visibility app
+       */
+      appOnly(): void {}
+      /** Both scopes, comma-separated.
+       * @visibility model, app
+       */
+      both(): void {}
+      /** Unknown words are ignored.
+       * @visibility hidden
+       */
+      unknownOnly(): void {}
+      /** No tag at all. */
+      untagged(): void {}
+    }
+  `;
+  const fns = () =>
+    analyzeSource({ "/tools/VisibilityTags.ts": SOURCE })
+      .find((f) => f.path === "tools/VisibilityTags.ts")!
+      .classes.find((c) => c.name === "VisibilityTags")!.functions;
+
+  it("parses scopes and omits the field for unknown or missing tags", () => {
+    const byName = Object.fromEntries(fns().map((fn) => [fn.name, fn.visibility]));
+    expect(byName.appOnly).toEqual(["app"]);
+    expect(byName.both).toEqual(["model", "app"]);
+    expect(byName.unknownOnly).toBeUndefined();
+    expect(byName.untagged).toBeUndefined();
+  });
+});
+
 describe("TsMorphAnalyzer type mapping", () => {
   it("maps keywords, arrays, refs, unions, inline objects, and nullability", () => {
     const files = analyzeSource({

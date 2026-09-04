@@ -143,7 +143,10 @@
                 "description": "The product of the two numbers."
               },
               "isAsync": false,
-              "isStatic": false
+              "isStatic": false,
+              "visibility": [
+                "app"
+              ]
             }
           ],
           "properties": [],
