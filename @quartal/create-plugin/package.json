@@ -1,6 +1,6 @@
 {
   "name": "@quartal/create-plugin",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Starter kit for Quartal Plugins — run `pnpm create @quartal/plugin`",
   "type": "module",
   "license": "MIT",
