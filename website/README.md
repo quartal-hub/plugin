@@ -19,9 +19,9 @@ pnpm --filter @quartal/website build     # static site in dist/
 
 ## Deployment
 
-Deployed to **GitHub Pages** at https://plugins.quartal.com by
+Deployed to **GitHub Pages** at https://plugin.quartal.com by
 [`.github/workflows/deploy-website.yml`](../.github/workflows/deploy-website.yml) on every push to
 `main` that touches `website/`. The custom domain is pinned by `public/CNAME` (copied into
 `dist/`), and `site` in `astro.config.mjs` must match it. DNS: a CNAME record for
-`plugins.quartal.com` pointing at `quartal-hub.github.io`.
+`plugin.quartal.com` pointing at `quartal-hub.github.io`.
 

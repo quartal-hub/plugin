@@ -1,0 +1,27 @@
+---
+// A widget page's file name is the id of the tool it visualizes: this page is the UI
+// for the `sayHello` tool. Rename the file when you rename or replace the tool.
+import WidgetLayout from "../../layouts/WidgetLayout.astro";
+---
+<WidgetLayout title="Say hello">
+  <div id="say-hello" style="font-family: system-ui, sans-serif; padding: 1rem;">
+    Waiting for the tool result…
+  </div>
+  <script>
+    import { connectWidget } from "@quartal/plugin/widget";
+
+    // The MCP host runs the `sayHello` tool and delivers the result (the greeting string)
+    // over the framework-agnostic `@quartal/plugin/widget` bridge.
+    const el = document.getElementById("say-hello")!;
+    void connectWidget<string>({
+      name: "SayHelloApp",
+      version: "0.1.0",
+      onResult: (greeting) => {
+        el.textContent = greeting;
+      },
+      onError: (message) => {
+        el.textContent = `Tool failed: ${message}`;
+      },
+    });
+  </script>
+</WidgetLayout>

@@ -1,0 +1,41 @@
+{
+  "name": "@quartal/create-plugin",
+  "version": "0.5.0",
+  "description": "Starter kit for Quartal Plugins — run `pnpm create @quartal/plugin`",
+  "type": "module",
+  "license": "MIT",
+  "author": "Quartal Accounting Software Oy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "@quartal/create-plugin"
+  },
+  "bin": {
+    "create-plugin": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
