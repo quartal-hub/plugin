@@ -1,7 +1,7 @@
 name: deploy-website
 
 # Builds the static marketing/docs site (website/) and publishes it to GitHub Pages.
-# The custom domain (plugins.quartal.com) is pinned by website/public/CNAME, which Astro
+# The custom domain (plugin.quartal.com) is pinned by website/public/CNAME, which Astro
 # copies into dist/ so every deployment keeps the domain.
 
 on:
