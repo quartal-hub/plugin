@@ -41,12 +41,16 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run test
 
-      - uses: changesets/action@v1
+      # v2 of the action is required with @changesets/cli v3: v1 parses the CLI's old
+      # "New tag:" publish output, which v3 no longer prints, so v1 silently skips
+      # pushing git tags and creating GitHub Releases after a successful publish.
+      # v2 pushes release commits and tags via the GitHub API (github-token input,
+      # defaulting to the workflow token) and creates a GitHub Release per package.
+      - uses: changesets/action@v2
         with:
-          version: pnpm run version:packages
-          publish: pnpm run release
-          commit: "chore: version packages"
-          title: "chore: version packages"
+          version-script: pnpm run version:packages
+          publish-script: pnpm run release
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
