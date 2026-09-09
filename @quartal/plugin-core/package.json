@@ -2,6 +2,7 @@
   "name": "@quartal/plugin-core",
   "version": "0.6.1",
   "description": "Core types and client for Quartal Plugins",
+  "homepage": "https://plugin.quartal.com",
   "type": "module",
   "license": "MIT",
   "author": "Quartal Accounting Software Oy",

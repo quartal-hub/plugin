@@ -2,6 +2,7 @@
   "name": "@quartal/plugin",
   "version": "0.6.1",
   "description": "The core plugin NPM package for creating Quartal plugins",
+  "homepage": "https://plugin.quartal.com",
   "type": "module",
   "license": "MIT",
   "author": "Quartal Accounting Software Oy",

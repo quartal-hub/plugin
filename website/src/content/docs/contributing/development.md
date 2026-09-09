@@ -1,7 +1,7 @@
 ---
 title: "Developing the framework"
 description: "For contributors to Quartal Plugins itself — not needed for creating plugins."
-section: framework
+section: contributing
 order: 1
 ---
 
