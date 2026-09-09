@@ -1,5 +1,6 @@
 ---
 import CodeCompare from "../components/CodeCompare.vue";
+import CommandPrompt from "../components/CommandPrompt.vue";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const features = [
@@ -36,21 +37,21 @@ const features = [
 ];
 ---
 <BaseLayout title="Quartal Plugins — package your business logic for AI agents">
-  <section class="bg-dark text-light py-5">
+  <section class="bg-primary text-light py-5">
     <div class="container py-4 text-center">
       <h1 class="display-5 fw-bold">
-        Package your business logic<br />for <span class="text-info">AI agents</span>
+        Package your business logic<br />for <span class="">AI agents</span>
       </h1>
       <p class="lead mx-auto mt-3" style="max-width: 44rem;">
         Write plain TypeScript once — get MCP tools, chat widgets, agent skills, agents,
         prompts and a documented REST API from the same package. Open source, MIT, zero lock-in.
       </p>
       <div class="d-flex justify-content-center gap-3 mt-4">
-        <a class="btn btn-info btn-lg fw-semibold" href="/docs/getting-started/">Get started</a>
+        <a class="btn btn-default btn-lg fw-semibold" href="/docs/getting-started/">Get started</a>
         <a class="btn btn-outline-light btn-lg" href="https://github.com/quartal-hub/plugin">GitHub</a>
       </div>
-      <div class="mt-4 text-secondary">
-        <code class="bg-black px-3 py-2 rounded d-inline-block text-info">pnpm create @quartal/plugin</code>
+      <div class="mt-4 mx-auto" style="max-width: 24rem;">
+        <CommandPrompt client:load command="pnpm create @quartal/plugin" />
       </div>
     </div>
   </section>
@@ -59,7 +60,7 @@ const features = [
     <div class="row align-items-center g-5">
       <div class="col-lg-5">
         <h2 class="fw-bold">No hand-written schemas.<br />Just TypeScript.</h2>
-        <p class="text-secondary">
+        <p class="text-body-secondary">
           Most MCP frameworks make you describe every input and output twice — once for the
           compiler, once for the schema library. In a Quartal Plugin your interfaces, JSDoc
           comments and tags like <code>@format</code>, <code>@example</code> and
@@ -77,7 +78,7 @@ const features = [
   <section class="bg-body-tertiary py-5">
     <div class="container">
       <h2 class="fw-bold text-center mb-2">Everything an AI agent needs, in one package</h2>
-      <p class="text-secondary text-center mx-auto mb-5" style="max-width: 40rem;">
+      <p class="text-body-secondary text-center mx-auto mb-5" style="max-width: 40rem;">
         Build it once; serve it to chatbots, autonomous agents, vibe-coding tools and traditional
         software — over MCP, OpenAPI/REST, Claude plugins and Agent Skills.
       </p>
@@ -87,7 +88,7 @@ const features = [
             <a class="card h-100 text-decoration-none shadow-sm" href={f.href}>
               <div class="card-body">
                 <h3 class="h5 card-title">{f.title}</h3>
-                <p class="card-text text-secondary">{f.text}</p>
+                <p class="card-text text-body-secondary">{f.text}</p>
               </div>
             </a>
           </div>
@@ -100,21 +101,21 @@ const features = [
     <div class="row g-4 text-center">
       <div class="col-md-4">
         <h3 class="h5 fw-bold">Deploy anywhere</h3>
-        <p class="text-secondary">
+        <p class="text-body-secondary">
           A plugin is a dynamic Astro site — deploy it to any modern hosting platform, then
           optionally publish the package to npm or JSR.
         </p>
       </div>
       <div class="col-md-4">
         <h3 class="h5 fw-bold">Docs generated for you</h3>
-        <p class="text-secondary">
+        <p class="text-body-secondary">
           Every plugin ships its own documentation site, Swagger UI, widget tester and an
           integration skill for coding agents.
         </p>
       </div>
       <div class="col-md-4">
         <h3 class="h5 fw-bold">Open source, zero lock-in</h3>
-        <p class="text-secondary">
+        <p class="text-body-secondary">
           MIT licensed, built on Astro (MIT) and open standards: MCP, MCP Apps, OpenAPI and
           Agent Skills.
         </p>

@@ -2,6 +2,7 @@
   "name": "@quartal/plugin-vue",
   "version": "0.5.4",
   "description": "Vue bindings for Quartal Plugin widgets (composables over @quartal/plugin/widget)",
+  "homepage": "https://plugin.quartal.com",
   "type": "module",
   "license": "MIT",
   "author": "Quartal Accounting Software Oy",

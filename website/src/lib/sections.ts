@@ -5,5 +5,5 @@ export const SECTIONS: { key: string; title: string }[] = [
   { key: "widgets", title: "MCP Apps / Widgets" },
   { key: "skills", title: "Agent Skills" },
   { key: "more", title: "Prompts & Agents" },
-  { key: "framework", title: "Framework development" },
+  { key: "contributing", title: "Contributing" },
 ];

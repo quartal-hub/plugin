@@ -12,16 +12,8 @@ order: 1
 
 ## Create a plugin
 
-With pnpm:
-
 ```bash
 pnpm create @quartal/plugin
-```
-
-With npm:
-
-```bash
-npm create @quartal/plugin
 ```
 
 Alternatively, fork the template repository at

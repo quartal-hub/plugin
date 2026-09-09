@@ -5,7 +5,8 @@
 -->
 
 ![quartal-plugin](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/quartal-plugin.svg)
-Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills and Agents.
+
+Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same plugins / packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills, Agents and Prompts.
 
 ![Plugins overview](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/plugins-overview.svg)
 The basic idea is that you can create a Quartal **Plugins** package once containing all the business logic for a specific business domain. You can then publish that package as a simple web site and other people inside or outside your organization can use that logic in different chatbots, agents, vibe tools, integrations and other software using Model Context Protocol ([MCP](https://modelcontextprotocol.io/)), [Open API](https://www.openapis.org/) (REST), [Claude plugins](https://code.claude.com/docs/en/plugins), [Agent skills](https://agentskills.io/) and more...
@@ -15,96 +16,54 @@ The basic idea is that you can create a Quartal **Plugins** package once contain
 > We are currently pushing Quartal **Plugins** to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version and we do not guarantee that all of these features make the final cut.
 
 ## Getting Started
-Requirements:
-- Node, version 20+
-- We recommend using [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets
-
-With PNPM:
+### Requirements
+- Node.js 20+
+- We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
+### Create a plugin
 ```bash
 pnpm create @quartal/plugin
 ```
 
-With NPM:
+Alternatively, fork the template repository at
+[quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template).
+
+### Run it
 ```bash
-npm create @quartal/plugin
+pnpm install
+pnpm dev
 ```
 
-Alternatively, you may also just fork the template repository in [https://github.com/quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template)
+Your plugin is an [Astro](https://astro.build) project running on `http://localhost:4321`, serving:
 
-Once you have run the template / starter-kit, follow the instructions in the `README.md` or use your favourite development agent to modify your project.
+| URL                     | What                                                                     |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `/`                     | Documentation site for your plugin (tools, widgets, skills, API testers) |
+| `/mcp`                  | The MCP server — connect any MCP client here                             |
+| `/api/<Class>/<method>` | The generated OpenAPI / REST actions                                     |
+| `/plugin.json`          | The plugin manifest                                                      |
+| `/widgets/<toolId>`     | Your widget pages                                                        |
+| `/skills/catalog.json`  | The Agent Skills catalog                                                 |
+### Make it yours
+1. Add a tool: create a class in `src/tools/` and export it from `src/tools/mod.ts` —
+   see [Creating tools](https://plugin.quartal.com/docs/tools/creating-tools).
+2. Add a widget for a tool: create a page in `src/pages/widgets/` —
+   see [MCP Apps widgets](https://plugin.quartal.com/docs/widgets/mcp-apps-widgets).
+3. Add a skill: create a folder with a `SKILL.md` under `skills/` —
+   see [Agent Skills](https://plugin.quartal.com/docs/skills/agent-skills).
+See more in [https://plugin.quartal.com/docs/](https://plugin.quartal.com/docs/)
+### Test with an MCP client
+Point [MCPJam](https://www.mcpjam.com/) (or Claude, or any MCP client) at
+`http://localhost:4321/mcp` and try your tools live.
 
-## Easy MCP Tools as plain TypeScript
-In most [MCP Tools](https://modelcontextprotocol.io/docs/2026-07-28/learn/server-concepts#tools) frameworks, you are required to write the input and output schemas with tools like Zod, e.g.:
-```ts
-import { z } from "zod";
-import { type InferSchema } from "xmcp";
+### Deploy
+Build and run like any server-output Astro site — then deploy to
+[any modern hosting platform](https://docs.astro.build/en/guides/deploy/):
 
-export const schema = {
-  name: z.string().describe("User's full name"),
-  email: z.string().email().describe("Valid email address"),
-  age: z.number().optional().describe("User's age, optional"),
-  role: z.enum(["admin", "user"]).describe("User role"),
-};
-
-export default async function createUser(args: InferSchema<typeof schema>) {
-  // args is automatically typed: { name: string; email: string; age?: number; role: "admin" | "user" }
-  const { name, email, age, role } = args;
-  // Implementation here
-}
-
-// More configuration such as metadata deifinition is omitted from this example.
-
+```bash
+pnpm build
+node ./dist/server/entry.mjs
 ```
 
-in a Quartal **Plugin** the same is written in **plain TypeScript** classes and functions:
-```ts
-// file:/src/tools/HelloWorldInput.ts
-/** Schema for the hello method */
-export interface HelloWorldInput {
-  /** User's full name */
-  name: string;
-  /**
-   * Valid email address
-   * @format email
-   */
-  email: string;
-  /**
-   * User's age, optional
-   * @format int32
-   */
-  age?: number;
-  /** User role */
-  role: "admin" | "user";
-}
-
-// file:/src/tools/HelloWorld.ts
-import type { HelloWorldInput } from "./HelloWorldInput.ts";
-
-/**
- * A class that says hello to the world.
- */
-export class HelloWorld {
-  /**
-   * Function with advanced parameters.
-   * @param input Greeting fields (name, age, gender, keywords).
-   */
-  createUser(input: HelloWorldInput): string {
-    // implementation here
-    return "User created: " + input.name;
-  }
-}
-
-// file:/src/tools/mod.ts
-
-// All the public functions in classes exported from "/src/tools/mod.ts"
-// will be exported as MCP Tools AND actions in Open API / REST services.
-export * from "./HelloWorld.ts";
-
-```
-
-Description and TypeScript types are the most important information that is passed via MCP all the way to the AI agents. These are important for the Tool (function) as well as all the properties of input and output types so that an AI agent knows how to use them. In addition, we also support most of the JSON schema features including enumerations and formats like email, date, datetime etc.
-
-What's more, the types can be any imported classes or interfaces, even from external packages, which makes code reuse in types much easier. This of course also means that the types are real TypeScript types, not some Zod inferred types which are ugly and painful to debug when something goes wrong.
 ## MCP Apps Widgets: Add UI to your tools
 You can easily add custom user interface to interact with any of your tools. This has the following benefits:
 - The Tool results and further interaction UI will be rendered exactly as you specify, not something that the model vibes on-the-fly (no hallucinations).
