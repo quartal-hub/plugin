@@ -50,4 +50,55 @@ const bySection = SECTIONS.map((section) => ({
       </div>
     </div>
   </div>
+  <script>
+    import { createApp } from "vue";
+    import CommandPrompt from "../components/CommandPrompt.vue";
+
+    /** Monaco language ids for the fence languages used in the docs markdown. */
+    const LANGS: Record<string, string> = {
+      ts: "typescript",
+      typescript: "typescript",
+      js: "javascript",
+      javascript: "javascript",
+      json: "json",
+      yaml: "yaml",
+      yml: "yaml",
+      html: "html",
+      css: "css",
+      astro: "html",
+      bash: "shell",
+      sh: "shell",
+      shell: "shell",
+    };
+    const COMMAND_RE = /^\s*(pnpm|npm|npx|node)\b/;
+
+    // Upgrade the statically rendered markdown code blocks to <qrtl-editor> /
+    // CommandPrompt. Blocks without a mapped language (e.g. `text` directory
+    // trees) keep the plain <pre> rendering.
+    document.querySelectorAll(".qp-doc pre[data-language]").forEach((pre) => {
+      const lang = pre.getAttribute("data-language") ?? "";
+      const monacoLang = LANGS[lang];
+      if (!monacoLang) return;
+      const code = (pre.textContent ?? "").replace(/\n$/, "");
+
+      if (monacoLang === "shell" && COMMAND_RE.test(code)) {
+        const host = document.createElement("div");
+        host.className = "my-3";
+        pre.replaceWith(host);
+        createApp(CommandPrompt, { command: code }).mount(host);
+        return;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "card overflow-hidden my-3";
+      wrapper.style.height = `${Math.min(560, code.split("\n").length * 20 + 28)}px`;
+      const editor = document.createElement("qrtl-editor");
+      editor.setAttribute("type", "monaco");
+      editor.setAttribute("lang", monacoLang);
+      editor.setAttribute("read-only", "");
+      editor.setAttribute("code", code);
+      wrapper.append(editor);
+      pre.replaceWith(wrapper);
+    });
+  </script>
 </BaseLayout>

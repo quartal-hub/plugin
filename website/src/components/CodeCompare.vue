@@ -2,7 +2,7 @@
 import { ref } from "vue";
 
 const ZOD_SAMPLE = `import { z } from "zod";
-import { type InferSchema } from "xmcp";
+import { type InferSchema } from` + /* removing error with Vite dependency scanner in Astro */ ` "xmcp";
 
 export const schema = {
   name: z.string().describe("User's full name"),
@@ -44,15 +44,15 @@ export class Users {
 }`;
 
 const tabs = [
-  { key: "quartal", label: "Quartal Plugins — plain TypeScript", code: QUARTAL_SAMPLE },
-  { key: "zod", label: "Typical MCP framework — hand-written schemas", code: ZOD_SAMPLE },
+  { key: "quartal", label: "Quartal Plugins", code: QUARTAL_SAMPLE },
+  { key: "zod", label: "Typical MCP framework", code: ZOD_SAMPLE },
 ];
 const active = ref("quartal");
 </script>
 
 <template>
   <div class="q-code-compare card shadow-sm overflow-hidden">
-    <div class="card-header p-0 bg-dark">
+    <div class="card-header p-0 bg-primary">
       <ul class="nav nav-tabs border-0 px-2 pt-2">
         <li v-for="tab in tabs" :key="tab.key" class="nav-item">
           <button
@@ -66,7 +66,9 @@ const active = ref("quartal");
         </li>
       </ul>
     </div>
-    <pre class="m-0 p-3 bg-body-tertiary"><code>{{ tabs.find((t) => t.key === active)?.code }}</code></pre>
+    <div style="width: 100%; height: 428px;">
+      <qrtl-editor type="monaco" lang="typescript" :code="tabs.find((t) => t.key === active)?.code" read-only></qrtl-editor>
+    </div>
   </div>
 </template>
 
