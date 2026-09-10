@@ -29,6 +29,15 @@ from this repo.
 - `pnpm run typecheck` — `vue-tsc`/`tsc` across packages (kept out of `build`).
 - `pnpm run lint` — ESLint import-hygiene rules (`lint:fix` auto-fixes import order).
 
+## Documentation
+
+The detailed documentation of the plugin project's features lives in the `website/` folder
+(`website/src/content/docs/`). It documents **existing** features with language and presentation
+that make sense to an outside person looking to create plugins — never narrate history or
+decisions ("this was changed because…"); describe the present state only. Internal plans and
+design documents live in `docs/` (e.g. [docs/agent-plugins-alignment.md](./docs/agent-plugins-alignment.md)).
+Distribution/marketplace planning continues in the separate Quartal Hub project.
+
 ## Code organization
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full rules. Summary: one primary artifact per
