@@ -1,8 +1,8 @@
 ---
-title: "MCP Apps widgets"
+title: "MCP App Widgets"
 description: "Add a real user interface to any tool — rendered inside the chat, in any UI framework."
-section: widgets
-order: 1
+section: creating
+order: 2
 ---
 
 A **widget** gives a tool a real user interface, rendered inside the chat by hosts that support

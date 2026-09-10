@@ -120,3 +120,20 @@ export interface PluginWidgetEntry {
   /** MCP Apps resource URI for the widget HTML. */
   resourceUri: string;
 }
+
+/** One MCP server of the plugin, as listed in the overview and in `links.mcpConfig`. */
+export interface PluginMcpServerEntry {
+  /** Server name (the key in the `mcp.json` `mcpServers` map). */
+  name: string;
+  /**
+   * MCP endpoint URL: a path relative to the plugin origin for hosted servers (`/mcp`,
+   * `/mcp/<name>`), or the absolute original URL for external servers.
+   */
+  url: string;
+  /** True for an external server the plugin declares but does not host. */
+  external?: boolean;
+  /** What this server exposes. */
+  description?: string;
+  /** Number of tools served, when known (omitted for external servers). */
+  toolCount?: number;
+}

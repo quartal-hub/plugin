@@ -25,6 +25,9 @@ export default defineConfig(({ mode }) => {
       port: Number(env.VITE_DEV_PORT ?? 5173),
       proxy: {
         "/plugin.json": apiTarget,
+        "/plugin.zip": apiTarget,
+        "/mcp.json": apiTarget,
+        "/com.quartal.plugin": apiTarget,
         "/open-api.json": apiTarget,
         "/types.json": apiTarget,
         "/mcp-server.json": apiTarget,

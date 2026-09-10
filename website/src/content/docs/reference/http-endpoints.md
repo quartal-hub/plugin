@@ -8,12 +8,23 @@ order: 2
 A running Quartal Plugin is a single web server. This page lists every endpoint it serves.
 All endpoints allow cross-origin requests (CORS `*`).
 
-## Plugin metadata
+## The Agent Plugins package
+
+The plugin's identity endpoints mirror the [Agent Plugins 1.0](https://agent-plugins.org)
+package: what you download at `/plugin.zip` is exactly what the individual URLs serve.
 
 | Endpoint | Returns |
 |---|---|
-| `GET /plugin.json` | The plugin overview: identity, style, and catalogs of tools, tool groups, skills, agents, widgets and prompts. The machine-readable entry point for the whole plugin. |
-| `GET /mcp-server.json` | MCP server info: name, version, title, description, website and icons. |
+| `GET /plugin.json` | The [Agent Plugins 1.0 manifest](https://agent-plugins.org/specification): name, version, description, author, license, keywords. Quartal-specific links (the OpenAPI document, the overview, the package) live under `extensions["com.quartal.plugin"]`. |
+| `GET /mcp.json` | The standard MCP server configuration: every MCP server of the plugin as `streamable-http` entries — the plugin's own hosted servers on this origin, plus any declared external servers at their original URLs. |
+| `GET /plugin.zip` | The whole installable Agent Plugin as a zip: both manifests (`plugin.json` and Claude's `.claude-plugin/plugin.json`), both MCP configs (`mcp.json` and `.mcp.json`), the skills, the agents, the README and the Quartal overview. |
+| `GET /com.quartal.plugin/contents.json` | The rich Quartal overview: identity, style, and catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. This is what the built-in docs site renders. |
+
+## Other metadata
+
+| Endpoint | Returns |
+|---|---|
+| `GET /mcp-server.json` | MCP server info (name, version, title, website, icons) plus the declared MCP capabilities. |
 | `GET /open-api.json` | The OpenAPI 3.0 document for the REST API. |
 | `GET /types.json` | A flat index of the TypeScript types used by the tools. |
 | `GET /readme.md` | The plugin's README as plain text. |
@@ -23,7 +34,11 @@ All endpoints allow cross-origin requests (CORS `*`).
 
 | Endpoint | Returns |
 |---|---|
-| `ALL /mcp` (and `/mcp/*`) | The MCP server over streamable HTTP. Capabilities: `tools` always; `prompts` when the plugin defines prompts; `resources` when the plugin has widgets (each widget is a `ui://widgets/<toolId>.html` resource). |
+| `ALL /mcp` | The main MCP server over streamable HTTP. Capabilities: `tools` always; `prompts` when the plugin defines prompts; `resources` when the plugin has widgets (each widget is a `ui://widgets/<toolId>.html` resource). |
+| `ALL /mcp/<server>` | Additional named MCP servers, when the plugin defines a `mcp.servers` map in `qrtl.config.ts`. Each serves its own subset of tool classes; widgets follow their tools, prompts stay on the main server. |
+| `GET /mcp/tools.json` | REST mirror of the MCP `tools/list` result — the exact same JSON, readable with a plain GET. Also per server: `GET /mcp/<server>/tools.json`. |
+| `GET /mcp/prompts.json` | REST mirror of `prompts/list`. |
+| `GET /mcp/resources.json` | REST mirror of `resources/list`. |
 
 ## REST API
 

@@ -33,9 +33,11 @@ Your plugin is an [Astro](https://astro.build) project running on `http://localh
 | `/` | Documentation site for your plugin (tools, widgets, skills, API testers) |
 | `/mcp` | The MCP server — connect any MCP client here |
 | `/api/<Class>/<method>` | The generated OpenAPI / REST actions |
-| `/plugin.json` | The plugin manifest |
+| `/plugin.json` | The [Agent Plugins](https://agent-plugins.org) manifest (`/plugin.zip` is the installable package) |
 | `/widgets/<toolId>` | Your widget pages |
 | `/skills/catalog.json` | The Agent Skills catalog |
+
+The full endpoint list is in the [HTTP endpoints](/docs/reference/http-endpoints) reference.
 
 ## Make it yours
 

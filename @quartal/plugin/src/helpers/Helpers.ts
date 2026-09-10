@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { DEFAULT_ICON_SIZES, derivePluginTitle } from "../hono-app/pluginMetadata.ts";
 import { guessIconMimeType } from "../hono-app/pluginIcon.ts";
-import type { PluginManifest, PluginIcon, PluginRepository } from "../model/index.ts";
+import type { PluginAuthor, PluginManifest, PluginIcon, PluginRepository } from "../model/index.ts";
 import type { QrtlConfig } from "../model/QrtlConfig.ts";
 
 const DEFAULT_ICON_SRC = "https://cdn.quartal.com/img/logo/quartal-logo-q.png";
@@ -90,7 +90,30 @@ export class Helpers {
     if (homepage) manifest.homepage = homepage;
     const repo = Helpers.normalizeRepository(pkg.repository);
     if (repo) manifest.repository = repo;
+    const author = Helpers.normalizeAuthor(pkg.author);
+    if (author) manifest.author = author;
+    const keywords = Array.isArray(pkg.keywords)
+      ? (pkg.keywords as unknown[]).filter((k): k is string => typeof k === "string")
+      : [];
+    if (keywords.length) manifest.keywords = keywords;
     return manifest;
+  }
+
+  /** Normalizes npm's `author` (string shorthand `"Name <email> (url)"` or object) to {@link PluginAuthor}. */
+  private static normalizeAuthor(author: unknown): PluginAuthor | undefined {
+    if (typeof author === "string") {
+      const email = /<([^>]+)>/.exec(author)?.[1];
+      const url = /\(([^)]+)\)/.exec(author)?.[1];
+      const name = author.replace(/<[^>]*>/, "").replace(/\([^)]*\)/, "").trim();
+      if (!name) return undefined;
+      return { name, ...(email ? { email } : {}), ...(url ? { url } : {}) };
+    }
+    if (author && typeof author === "object") {
+      const a = author as { name?: string; email?: string; url?: string };
+      if (!a.name) return undefined;
+      return { name: a.name, ...(a.email ? { email: a.email } : {}), ...(a.url ? { url: a.url } : {}) };
+    }
+    return undefined;
   }
 
   /**

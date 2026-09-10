@@ -445,8 +445,8 @@ describe("agent routes", () => {
     expect(res.headers.get("location")).toBe("/#/agents/greeter");
   });
 
-  it("lists agents in /plugin.json", async () => {
-    const info = await (await app.request("/plugin.json")).json() as PluginInfo;
+  it("lists agents in the contents overview", async () => {
+    const info = await (await app.request("/com.quartal.plugin/contents.json")).json() as PluginInfo;
     expect(info.links.agentsCatalog).toBe("/agents/catalog.json");
     expect(info.agents.map((a) => a.name)).toEqual(["flip-reporter", "greeter", "math-tutor"]);
     expect(info.agents[1]).toMatchObject({ model: "anthropic/claude-sonnet-5", toolCount: 3 });

@@ -1,7 +1,9 @@
 import type {
+  AgentPluginManifest,
   AgentsCatalogResponse,
   CodeType,
   McpServerInfo,
+  McpServersConfig,
   PluginInfo,
   SkillsCatalogResponse,
 } from "../model/index.ts";
@@ -53,9 +55,19 @@ export class PluginClient {
     return await res.text();
   }
 
-  /** Fetches `GET /plugin.json` (unified plugin overview). */
+  /** Fetches `GET /com.quartal.plugin/contents.json` (unified plugin overview). */
   getPlugin(): Promise<PluginInfo> {
-    return this.#fetchJson<PluginInfo>("/plugin.json");
+    return this.#fetchJson<PluginInfo>("/com.quartal.plugin/contents.json");
+  }
+
+  /** Fetches `GET /plugin.json` (the Agent Plugins 1.0 manifest). */
+  getManifest(): Promise<AgentPluginManifest> {
+    return this.#fetchJson<AgentPluginManifest>("/plugin.json");
+  }
+
+  /** Fetches `GET /mcp.json` (the standard MCP server configuration). */
+  getMcpConfig(): Promise<McpServersConfig> {
+    return this.#fetchJson<McpServersConfig>("/mcp.json");
   }
 
   /** Fetches `GET /readme.md`. */

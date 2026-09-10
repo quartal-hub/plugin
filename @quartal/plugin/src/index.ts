@@ -98,6 +98,23 @@ export { PluginApiHelper } from "./hono-app/PluginApiHelper.ts";
 export { PluginMcpHelper } from "./hono-app/PluginMcpHelper.ts";
 export { buildMcpServerImplementation } from "./hono-app/pluginIcon.ts";
 
+// Agent Plugins 1.0 package: manifests, mcp.json and the installable zip.
+export {
+  agentPluginName,
+  buildAgentPluginManifest,
+  buildClaudePluginManifest,
+  buildQuartalExtension,
+} from "./agent-plugin/buildAgentPluginManifest.ts";
+export { buildMcpServerEntries, buildMcpServersConfig } from "./agent-plugin/buildMcpServersConfig.ts";
+export { buildAgentPluginZip } from "./agent-plugin/buildAgentPluginZip.ts";
+export type { BuildAgentPluginZipInput } from "./agent-plugin/buildAgentPluginZip.ts";
+export { resolveMcpServers } from "./agent-plugin/resolveMcpServers.ts";
+export type {
+  ResolvedExternalMcpServer,
+  ResolvedLocalMcpServer,
+  ResolvedMcpServers,
+} from "./agent-plugin/resolveMcpServers.ts";
+
 // Widgets: page discovery (config-time catalog) + runtime live serving of MCP UI resources.
 export {
   discoverWidgets,
@@ -117,10 +134,18 @@ export {
   withWidgetOrigin,
 } from "./widgets/runtimeWidgets.ts";
 export type {
+  AgentPluginManifest,
   ExecuteFn,
   FetchWidgetHtml,
+  McpExternalServer,
+  McpRemoteServerConfig,
+  McpServerConfig,
+  McpServerDefinition,
   McpServerOptions,
+  McpServersConfig,
+  McpStdioServerConfig,
   PluginAppConfig,
+  QuartalPluginExtension,
   ToolModuleRegistry,
   WidgetEntry,
 } from "./model/index.ts";

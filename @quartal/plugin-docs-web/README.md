@@ -29,7 +29,7 @@ Then rebuild the hub / restart the consuming plugin's dev server to pick up the 
 
 ## Develop the SPA standalone
 
-`pnpm --filter @quartal/plugin-docs-web dev` serves it on :5173 and proxies `/plugin.json`, `/api`, `/mcp`,
+`pnpm --filter @quartal/plugin-docs-web dev` serves it on :5173 and proxies `/plugin.json`, `/com.quartal.plugin`, `/api`, `/mcp`,
 … plus plugin `public/` static files (e.g. README `/screen-shots/*.png`) to a running plugin
 (default `http://localhost:4321` which is Astro default; override with `VITE_HUB_API_PROXY`).
 

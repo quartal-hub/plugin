@@ -1,7 +1,7 @@
 ---
-title: "Creating tools"
+title: "Tools"
 description: "From a hello-world class to a fully documented tool: types, descriptions, and every JSDoc tag."
-section: tools
+section: creating
 order: 1
 ---
 

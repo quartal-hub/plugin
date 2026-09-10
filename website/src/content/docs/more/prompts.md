@@ -1,8 +1,8 @@
 ---
 title: "Prompts"
 description: "MCP prompts as simple TypeScript functions — guided starting points for interactive chat."
-section: more
-order: 1
+section: creating
+order: 4
 ---
 
 An **MCP prompt** is a reusable, parameterized starting point the user can pick in an interactive

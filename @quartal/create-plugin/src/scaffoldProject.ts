@@ -198,7 +198,7 @@ The plugin runs on <http://localhost:4321>:
 | \`/\` | Documentation site for your plugin |
 | \`/mcp\` | The MCP server — connect any MCP client here |
 | \`/api/<Class>/<method>\` | The generated OpenAPI / REST actions |
-| \`/plugin.json\` | The plugin manifest |
+| \`/plugin.json\` | The Agent Plugins manifest (\`/plugin.zip\` is the installable package) |
 | \`/widgets/<toolId>\` | Widget pages |
 | \`/skills/catalog.json\` | The Agent Skills catalog |
 

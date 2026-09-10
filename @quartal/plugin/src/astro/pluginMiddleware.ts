@@ -24,6 +24,7 @@ const SERVER_PREFIXES = [
   "/assets",
   "/widget-assets",
   "/.well-known",
+  "/com.quartal.plugin",
 ];
 
 /** Exact server paths handled by the Hono app (docs SPA shell, generated docs, legacy redirects). */
@@ -31,6 +32,8 @@ const SERVER_EXACT = new Set([
   "/",
   "/favicon.ico",
   "/plugin.json",
+  "/plugin.zip",
+  "/mcp.json",
   "/mcp-server.json",
   "/open-api.json",
   "/types.json",

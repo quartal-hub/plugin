@@ -796,7 +796,18 @@
       ]
     }
   ],
+  "mcpServers": [
+    {
+      "name": "test1",
+      "url": "/mcp",
+      "toolCount": 13
+    }
+  ],
   "links": {
+    "manifest": "/plugin.json",
+    "mcpConfig": "/mcp.json",
+    "packageZip": "/plugin.zip",
+    "contents": "/com.quartal.plugin/contents.json",
     "openApi": "/open-api.json",
     "types": "/types.json",
     "mcpServer": "/mcp-server.json",

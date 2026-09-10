@@ -75,8 +75,10 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 ## Run a plugin locally
 
 - Any `@samples/*`: `cd samples/<name> && pnpm install && npm run dev` → `astro dev`.
-  - `POST /api/<Class>/<method>`, docs SPA at `/`, `/plugin.json`, `/skills/catalog.json`, MCP at `/mcp`,
-    widgets at `/widgets/<toolId>`, agents at `/agents/catalog.json`.
+  - `POST /api/<Class>/<method>`, docs SPA at `/`, Agent Plugins manifest at `/plugin.json` (package at
+    `/plugin.zip`, MCP config at `/mcp.json`, overview at `/com.quartal.plugin/contents.json`),
+    `/skills/catalog.json`, MCP at `/mcp` (+ `/mcp/tools.json` REST mirror), widgets at
+    `/widgets/<toolId>`, agents at `/agents/catalog.json`.
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).
 - `@quartal/ui-plugin` Storybook: `pnpm --filter @quartal/ui-plugin storybook` (port 6007).
 - Refresh the vendored docs SPA after a `ui-plugin`/SPA change: `pnpm --filter @quartal/plugin-docs-web build`.

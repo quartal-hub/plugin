@@ -6,14 +6,29 @@ export type { QrtlConfig } from "./QrtlConfig.ts";
 export type {
   ExecuteFn,
   FetchWidgetHtml,
+  McpExternalServer,
+  McpServerDefinition,
   McpServerOptions,
   PluginAppConfig,
   ToolModuleRegistry,
   WidgetEntry,
 } from "./web-app/index.ts";
+export {
+  AGENT_PLUGIN_MANIFEST_SCHEMA,
+  AGENT_PLUGIN_MCP_SCHEMA,
+  QUARTAL_EXTENSION_NAMESPACE,
+} from "@quartal/plugin-core";
 export type {
   AgentCatalogEntry,
   AgentCatalogUrls,
+  AgentPluginManifest,
+  McpRemoteServerConfig,
+  McpServerConfig,
+  McpServersConfig,
+  McpStdioServerConfig,
+  PluginAuthor,
+  PluginMcpServerEntry,
+  QuartalPluginExtension,
   AgentColor,
   AgentDefinition,
   AgentEffort,

@@ -14,4 +14,6 @@ export interface McpServerInfo {
   websiteUrl?: string;
   /** Icons for MCP clients (same schema as plugin icons). */
   icons?: PluginIcon[];
+  /** Declared MCP capabilities (as in the `initialize` result), e.g. `tools`, `prompts`, `resources`. */
+  capabilities?: Record<string, unknown>;
 }

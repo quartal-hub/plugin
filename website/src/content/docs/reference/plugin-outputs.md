@@ -33,7 +33,7 @@ it is gitignored and regenerated on every change to `src/tools`, `src/prompts`, 
 
 | File | Contents |
 |---|---|
-| `contents.json` | The plugin overview: name, title, version, style, plus catalogs of tools, tool groups, skills, agents, widgets and prompts. Served at runtime as [`GET /plugin.json`](/docs/reference/http-endpoints). |
+| `contents.json` | The plugin overview: name, title, version, style, plus catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. Served at runtime as [`GET /com.quartal.plugin/contents.json`](/docs/reference/http-endpoints). |
 | `mcp-tools.json` | One descriptor per tool: id, source class/method, description, JSON Schema for input and output, and visibility. This drives both the MCP server and the REST routes. |
 | `mcp-prompts.json` | One descriptor per MCP prompt: id, description and arguments. |
 | `open-api.json` | A complete OpenAPI 3.0 document for the REST API — one `POST /api/<Class>/<method>` operation per tool, with your types as named component schemas and one tag per class. |
@@ -47,9 +47,12 @@ types and tags map to schema fields.
 
 ## Where the outputs are used
 
-- The **MCP server** at `/mcp` serves the tools, prompts and widget resources.
+- The **MCP server(s)** at `/mcp` (and `/mcp/<name>`) serve the tools, prompts and widget
+  resources.
 - The **REST API** at `/api/...` serves the same tools as HTTP actions, documented by
   `open-api.json`.
+- The **Agent Plugins package** — the standard `plugin.json` + `mcp.json` manifests served at the
+  origin root, downloadable as one installable zip at `/plugin.zip`.
 - The **built-in docs site** at `/` renders the overview, tools, skills, agents, widgets and
   prompts for a human reader.
 

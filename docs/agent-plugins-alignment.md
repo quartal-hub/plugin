@@ -1,9 +1,12 @@
 # Plan: Align plugin outputs with Agent Plugins 1.0
 
-> **Status: PLAN (2026-09).** This document proposes a rewrite of the plugin's generated outputs
-> and HTTP metadata endpoints. Nothing here is implemented yet. Backward compatibility is not a
-> constraint: `PluginClient`, the docs SPA, the samples and the couple of Salaxy projects that use
-> the plugin are updated by hand when this lands.
+> **Status: IMPLEMENTED (2026-09), with deferrals.** The endpoint alignment, the servable Agent
+> Plugins package (`/plugin.json`, `/mcp.json`, `/plugin.zip`), the MCP REST mirror, multi-server
+> `mcp.servers` config and external-server declaration are implemented. Still open: **proxy
+> servers** (re-serving an upstream MCP/OpenAPI source through the plugin's own endpoint),
+> emitting the package to disk at build time (needs a configured public base URL), and the
+> per-client verification items below. The Salaxy projects outside this repo still need their
+> by-hand update to the new endpoints.
 >
 > Companion plan: the Quartal Hub multi-target publishing plan (maintained in the Hub project).
 
@@ -189,11 +192,16 @@ Three server kinds:
 4. Whether `mcp-server.json` should be dropped entirely in favor of the `initialize` result and
    `/plugin.json`.
 
-## Suggested implementation phases (separate efforts, not this document)
+## Implementation status
 
-1. Generate the Agent Plugin package (`dist/agent-plugin/` + `/plugin.zip`) alongside current
-   outputs; validate against `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`.
-2. Endpoint alignment: `/plugin.json` → manifest, `/mcp.json`, `/com.quartal.plugin/contents.json`,
-   MCP REST mirror; update `PluginClient`, docs SPA, samples and the Salaxy projects.
-3. `mcp.servers` config: local multi-server + external emission; proxy servers last.
-4. Marketplace/Hub work per the companion plan.
+1. ✅ The servable Agent Plugin package: manifests built at request time (the origin is only known
+   then), the whole package downloadable at `/plugin.zip` (`src/agent-plugin/`). Disk emission for
+   offline distribution is deferred until a public base URL is part of the deploy config.
+2. ✅ Endpoint alignment: `/plugin.json` → manifest, `/mcp.json`, `/com.quartal.plugin/contents.json`,
+   `/plugin.zip`, MCP REST mirror (`/mcp/tools.json` etc., shared code path with the protocol
+   handlers in `PluginMcpHelper`), `/mcp-server.json` + capabilities. `PluginClient` and the docs
+   SPA updated; the Salaxy projects outside this repo are still to be updated by hand.
+3. ✅ `mcp.servers` config: local multi-server mounting (`/mcp/<name>`) + external emission
+   (`resolveMcpServers`). ⏳ Proxy servers (upstream MCP / OpenAPI introspection, harmonized auth)
+   are not implemented yet.
+4. ⏳ Marketplace/Hub work per the companion plan (Hub project).
