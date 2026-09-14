@@ -1,0 +1,87 @@
+/*
+ * All site styles live here (imported by BaseLayout, so Astro bundles them on
+ * every page). Vue components must not carry <style> blocks: components that
+ * are mounted from a client <script> (DocsLayout's markdown upgrade) would
+ * lose SFC styles in production builds, where Vite extracts CSS that Astro
+ * only links for components rendered in a template.
+ */
+
+/* --- Layout (BaseLayout) --- */
+
+/* The code.quartal.com editor elements render an iframe that fills the host;
+   the host itself must be a sized block. */
+qrtl-editor,
+qrtl-editor-code,
+qrtl-editor-url {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Keep generated markdown tables and code readable inside Bootstrap. */
+.qp-doc table {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+.qp-doc th,
+.qp-doc td {
+  border: 1px solid var(--bs-border-color);
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+.qp-doc th {
+  background: var(--bs-tertiary-bg);
+  text-align: left;
+}
+.qp-doc pre {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+.qp-doc blockquote {
+  border-left: 4px solid var(--bs-info);
+  padding-left: 1rem;
+  color: var(--bs-secondary-color);
+}
+.qp-doc h2 {
+  margin-top: 2.5rem;
+}
+.qp-doc h3 {
+  margin-top: 1.75rem;
+}
+
+/* --- CommandPrompt --- */
+
+.qcp-code, .qp-doc pre.qcp-code {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  /* .qp-doc pre rounds markdown code blocks; inside the card the card's own radius applies. */
+  border-radius: 0;
+}
+.qcp-cmd {
+  color: color-mix(in srgb, var(--bs-primary) 70%, white);
+  font-weight: 600;
+}
+
+/* --- CodeCompare --- */
+
+.q-code-compare pre {
+  min-height: 26rem;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+/* --- AgentPrompt --- */
+
+.qap-prompt {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--bs-border-radius);
+  max-width: 44rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}

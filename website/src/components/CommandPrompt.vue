@@ -116,16 +116,5 @@ async function copy() {
   </div>
 </template>
 
-<style scoped>
-.qcp-code {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  overflow-x: auto;
-  /* .qp-doc pre rounds markdown code blocks; inside the card the card's own radius applies. */
-  border-radius: 0;
-}
-.qcp-code :deep(.qcp-cmd) {
-  color: color-mix(in srgb, var(--bs-primary) 70%, white);
-  font-weight: 600;
-}
-</style>
+<!-- Styles live in src/styles/site.css: this component is also mounted from a client
+     <script> (DocsLayout), where SFC styles would be dropped in production builds. -->

@@ -72,10 +72,4 @@ const active = ref("quartal");
   </div>
 </template>
 
-<style scoped>
-.q-code-compare pre {
-  min-height: 26rem;
-  font-size: 0.85rem;
-  overflow-x: auto;
-}
-</style>
+<!-- Styles live in src/styles/site.css (site convention: no SFC style blocks). -->
