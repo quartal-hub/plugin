@@ -3,6 +3,8 @@ import { join, relative } from "node:path";
 
 import { cancel, confirm, intro, isCancel, note, outro, select, text } from "@clack/prompts";
 
+import type { CliArgs } from "./cliArgs.ts";
+import { parseCliArgs, USAGE } from "./cliArgs.ts";
 import type { CreatePluginOptions, WidgetFramework } from "./CreatePluginOptions.ts";
 import { scaffoldProject, unscopedName } from "./scaffoldProject.ts";
 
@@ -29,15 +31,21 @@ function unwrap<T>(value: T | symbol): T {
   return value as T;
 }
 
-/** Asks the starter-kit questions, pre-filling the name from argv when given. */
-async function promptOptions(argv: string[], cwd: string): Promise<CreatePluginOptions> {
-  let name = argv.find((arg) => !arg.startsWith("-")) ?? "";
+/**
+ * Resolves the starter-kit options: answers given as CLI flags are used as-is, `--yes` fills the
+ * rest with the defaults, and anything still unanswered is asked interactively.
+ */
+async function resolveOptions(args: CliArgs, cwd: string): Promise<CreatePluginOptions> {
+  let name = args.name ?? "";
   if (name) {
     const problem = validatePluginName(name, cwd);
     if (problem) {
       cancel(problem);
       process.exit(1);
     }
+  } else if (args.yes) {
+    cancel("--yes needs the plugin name as an argument: pnpm create @quartal/plugin my-plugin --yes");
+    process.exit(1);
   } else {
     name = unwrap(
       await text({
@@ -48,20 +56,23 @@ async function promptOptions(argv: string[], cwd: string): Promise<CreatePluginO
     );
   }
 
-  const description = unwrap(
-    await text({ message: "Description (optional)", placeholder: "What does your plugin do?", defaultValue: "" }),
-  );
+  const description = args.description ?? (args.yes
+    ? ""
+    : unwrap(
+      await text({ message: "Description (optional)", placeholder: "What does your plugin do?", defaultValue: "" }),
+    ));
 
-  const auth = unwrap(
+  const auth = args.auth ?? (args.yes ? false : unwrap(
     await confirm({
       message: "Add Quartal Hub authentication? (OAuth2 with the default Quartal auth)",
       initialValue: false,
     }),
-  );
+  ));
 
-  const sampleTool = unwrap(await confirm({ message: "Create a sample tool?", initialValue: true }));
+  const sampleTool = args.sampleTool ??
+    (args.yes ? true : unwrap(await confirm({ message: "Create a sample tool?", initialValue: true })));
 
-  const widgets = unwrap(
+  const widgets = args.widgets ?? (args.yes ? "vue" : unwrap(
     await select<WidgetFramework>({
       message: "Add widgets?",
       initialValue: "vue",
@@ -72,21 +83,35 @@ async function promptOptions(argv: string[], cwd: string): Promise<CreatePluginO
         { value: "js", label: "Plain JavaScript" },
       ],
     }),
-  );
+  ));
 
   return { name, description, auth, sampleTool, widgets };
 }
 
 /**
- * The `create-plugin` CLI: prompts for the starter-kit options, scaffolds the project and prints
- * the next steps.
- * @param argv Arguments after the bin name (an optional positional plugin name).
+ * The `create-plugin` CLI: resolves the starter-kit options (flags, `--yes` defaults, interactive
+ * prompts), scaffolds the project and prints the next steps.
+ * @param argv Arguments after the bin name — see {@link USAGE}.
  */
 export async function runCreatePlugin(argv: string[]): Promise<void> {
   const cwd = process.cwd();
+
+  let args: CliArgs;
+  try {
+    args = parseCliArgs(argv);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error(`\n${USAGE}`);
+    process.exit(1);
+  }
+  if (args.help) {
+    console.log(USAGE);
+    return;
+  }
+
   intro("Create a Quartal Plugin");
 
-  const options = await promptOptions(argv, cwd);
+  const options = await resolveOptions(args, cwd);
   const dir = await scaffoldProject(options, cwd);
 
   const steps = [
@@ -98,7 +123,7 @@ export async function runCreatePlugin(argv: string[]): Promise<void> {
       ? "1. Check the sample tool: src/tools/HelloWorld.ts"
       : "1. Create your first tool in src/tools/ and export it from src/tools/mod.ts",
     "2. Look at the options in package.json and qrtl.config.ts",
-    "3. Replace README.md with your own",
+    "3. Replace README.md with your own (AGENTS.md briefs coding agents on the conventions)",
   ];
   if (options.widgets !== "none" && !options.sampleTool) {
     steps.push("4. Rename src/pages/widgets/sayHello.astro to the id of the tool it visualizes");

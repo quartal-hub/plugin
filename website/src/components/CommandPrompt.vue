@@ -16,6 +16,8 @@ const selectedPm = ref<Pm | undefined>(undefined);
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 
+import { copyText } from "../lib/copyText.ts";
+
 const props = defineProps<{
   /** The command(s) to show, one per line, written in either pnpm or npm form. */
   command: string;
@@ -82,7 +84,7 @@ function select(pm: Pm) {
 
 const copied = ref(false);
 async function copy() {
-  await navigator.clipboard.writeText(activeCode.value);
+  if (!(await copyText(activeCode.value))) return;
   copied.value = true;
   setTimeout(() => (copied.value = false), 1500);
 }

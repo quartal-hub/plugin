@@ -16,6 +16,24 @@ npm create @quartal/plugin
 
 Optionally pass the project name directly: `pnpm create @quartal/plugin my-plugin`.
 
+### Non-interactive (CI and coding agents)
+
+Every question can be answered with a flag, and `--yes` accepts the defaults for the rest —
+so the command runs without a terminal:
+
+```bash
+pnpm create @quartal/plugin my-plugin --yes
+```
+
+```bash
+npm create @quartal/plugin -- my-plugin --yes
+```
+
+Flags: `--description <text>`, `--auth` / `--no-auth`, `--sample-tool` / `--no-sample-tool`,
+`--widgets none|vue|react|js`, `--yes`, `--help`. With npm, flags go after `--`.
+
+### Interactive prompts
+
 The starter kit asks for:
 
 - **Name** — the npm package / directory name (required).
@@ -40,8 +58,8 @@ to make the plugin your own.
 ## How it works
 
 Static files are copied from [`templates/`](./templates/); the option-dependent files
-(`package.json`, `qrtl.config.ts`, `astro.config.mjs`, `README.md`, `src/tools/mod.ts`) are
-generated in [`src/scaffoldProject.ts`](./src/scaffoldProject.ts). Dependency versions written into
+(`package.json`, `qrtl.config.ts`, `astro.config.mjs`, `README.md`, `AGENTS.md`,
+`src/tools/mod.ts`) are generated in [`src/scaffoldProject.ts`](./src/scaffoldProject.ts). Dependency versions written into
 the scaffolded `package.json` are pinned in
 [`src/dependencyVersions.ts`](./src/dependencyVersions.ts) — bump them there when the workspace
 packages release.

@@ -253,10 +253,13 @@ function countEnabled(count: number): boolean {
 
       <RouterLink
         to="/mcp"
-        class="list-group-item list-group-item-action text-truncate"
+        class="list-group-item list-group-item-action text-truncate d-flex justify-content-between align-items-start"
         :class="{ active: route.path === '/mcp' }"
       >
-        MCP Server
+        {{ (plugin.mcpServers?.length ?? 0) > 1 ? "MCP Servers" : "MCP Server" }}
+        <span v-if="(plugin.mcpServers?.length ?? 0) > 1" class="badge bg-primary rounded-pill">
+          {{ plugin.mcpServers.length }}
+        </span>
       </RouterLink>
     </div>
   </nav>

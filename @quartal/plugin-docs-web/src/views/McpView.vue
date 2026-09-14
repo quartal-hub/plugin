@@ -8,7 +8,17 @@ const props = defineProps<{ plugin: PluginInfo | null }>();
 
 const server = ref<McpServerInfo | null>(null);
 const error = ref("");
-const mcpEndpoint = pluginClient.url("/mcp");
+const mcpEndpoint = new URL(pluginClient.url("/mcp"), window.location.origin).toString();
+
+// All declared servers with display URLs: hosted URLs made absolute (so the copy button yields a
+// connectable URL), external servers at their original absolute URL.
+const mcpServers = computed(() =>
+  (props.plugin?.mcpServers ?? []).map((s) => ({
+    ...s,
+    displayUrl: s.external ? s.url : new URL(pluginClient.url(s.url), window.location.origin).toString(),
+    toolsJsonUrl: s.external ? undefined : pluginClient.url(`${s.url}/tools.json`),
+  })),
+);
 
 // Only tools exposed via MCP carry an `exposure.mcpName`.
 const mcpTools = computed(() => (props.plugin?.tools ?? []).filter((t) => t.exposure.mcpName));
@@ -35,6 +45,29 @@ onMounted(async () => {
     </p>
 
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+    <section v-if="mcpServers.length > 1" class="mb-4">
+      <h2 class="h5">Servers ({{ mcpServers.length }})</h2>
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr><th>Name</th><th>Endpoint</th><th>Tools</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="s in mcpServers" :key="s.name">
+            <td>
+              <code>{{ s.name }}</code>
+              <span v-if="s.external" class="badge text-bg-secondary ms-1">external</span>
+            </td>
+            <td><code>{{ s.displayUrl }}</code> <CopyButton :text="s.displayUrl" /></td>
+            <td>
+              <a v-if="s.toolsJsonUrl" :href="s.toolsJsonUrl" target="_blank" rel="noopener">{{ s.toolCount }}</a>
+              <span v-else class="text-muted">—</span>
+            </td>
+            <td class="text-muted small">{{ s.description }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
     <section v-if="server" class="mb-4">
       <h2 class="h5">Server (initialize)</h2>

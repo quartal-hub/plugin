@@ -28,7 +28,10 @@ const { title, description = "Quartal Plugins — packaged business functionalit
         <div class="navbar-nav flex-row gap-3">
           <a class="nav-link" href="/docs/getting-started/">Getting started</a>
           <a class="nav-link" href="/docs/">Documentation</a>
-          <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">GitHub</a>
+          <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">
+            <span class="bi bi-github me-1"></span>
+            GitHub
+          </a>
         </div>
       </div>
     </nav>
@@ -37,15 +40,21 @@ const { title, description = "Quartal Plugins — packaged business functionalit
       <slot />
     </main>
 
-    <footer class="border-top py-4 mt-5">
-      <div class="container d-flex flex-wrap justify-content-between text-body-secondary small">
+    <footer class="border-top py-4 bg-body-secondary">
+      <div class="container d-flex flex-wrap justify-content-between small">
         <span>Quartal Plugins — open source, MIT licensed.</span>
         <span>
           <a class="link-body-emphasis" href="https://github.com/quartal-hub/plugin" target="_blank">GitHub</a>
-          ·
-          <a class="link-body-emphasis" href="https://modelcontextprotocol.io/">MCP</a>
-          ·
-          <a class="link-body-emphasis" href="https://astro.build/">Astro</a>
+          <span> · </span>
+          <a class="link-body-emphasis" href="https://modelcontextprotocol.io/" target="_blank">MCP</a>
+          <span> · </span>
+          <a class="link-body-emphasis" href="https://agentskills.io/" target="_blank">Agent Skills</a>
+          <span> · </span>
+          <a class="link-body-emphasis" href="https://agent-plugins.org/" target="_blank">Agent Plugins</a>
+          <span> · </span>
+          <a class="link-body-emphasis" href="https://www.openapis.org/" target="_blank">OpenAPI</a>
+          <span> · </span>
+          <a class="link-body-emphasis" href="https://astro.build/" target="_blank">Astro</a>
         </span>
       </div>
     </footer>

@@ -16,6 +16,19 @@ order: 1
 pnpm create @quartal/plugin
 ```
 
+Coding agents and CI can skip the prompts — every question has a flag, and `--yes` accepts
+the defaults for the rest:
+
+```bash
+pnpm create @quartal/plugin my-plugin --yes
+```
+
+Flags: `--description <text>`, `--auth` / `--no-auth`, `--sample-tool` / `--no-sample-tool`,
+`--widgets none|vue|react|js` (with npm, pass flags after `--`:
+`npm create @quartal/plugin -- my-plugin --yes`). There is also a ready-made prompt for your
+coding agent on the [front page](/), and the docs are indexed for agents at
+[/llms.txt](/llms.txt).
+
 Alternatively, fork the template repository at
 [quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template).
 

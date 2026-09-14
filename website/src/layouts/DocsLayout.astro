@@ -1,6 +1,5 @@
 ---
-import { getCollection } from "astro:content";
-import { SECTIONS } from "../lib/sections.ts";
+import { docSections } from "../lib/docSections.ts";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -11,13 +10,7 @@ interface Props {
 }
 const { title, description, currentId } = Astro.props;
 
-const all = await getCollection("docs");
-const bySection = SECTIONS.map((section) => ({
-  ...section,
-  entries: all
-    .filter((e) => e.data.section === section.key)
-    .sort((a, b) => a.data.order - b.data.order),
-})).filter((s) => s.entries.length > 0);
+const bySection = await docSections();
 ---
 <BaseLayout title={`${title} — Quartal Plugins`} description={description}>
   <div class="container py-4">
