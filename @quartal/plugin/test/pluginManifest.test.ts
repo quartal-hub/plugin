@@ -100,6 +100,68 @@ describe("Helpers.getPluginManifest", () => {
     expect(m.style.icons.length).toBeGreaterThan(0);
   });
 
+  it("prefers qrtl.config identity fields over package.json", async () => {
+    const dir = await tempPkg({
+      "package.json": JSON.stringify({
+        name: "@samples/pkg-name",
+        version: "1.0.0",
+        description: "pkg description",
+        license: "MIT",
+        homepage: "https://pkg.example.com",
+        author: "Pkg Author <pkg@example.com>",
+        keywords: ["pkg"],
+        repository: "https://github.com/o/pkg.git",
+      }),
+      "qrtl.config.json": JSON.stringify({
+        name: "@samples/qrtl-name",
+        version: "9.9.9",
+        description: "qrtl description",
+        license: "Apache-2.0",
+        homepage: "https://qrtl.example.com",
+        author: { name: "Qrtl Author", email: "qrtl@example.com" },
+        keywords: ["qrtl"],
+        repository: { url: "https://github.com/o/qrtl.git", directory: "plugins/qrtl" },
+      }),
+    });
+    const m = await Helpers.getPluginManifest(dir);
+    expect(m.name).toBe("@samples/qrtl-name");
+    expect(m.version).toBe("9.9.9");
+    expect(m.description).toBe("qrtl description");
+    expect(m.license).toBe("Apache-2.0");
+    expect(m.homepage).toBe("https://qrtl.example.com");
+    expect(m.author).toEqual({ name: "Qrtl Author", email: "qrtl@example.com" });
+    expect(m.keywords).toEqual(["qrtl"]);
+    expect(m.repository).toEqual({ type: "git", url: "https://github.com/o/qrtl.git", directory: "plugins/qrtl" });
+  });
+
+  it("falls back to package.json for identity fields qrtl.config leaves unset", async () => {
+    const dir = await tempPkg({
+      "package.json": JSON.stringify({
+        name: "@samples/pkg-name",
+        version: "1.2.3",
+        license: "MIT",
+        author: "Pkg Author <pkg@example.com>",
+      }),
+      "qrtl.config.json": JSON.stringify({ title: "Overlay Only" }),
+    });
+    const m = await Helpers.getPluginManifest(dir);
+    expect(m.name).toBe("@samples/pkg-name");
+    expect(m.version).toBe("1.2.3");
+    expect(m.license).toBe("MIT");
+    expect(m.author).toEqual({ name: "Pkg Author", email: "pkg@example.com" });
+    expect(m.title).toBe("Overlay Only");
+  });
+
+  it("loadQrtlConfig tolerates a broken config unless strict, which names the file", async () => {
+    const dir = await tempPkg({
+      "package.json": JSON.stringify({ name: "@samples/broken", version: "1.0.0" }),
+      "qrtl.config.mjs": "export default {",
+    });
+    expect(await Helpers.loadQrtlConfig(dir)).toBeUndefined();
+    await expect(Helpers.loadQrtlConfig(dir, { strict: true })).rejects.toThrow(/qrtl\.config\.mjs/);
+    expect(await Helpers.findQrtlConfigPath(dir)).toBe(join(dir, "qrtl.config.mjs"));
+  });
+
   it("loads qrtl.config.mjs (default export)", async () => {
     const dir = await tempPkg({
       "package.json": JSON.stringify({ name: "@samples/esm", version: "0.1.0" }),

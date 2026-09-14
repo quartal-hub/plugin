@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { Helpers } from "../helpers/Helpers.ts";
 import { qrtlCodegenPlugin } from "../vite/qrtlCodegenPlugin.ts";
 import { pluginDevServerPlugin } from "../vite/pluginDevServer.ts";
 import { discoverWidgetsSync, toWidgetCatalog } from "../widgets/discoverWidgets.ts";
@@ -28,12 +29,17 @@ const QRTL_PLUGIN_DIR = "src/qrtl-plugin";
 const WIDGETS_PAGES_DIR = "src/pages/widgets";
 
 /**
- * Options for {@link qrtlPlugin}. Deliberately minimal: everything else (title, style, widget
- * names/CSP, deploy metadata) belongs in the plugin's `qrtl.config.ts`, and the file layout
- * (`src/tools/`, `src/pages/widgets/`, `src/qrtl-plugin/`) is a fixed convention.
+ * Options for {@link qrtlPlugin}. Deliberately minimal: everything about the plugin itself (auth
+ * mode, title, style, widget names/CSP, deploy metadata) belongs in the plugin's `qrtl.config.ts`,
+ * and the file layout (`src/tools/`, `src/pages/widgets/`, `src/qrtl-plugin/`) is a fixed
+ * convention — only Astro-host concerns remain here.
  */
 export interface QrtlPluginOptions {
-  /** Auth mode: `"anon"` (default, `getAnonApp`) or `"quartal-iam"` (`getAuthApp`). */
+  /**
+   * Auth mode override: `"anon"` (`getAnonApp`) or `"quartal-iam"` (`getAuthApp`).
+   * @deprecated Set `auth` in `qrtl.config.ts` instead. When passed, this option wins over the
+   * config file (and logs a deprecation warning).
+   */
   auth?: "anon" | "quartal-iam";
   /**
    * Whether to show the Astro dev toolbar in `astro dev` (default: `false`). Plugins are mostly
@@ -102,6 +108,7 @@ export interface AstroConfigSetupOptions {
   config: { output?: string; root?: URL | string; adapter?: unknown };
   updateConfig: (config: Record<string, unknown>) => void;
   addMiddleware: (opts: { entrypoint: string | URL; order: "pre" | "post" }) => void;
+  addWatchFile?: (path: string | URL) => void;
   logger?: { warn: (msg: string) => void; info: (msg: string) => void };
   command?: string;
 }
@@ -126,7 +133,6 @@ function toPath(root: URL | string | undefined): string | undefined {
  * @param options Integration options.
  */
 export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
-  const auth = options?.auth ?? "anon";
   const devToolbar = options?.devToolbar ?? false;
   const registryImport = `/${QRTL_PLUGIN_DIR}/tools.registry.ts`;
   const promptsRegistryImport = `/${QRTL_PLUGIN_DIR}/prompts.registry.ts`;
@@ -134,8 +140,23 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
   return {
     name: "@quartal/plugin",
     hooks: {
-      "astro:config:setup": ({ config, updateConfig, addMiddleware, logger, command }) => {
+      "astro:config:setup": async ({ config, updateConfig, addMiddleware, addWatchFile, logger, command }) => {
         const root = toPath(config.root);
+
+        // The auth mode comes from qrtl.config (`auth`), loaded strictly: a present-but-broken
+        // config must abort the build, not silently downgrade an authenticated plugin to anonymous.
+        const qrtlConfig = root ? await Helpers.loadQrtlConfig(root, { strict: true }) : undefined;
+        if (options?.auth) {
+          logger?.warn(
+            `qrtlPlugin({ auth: "${options.auth}" }) is deprecated — set \`auth: "${options.auth}"\` in qrtl.config.ts instead.`,
+          );
+        }
+        const auth = options?.auth ?? qrtlConfig?.auth ?? "anon";
+
+        // The auth mode is baked into the generated middleware at config time, so a qrtl.config
+        // edit must restart the dev server for this hook to run again.
+        const qrtlConfigPath = root ? await Helpers.findQrtlConfigPath(root) : undefined;
+        if (qrtlConfigPath) addWatchFile?.(qrtlConfigPath);
 
         // Discover widget pages so the catalog (contents.json) lists them. Synchronous so the plugins /
         // middleware are registered before this hook returns. The MCP resources themselves are resolved

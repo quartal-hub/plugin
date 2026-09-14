@@ -113,13 +113,16 @@ function renderPackageJson(options: CreatePluginOptions): string {
 /** Renders `qrtl.config.ts` with the chosen auth mode and commented-out optional settings. */
 function renderQrtlConfig(options: CreatePluginOptions): string {
   const auth = options.auth ? "quartal-iam" : "anon";
+  const authEnvComment = options.auth
+    ? `\n  // Defaults derive from the plugin name; override with OAUTH_ISSUER / OAUTH_AUDIENCE /\n  // OAUTH_RESOURCE env vars when needed.`
+    : "";
   return `import { defineQrtlConfig } from "@quartal/plugin";
 
 // Plugin metadata and options — see https://plugin.quartal.com for the full reference.
 export default defineQrtlConfig({
   title: ${JSON.stringify(titleFromName(options.name))},
   description: ${JSON.stringify(options.description || "A Quartal Plugin.")},
-  // Auth mode: "anon" (no authentication) or "quartal-iam" (OAuth2 via Quartal Hub).
+  // Auth mode: "anon" (no authentication) or "quartal-iam" (OAuth2 via Quartal Hub).${authEnvComment}
   auth: ${JSON.stringify(auth)},
   // Logo and icons shown by MCP clients and the docs site:
   // style: {
@@ -134,20 +137,16 @@ export default defineQrtlConfig({
 
 /** Renders `astro.config.mjs` with the integrations the chosen widget framework needs. */
 function renderAstroConfig(options: CreatePluginOptions): string {
-  const auth = options.auth ? "quartal-iam" : "anon";
   const frameworkImport = options.widgets === "vue"
     ? `import vue from "@astrojs/vue";\n`
     : options.widgets === "react"
     ? `import react from "@astrojs/react";\n`
     : "";
   const integrations = options.widgets === "vue"
-    ? `[vue(), qrtlPlugin({ auth: "${auth}" })]`
+    ? `[vue(), qrtlPlugin()]`
     : options.widgets === "react"
-    ? `[react(), qrtlPlugin({ auth: "${auth}" })]`
-    : `[qrtlPlugin({ auth: "${auth}" })]`;
-  const authComment = options.auth
-    ? `  // Quartal auth (OAuth2/OIDC JWT bearer). Defaults derive from the plugin name;\n  // override with OAUTH_ISSUER / OAUTH_AUDIENCE / OAUTH_RESOURCE env vars when needed.\n`
-    : "";
+    ? `[react(), qrtlPlugin()]`
+    : `[qrtlPlugin()]`;
   return `import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
 ${frameworkImport}import qrtlPlugin from "@quartal/plugin/astro";
@@ -155,7 +154,7 @@ ${frameworkImport}import qrtlPlugin from "@quartal/plugin/astro";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-${authComment}  integrations: ${integrations},
+  integrations: ${integrations},
 });
 `;
 }

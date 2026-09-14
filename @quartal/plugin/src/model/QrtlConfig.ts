@@ -1,19 +1,37 @@
-import type { WidgetCsp } from "@quartal/plugin-core";
+import type { PluginAuthor, WidgetCsp } from "@quartal/plugin-core";
 import type { McpServerOptions } from "./web-app/McpServerOptions.ts";
 
 /**
- * Quartal Plugin configuration (`qrtl.config.ts` / `.js` / `.mjs` / `.json`). Holds the Quartal
- * metadata that `package.json` has no place for — title, visual style, MCP options, auth mode, deploy
- * target, and widget CSP. Combined with `package.json` (name/version/description/license/…) it fully
- * describes the plugin. Author it with a `defineQrtlConfig({...})` default export.
+ * Quartal Plugin configuration (`qrtl.config.ts` / `.js` / `.mjs` / `.json`) — the single place to
+ * configure a plugin: identity, visual style, MCP options, auth mode, deploy target, and widget CSP.
+ * Every identity field defaults from the corresponding `package.json` field; a value here takes
+ * precedence. Author it with a `defineQrtlConfig({...})` default export.
  */
 export interface QrtlConfig {
-  /** Overrides the plugin name (defaults to `package.json#name`). */
+  /** Plugin name (defaults to `package.json#name`). */
   name?: string;
   /** End-user-friendly title shown in docs and MCP (defaults to a title derived from the name). */
   title?: string;
   /** Short description (defaults to `package.json#description`). */
   description?: string;
+  /** Plugin version (defaults to `package.json#version`). */
+  version?: string;
+  /** License identifier, e.g. `MIT` (defaults to `package.json#license`). */
+  license?: string;
+  /** Primary public URL for the plugin (defaults to `package.json#homepage`). */
+  homepage?: string;
+  /**
+   * Plugin author — npm's string shorthand (`"Name <email> (url)"`) or object form (defaults to
+   * `package.json#author`).
+   */
+  author?: string | PluginAuthor;
+  /**
+   * Source repository — npm's string shorthand (the URL) or object form (defaults to
+   * `package.json#repository`).
+   */
+  repository?: string | { type?: string; url: string; directory?: string };
+  /** Search keywords (defaults to `package.json#keywords`). */
+  keywords?: string[];
   /** Visual elements for documentation and plugin listings. */
   style?: {
     /** Front-page/documentation logo URL (≥300px wide). Defaults to the Quartal logo. */

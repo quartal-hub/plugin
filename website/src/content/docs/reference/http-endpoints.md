@@ -2,7 +2,7 @@
 title: "HTTP endpoints"
 description: "Every endpoint a running Quartal Plugin serves: metadata, MCP, REST API, skills, agents, widgets and docs."
 section: reference
-order: 2
+order: 3
 ---
 
 A running Quartal Plugin is a single web server. This page lists every endpoint it serves.

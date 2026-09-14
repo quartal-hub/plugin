@@ -13,8 +13,8 @@ tool metadata for you. This page lists exactly what you author and exactly what 
 
 | Path | Format | Purpose |
 |---|---|---|
-| `package.json` | JSON | Plugin identity: `name`, `version`, `description`, `license`, `repository`. |
-| `qrtl.config.ts` | TypeScript (`defineQrtlConfig({...})`) | Quartal metadata: title, style/skin, auth mode, widget settings. |
+| `qrtl.config.ts` | TypeScript (`defineQrtlConfig({...})`) | The plugin configuration: identity, title, style/skin, auth mode, MCP servers, widget settings. See [Configuration](/docs/reference/configuration). |
+| `package.json` | JSON | The npm manifest. Identity fields (`name`, `version`, `description`, `license`, `repository`, …) act as fallbacks for `qrtl.config.ts`. |
 | `astro.config.mjs` | JavaScript | Astro setup: `integrations: [qrtlPlugin()]`, `output: "server"`, an adapter. |
 | `src/tools/*.ts` + `src/tools/mod.ts` | TypeScript classes | Every public method of every exported class becomes one MCP tool **and** one REST action. See [Creating tools](/docs/tools/creating-tools). |
 | `src/prompts/*.ts` + `src/prompts/mod.ts` | TypeScript classes | Optional. Each method becomes an MCP prompt. See [Prompts](/docs/more/prompts). |

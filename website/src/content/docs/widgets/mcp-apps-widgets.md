@@ -70,7 +70,7 @@ export default defineQrtlConfig({
 });
 ```
 
-Your plugin's own serving origin is whitelisted automatically.
+Your plugin's own serving origin is whitelisted automatically. See [Configuration](/docs/reference/configuration) for details.
 
 ## Widget-only helper tools
 
