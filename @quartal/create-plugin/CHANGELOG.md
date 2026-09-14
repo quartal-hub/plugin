@@ -1,5 +1,19 @@
 # @quartal/create-plugin
 
+## 0.7.0
+
+### Minor Changes
+
+- aed3d80: Non-interactive scaffolding for CI and coding agents: every starter-kit question now has a CLI
+  flag (`--description`, `--auth`/`--no-auth`, `--sample-tool`/`--no-sample-tool`, `--widgets`),
+  `--yes` accepts the defaults for the rest, and `--help` prints the usage. Scaffolded projects
+  now include an `AGENTS.md` that briefs coding agents on the project conventions.
+
+### Patch Changes
+
+- aed3d80: Scaffolded projects configure the auth mode only in `qrtl.config.ts`; the generated
+  `astro.config.mjs` uses the bare `qrtlPlugin()` integration.
+
 ## 0.6.1
 
 ### Patch Changes
