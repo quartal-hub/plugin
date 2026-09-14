@@ -1,4 +1,6 @@
 ---
+import "../styles/site.css";
+
 interface Props {
   title: string;
   description?: string;
@@ -61,47 +63,3 @@ const { title, description = "Quartal Plugins — packaged business functionalit
     <script type="module" src="https://code.quartal.com/qrtl-editor.js"></script>
   </body>
 </html>
-
-<style is:global>
-  /* The code.quartal.com editor elements render an iframe that fills the host;
-     the host itself must be a sized block. */
-  qrtl-editor,
-  qrtl-editor-code,
-  qrtl-editor-url {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  /* Keep generated markdown tables and code readable inside Bootstrap. */
-  .qp-doc table {
-    width: 100%;
-    margin-bottom: 1rem;
-    border-collapse: collapse;
-  }
-  .qp-doc th,
-  .qp-doc td {
-    border: 1px solid var(--bs-border-color);
-    padding: 0.5rem 0.75rem;
-    vertical-align: top;
-  }
-  .qp-doc th {
-    background: var(--bs-tertiary-bg);
-    text-align: left;
-  }
-  .qp-doc pre {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-  }
-  .qp-doc blockquote {
-    border-left: 4px solid var(--bs-info);
-    padding-left: 1rem;
-    color: var(--bs-secondary-color);
-  }
-  .qp-doc h2 {
-    margin-top: 2.5rem;
-  }
-  .qp-doc h3 {
-    margin-top: 1.75rem;
-  }
-</style>

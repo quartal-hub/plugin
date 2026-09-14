@@ -58,15 +58,4 @@ async function copy() {
   <pre v-if="open" class="qap-prompt order-last w-100 text-start text-light mt-2 p-3 mb-0">{{ PROMPT }}</pre>
 </template>
 
-<style scoped>
-.qap-prompt {
-  font-size: 0.75rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: var(--bs-border-radius);
-  max-width: 44rem;
-  max-height: 16rem;
-  overflow-y: auto;
-}
-</style>
+<!-- Styles live in src/styles/site.css (site convention: no SFC style blocks). -->
