@@ -1,8 +1,8 @@
 ---
 title: "Agent Skills"
 description: "Ship the know-how next to the tools: markdown skills that guide agents through your business logic."
-section: skills
-order: 1
+section: creating
+order: 3
 ---
 
 **Agent Skills** are folders of markdown (plus optional assets and scripts) that teach an AI agent

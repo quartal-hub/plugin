@@ -11,15 +11,38 @@ async function* walkFiles(dir: string): AsyncGenerator<string> {
   }
 }
 
-/** Builds a ZIP archive (store, no compression) for all files under `dir`. */
-export async function buildDirectoryZip(dir: string): Promise<Uint8Array> {
-  const files: { path: string; data: Uint8Array }[] = [];
+/** One file to include in a ZIP archive. */
+export interface ZipFileEntry {
+  /** Archive-relative path (forward slashes). */
+  path: string;
+  /** File bytes. */
+  data: Uint8Array;
+}
+
+/** Collects the files under `dir` as ZIP entries (dotfiles skipped), paths prefixed with `prefix`.
+ * @param dir Directory to collect from.
+ * @param prefix Archive path prefix for the entries (e.g. `skills/my-skill`); empty for none.
+ */
+export async function collectZipEntries(dir: string, prefix = ""): Promise<ZipFileEntry[]> {
+  const files: ZipFileEntry[] = [];
   for await (const path of walkFiles(dir)) {
     const rel = relative(dir, path).replaceAll("\\", "/");
     if (rel.startsWith(".") || rel.includes("/.")) continue;
-    files.push({ path: rel, data: new Uint8Array(await readFile(path)) });
+    files.push({ path: prefix ? `${prefix}/${rel}` : rel, data: new Uint8Array(await readFile(path)) });
   }
-  files.sort((a, b) => a.path.localeCompare(b.path));
+  return files;
+}
+
+/** Builds a ZIP archive (store, no compression) for all files under `dir`. */
+export async function buildDirectoryZip(dir: string): Promise<Uint8Array> {
+  return buildFilesZip(await collectZipEntries(dir));
+}
+
+/** Builds a ZIP archive (store, no compression) from in-memory file entries.
+ * @param entries Files to archive; sorted by path for a deterministic archive.
+ */
+export function buildFilesZip(entries: ZipFileEntry[]): Uint8Array {
+  const files = [...entries].sort((a, b) => a.path.localeCompare(b.path));
 
   const parts: Uint8Array[] = [];
   const central: Uint8Array[] = [];

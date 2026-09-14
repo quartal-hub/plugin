@@ -10,6 +10,18 @@ const props = defineProps<{
   error?: string;
 }>();
 
+// MCP servers with display URLs: hosted (relative) URLs resolved against the main endpoint's
+// origin, external servers shown at their original absolute URL.
+const mcpServers = computed(() => {
+  const servers = props.plugin.mcpServers ?? [];
+  const origin = props.mcpUrl ? new URL(props.mcpUrl).origin : undefined;
+  return servers.map((server) => ({
+    ...server,
+    displayUrl: server.external || !origin ? server.url : new URL(server.url, origin).toString(),
+  }));
+});
+const multiServer = computed(() => mcpServers.value.length > 1);
+
 // Resources come last: they are not in use yet, so they never lead the row.
 const summaryCards = computed(() => [
   { label: "Tools", count: props.plugin.tools.length, to: "/tools", bg: "text-bg-primary" },
@@ -31,7 +43,23 @@ const summaryCards = computed(() => [
         <h1 class="display-5 mb-0">{{ plugin.title }}</h1>
         <p class="mb-0"><code class="text-muted fs-4">{{ plugin.name }} ({{ plugin.version }})</code></p>
         <p class="lead">{{ plugin.description }}</p>
-        <p v-if="mcpUrl" class="lead-x">
+        <div v-if="multiServer" class="lead-x">
+          <p class="mb-1">To connect Claude or ChatGPT to the API, use the <b>MCP servers</b>:</p>
+          <ul class="list-unstyled mb-0">
+            <li v-for="server in mcpServers" :key="server.name" class="mb-1">
+              <b>{{ server.name }}</b>
+              <span v-if="server.external" class="badge text-bg-secondary ms-1">external</span>
+              <span v-else-if="server.toolCount !== undefined" class="badge text-bg-light border ms-1">
+                {{ server.toolCount }} {{ server.toolCount === 1 ? "tool" : "tools" }}
+              </span>
+              <br />
+              <code>{{ server.displayUrl }}</code>
+              <slot name="server-copy" :url="server.displayUrl" />
+              <div v-if="server.description" class="text-muted small">{{ server.description }}</div>
+            </li>
+          </ul>
+        </div>
+        <p v-else-if="mcpUrl" class="lead-x">
           To connect Claude or ChatGPT to the API, use the <b>MCP service</b> at<br />
           <code>{{ mcpUrl }}</code>
           <slot name="mcp-copy" />

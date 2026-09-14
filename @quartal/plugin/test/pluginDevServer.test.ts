@@ -57,9 +57,9 @@ function invoke(handler: ConnectMiddleware, url: string) {
 }
 
 describe("pluginDevServerPlugin", () => {
-  it("delegates GET /plugin.json to the Hono app (serves generated contents.json)", async () => {
+  it("delegates GET /com.quartal.plugin/contents.json to the Hono app (serves generated contents.json)", async () => {
     const { handler } = mountMiddleware();
-    const { nexted, status, body } = await invoke(handler, "/plugin.json");
+    const { nexted, status, body } = await invoke(handler, "/com.quartal.plugin/contents.json");
     expect(nexted).toBe(false);
     expect(status).toBe(200);
     const info = JSON.parse(body) as { name: string; tools: unknown[] };
@@ -89,10 +89,10 @@ describe("pluginDevServerPlugin", () => {
 
     // Build the app once, invalidate via a change under qrtl-plugin, and confirm the middleware
     // still serves (i.e. the app is rebuilt, not left in a broken cached state).
-    const first = await invoke(handler, "/plugin.json");
+    const first = await invoke(handler, "/com.quartal.plugin/contents.json");
     expect(first.status).toBe(200);
     fire("change", join(fixturePkg, "qrtl-plugin", "contents.json"));
-    const second = await invoke(handler, "/plugin.json");
+    const second = await invoke(handler, "/com.quartal.plugin/contents.json");
     expect(second.status).toBe(200);
     expect(JSON.parse(second.body).name).toBe("@samples/test1");
   });

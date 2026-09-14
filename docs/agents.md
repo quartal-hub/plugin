@@ -128,7 +128,7 @@ the agent definition is served publicly.
 | `GET /agents/catalog.json` | `AgentsCatalogResponse` — every agent, resolved, with absolute URLs |
 | `GET /agents/<name>.md` | The Claude agent file: the authored markdown, or a rendering of a JSON agent |
 | `GET /agents/<name>.json` | The resolved `AgentDefinition` |
-| `GET /plugin.json` | `agents[]` summaries + `links.agentsCatalog` |
+| `GET /com.quartal.plugin/contents.json` | `agents[]` summaries + `links.agentsCatalog` |
 
 `@quartal/plugin-core`'s `PluginClient.getAgentsCatalog()` fetches the catalog.
 

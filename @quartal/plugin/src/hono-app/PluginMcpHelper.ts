@@ -11,6 +11,7 @@ import {
 import { z } from "@hono/zod-openapi";
 
 import { buildMcpTools } from "../code/buildMcpTools.ts";
+import { resolveMcpServers, type ResolvedLocalMcpServer } from "../agent-plugin/resolveMcpServers.ts";
 import type {
   PluginManifest,
   ExecuteFn,
@@ -66,7 +67,11 @@ export class PluginMcpHelper {
   private serverOrigin = "";
   private handler: McpHttpHandler | null = null;
 
-  /** Mounts an MCP server at `/mcp` on `app`, wiring auth middleware and supplied widgets.
+  /**
+   * Mounts the plugin's MCP server(s) on `app`, wiring auth middleware and supplied widgets. The
+   * main server serves at `/mcp`; additional local servers from `mcp.servers` mount at
+   * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts stay on
+   * the main server). External servers are declaration-only (`mcp.json`) and are not mounted.
    * @param app Hono app to mount the MCP routes on.
    * @param helper Shared hub API helper (metadata, execution).
    * @param config Optional plugin app configuration.
@@ -84,17 +89,37 @@ export class PluginMcpHelper {
     const baseDir = config?.pluginRootFolder ?? process.cwd();
     const hubDir = join(baseDir, helper.qrtlPluginDir);
     const toolEntries = await PluginMcpHelper.loadToolEntries(helper, hubDir);
-    const mcpHelper = new PluginMcpHelper(
-      helper,
-      toolEntries,
-      widgets,
-      typeof config?.mcp === "object" ? config.mcp : undefined,
-      config?.fetchWidgetHtml,
-    );
+    const mcpOptions = typeof config?.mcp === "object" ? config.mcp : undefined;
+
     if (config?.auth?.middleware) {
       app.use("/mcp", config.auth.middleware);
+      app.use("/mcp/*", config.auth.middleware);
     }
-    app.route("/mcp", mcpHelper.getApp());
+
+    const { local } = resolveMcpServers(helper.manifest!, mcpOptions);
+    const mcpRoot = new Hono();
+    const buildServerHelper = (server: ResolvedLocalMcpServer): PluginMcpHelper => {
+      const classFilter = server.tools ? new Set(server.tools) : undefined;
+      const serverTools = classFilter ? toolEntries.filter((t) => classFilter.has(t.className)) : toolEntries;
+      const serverToolIds = new Set(serverTools.map((t) => t.id));
+      return new PluginMcpHelper(
+        helper,
+        serverTools,
+        widgets.filter((w) => serverToolIds.has(w.toolId)),
+        server.main ? helper.mcpPrompts : [],
+        { ...mcpOptions, ...(server.main ? {} : { name: server.name }) },
+        config?.fetchWidgetHtml,
+      );
+    };
+    // Named sub-servers are registered before the main server's catch-all so `/mcp/<name>` wins.
+    for (const server of local.filter((s) => !s.main)) {
+      mcpRoot.route(`/${server.name}`, buildServerHelper(server).getApp());
+    }
+    const main = local.find((s) => s.main);
+    if (main) {
+      mcpRoot.route("/", buildServerHelper(main).getApp());
+    }
+    app.route("/mcp", mcpRoot);
   }
 
   private static async loadToolEntries(helper: PluginApiHelper, hubDir: string): Promise<McpToolDescriptor[]> {
@@ -112,12 +137,13 @@ export class PluginMcpHelper {
     apiHelper: PluginApiHelper,
     toolEntries: McpToolDescriptor[],
     widgets: WidgetEntry[],
+    promptEntries: McpPromptDescriptor[],
     serverOptions?: McpServerOptions,
     fetchWidgetHtml?: FetchWidgetHtml,
   ) {
     this.manifest = apiHelper.manifest!;
     this.toolEntries = toolEntries;
-    this.promptEntries = apiHelper.mcpPrompts;
+    this.promptEntries = promptEntries;
     this.widgets = widgets;
     this.widgetsByToolId = new Map(widgets.map((w) => [w.toolId, w]));
     this.widgetsByUri = new Map(widgets.map((w) => [w.uri, w]));
@@ -153,9 +179,19 @@ export class PluginMcpHelper {
     return headers;
   }
 
-  /** Returns the Hono sub-app that serves MCP via `createMcpHandler` (modern + legacy fallback). */
+  /**
+   * Returns the Hono sub-app for this server: the REST mirror of the MCP list results
+   * (`GET tools.json` / `prompts.json` / `resources.json`, byte-equivalent to `tools/list` /
+   * `prompts/list` / `resources/list`) and the MCP protocol itself via `createMcpHandler`
+   * (modern + legacy fallback) on everything else.
+   */
   getApp(): Hono {
     const app = new Hono();
+    // Mirror routes are registered before the protocol catch-all so a GET for them is never
+    // swallowed by the MCP handler.
+    app.get("/tools.json", (c) => c.json(this.listToolsResult()));
+    app.get("/prompts.json", (c) => c.json(this.listPromptsResult()));
+    app.get("/resources.json", (c) => c.json(this.listResourcesResult(new URL(c.req.url).origin)));
     app.all("/*", (c) => {
       // Fallback origin for requests without a `host` header — latched from the first request,
       // matching the previous transport-creation-time behavior. `resolveOrigin` prefers the
@@ -165,6 +201,56 @@ export class PluginMcpHelper {
       return this.handler.fetch(c.req.raw);
     });
     return app;
+  }
+
+  /** The MCP `tools/list` result — one source for the protocol handler and `GET tools.json`. */
+  private listToolsResult() {
+    // The generator always emits `type: "object"` schemas (see buildToolInputSchema /
+    // buildToolOutputSchema), which the SDK's Tool type requires but our JSON-level
+    // McpToolDescriptor cannot express — hence the cast.
+    type ObjectSchema = { type: "object"; [key: string]: unknown };
+    return {
+      tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema, visibility }) => {
+        const widgetEntry = this.widgetsByToolId.get(id);
+        // MCP Apps `_meta.ui` (SEP-1865): the tool's UI resource and its visibility scopes.
+        const ui = {
+          ...(widgetEntry ? { resourceUri: widgetEntry.uri } : {}),
+          ...(visibility ? { visibility } : {}),
+        };
+        return {
+          name: id,
+          ...(title ? { title } : {}),
+          description,
+          inputSchema: inputSchema as ObjectSchema,
+          ...(outputSchema ? { outputSchema: outputSchema as ObjectSchema } : {}),
+          ...(Object.keys(ui).length > 0 ? { _meta: { ui } } : {}),
+        };
+      }),
+    };
+  }
+
+  /** The MCP `resources/list` result — one source for the protocol handler and `GET resources.json`. */
+  private listResourcesResult(origin: string) {
+    return {
+      resources: this.widgets.map((w) => ({
+        uri: w.uri,
+        name: w.name,
+        mimeType: WIDGET_MIME_TYPE,
+        _meta: { ui: { csp: withWidgetOrigin(w.csp, origin) } },
+      })),
+    };
+  }
+
+  /** The MCP `prompts/list` result — one source for the protocol handler and `GET prompts.json`. */
+  private listPromptsResult() {
+    return {
+      prompts: this.promptEntries.map(({ id, title, description, arguments: args }) => ({
+        name: id,
+        ...(title ? { title } : {}),
+        description,
+        ...(args.length ? { arguments: args } : {}),
+      })),
+    };
   }
 
   /**
@@ -188,41 +274,11 @@ export class PluginMcpHelper {
     // on connect). 2026-07-28 clients pass `logLevel` per request in `_meta` instead; no handler
     // is involved.
 
-    // The generator always emits `type: "object"` schemas (see buildToolInputSchema /
-    // buildToolOutputSchema), which the SDK's Tool type requires but our JSON-level
-    // McpToolDescriptor cannot express — hence the cast.
-    type ObjectSchema = { type: "object"; [key: string]: unknown };
-    mcpServer.setRequestHandler("tools/list", () => ({
-      tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema, visibility }) => {
-        const widgetEntry = this.widgetsByToolId.get(id);
-        // MCP Apps `_meta.ui` (SEP-1865): the tool's UI resource and its visibility scopes.
-        const ui = {
-          ...(widgetEntry ? { resourceUri: widgetEntry.uri } : {}),
-          ...(visibility ? { visibility } : {}),
-        };
-        return {
-          name: id,
-          ...(title ? { title } : {}),
-          description,
-          inputSchema: inputSchema as ObjectSchema,
-          ...(outputSchema ? { outputSchema: outputSchema as ObjectSchema } : {}),
-          ...(Object.keys(ui).length > 0 ? { _meta: { ui } } : {}),
-        };
-      }),
-    }));
+    mcpServer.setRequestHandler("tools/list", () => this.listToolsResult());
 
     if (hasWidgets) {
-      mcpServer.setRequestHandler("resources/list", (_request, ctx) => {
-        const origin = this.resolveOrigin(ctx);
-        return {
-          resources: this.widgets.map((w) => ({
-            uri: w.uri,
-            name: w.name,
-            mimeType: WIDGET_MIME_TYPE,
-            _meta: { ui: { csp: withWidgetOrigin(w.csp, origin) } },
-          })),
-        };
-      });
+      mcpServer.setRequestHandler("resources/list", (_request, ctx) =>
+        this.listResourcesResult(this.resolveOrigin(ctx)));
 
       mcpServer.setRequestHandler("resources/read", async (request, ctx) => {
         const uri = request.params.uri;
@@ -255,14 +311,7 @@ export class PluginMcpHelper {
     }
 
     if (hasPrompts) {
-      mcpServer.setRequestHandler("prompts/list", () => ({
-        prompts: this.promptEntries.map(({ id, title, description, arguments: args }) => ({
-          name: id,
-          ...(title ? { title } : {}),
-          description,
-          ...(args.length ? { arguments: args } : {}),
-        })),
-      }));
+      mcpServer.setRequestHandler("prompts/list", () => this.listPromptsResult());
 
       mcpServer.setRequestHandler("prompts/get", async (request, ctx) => {
         const { name: promptName, arguments: args } = request.params;

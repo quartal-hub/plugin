@@ -1,3 +1,4 @@
+export * from "./agent-plugin/index.ts";
 export * from "./agents/index.ts";
 export * from "./code-file/index.ts";
 export * from "./context/index.ts";

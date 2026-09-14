@@ -38,6 +38,7 @@ describe("scaffoldProject", () => {
       "astro.config.mjs",
       "qrtl.config.ts",
       "README.md",
+      "AGENTS.md",
       "public/.gitkeep",
       "src/tools/mod.ts",
       "src/tools/HelloWorld.ts",
@@ -61,6 +62,12 @@ describe("scaffoldProject", () => {
 
     const tool = await readFile(join(dir, "src/tools/HelloWorld.ts"), "utf8");
     expect(tool).not.toContain("QuartalPluginContext");
+
+    const agents = await readFile(join(dir, "AGENTS.md"), "utf8");
+    expect(agents).toContain("# My Plugin — guide for coding agents");
+    expect(agents).toContain('auth: "anon"');
+    expect(agents).toContain("`src/pages/widgets/`");
+    expect(agents).toContain("HelloWorld.ts");
   });
 
   it("scaffolds auth + React with the context-aware tool and React deps", async () => {
@@ -75,8 +82,12 @@ describe("scaffoldProject", () => {
     const tool = await readFile(join(dir, "src/tools/HelloWorld.ts"), "utf8");
     expect(tool).toContain("QuartalPluginContext");
 
+    const qrtlConfig = await readFile(join(dir, "qrtl.config.ts"), "utf8");
+    expect(qrtlConfig).toContain('auth: "quartal-iam"');
+
     const astroConfig = await readFile(join(dir, "astro.config.mjs"), "utf8");
-    expect(astroConfig).toContain('qrtlPlugin({ auth: "quartal-iam" })');
+    expect(astroConfig).toContain("qrtlPlugin()");
+    expect(astroConfig).not.toContain("auth");
     expect(astroConfig).toContain("react()");
     expect(existsSync(join(dir, "src/components/SayHello.tsx"))).toBe(true);
   });
@@ -88,6 +99,10 @@ describe("scaffoldProject", () => {
     expect(existsSync(join(dir, "src/pages"))).toBe(false);
     expect(existsSync(join(dir, "src/layouts"))).toBe(false);
     expect(await readFile(join(dir, "src/tools/mod.ts"), "utf8")).toContain("export {};");
+
+    const agents = await readFile(join(dir, "AGENTS.md"), "utf8");
+    expect(agents).not.toContain("Widgets");
+    expect(agents).not.toContain("HelloWorld.ts");
 
     const pkg = await readJson(dir, "package.json");
     expect(Object.keys(pkg.dependencies)).toEqual(["@astrojs/node", "@quartal/plugin", "astro"]);

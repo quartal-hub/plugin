@@ -1,3 +1,4 @@
+import type { PluginAuthor } from "../agent-plugin/AgentPluginManifest.ts";
 import type { PluginIcon } from "./PluginIcon.ts";
 
 /** Source repository of a plugin, following npm's `repository` field. */
@@ -30,6 +31,10 @@ export interface PluginManifest {
   homepage?: string;
   /** The license text describing the plugin's license. */
   license?: string;
+  /** Plugin author (normalized from npm's `author` string or object form). */
+  author?: PluginAuthor;
+  /** Search keywords from `package.json#keywords`. */
+  keywords?: string[];
   /** Visual elements for documentation, plugin listings etc. */
   style: {
     /**

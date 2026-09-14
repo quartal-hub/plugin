@@ -1,8 +1,8 @@
 ---
 title: "Agents"
 description: "Ship agent definitions — interactive or autonomous — as markdown or JSON files."
-section: more
-order: 2
+section: creating
+order: 5
 ---
 
 An **agent** packages a persona and instructions for a specific job — for example an interactive

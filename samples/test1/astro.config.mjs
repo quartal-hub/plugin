@@ -6,5 +6,5 @@ import qrtlPlugin from "@quartal/plugin/astro";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  integrations: [vue(), qrtlPlugin({ auth: "anon" })],
+  integrations: [vue(), qrtlPlugin()],
 });

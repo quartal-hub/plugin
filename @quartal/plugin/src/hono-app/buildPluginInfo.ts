@@ -8,6 +8,7 @@ import type {
   PluginManifest,
   McpCatalogEntry,
   McpPromptDescriptor,
+  McpServerOptions,
   McpToolDescriptor,
   PluginAgentSummary,
   PluginInfo,
@@ -23,6 +24,8 @@ import type {
 import { discoverAgents, type DiscoverAgentsOptions } from "../agents/discoverAgents.ts";
 import { discoverSkills } from "./skillDiscovery.ts";
 import { resolveHomepage } from "./pluginMetadata.ts";
+import { buildMcpServerEntries } from "../agent-plugin/buildMcpServersConfig.ts";
+import { QUARTAL_EXTENSION_NAMESPACE } from "../model/index.ts";
 
 // NOTE: the serve-time `buildPluginInfoResponse` (needs the runtime PluginApiHelper) is intentionally
 // not part of this build-time port; it returns with the Hono app in a later migration phase.
@@ -53,6 +56,8 @@ export interface BuildPluginInfoInput {
   hasReadme: boolean;
   /** Server origin for homepage resolution (omit at build time). */
   origin?: string;
+  /** MCP options (`qrtl.config` `mcp`) — resolved into the overview's `mcpServers`. */
+  mcpOptions?: McpServerOptions;
 }
 
 function fileNameFromPath(filePath: string): string {
@@ -197,6 +202,10 @@ export async function buildAgentSummaries(
 
 function defaultLinks(): PluginLinks {
   return {
+    manifest: "/plugin.json",
+    mcpConfig: "/mcp.json",
+    packageZip: "/plugin.zip",
+    contents: `/${QUARTAL_EXTENSION_NAMESPACE}/contents.json`,
     openApi: "/open-api.json",
     types: "/types.json",
     mcpServer: "/mcp-server.json",
@@ -219,6 +228,10 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
   const { manifest, origin } = input;
   const tools = buildTools(input);
   const homepage = resolveHomepage(manifest, origin);
+  const mcpServers = buildMcpServerEntries(manifest, input.mcpOptions, (toolClasses) =>
+    toolClasses
+      ? input.mcpTools.filter((t) => toolClasses.includes(t.className)).length
+      : input.mcpTools.length);
 
   return {
     name: manifest.name,
@@ -237,6 +250,7 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
     widgets: buildWidgets(input),
     resources: input.resources,
     prompts: buildPrompts(input.prompts),
+    mcpServers,
     links: defaultLinks(),
   };
 }

@@ -104,6 +104,8 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
 
   const basePath = options?.basePath ?? "/api";
   const defaultMethod = options?.defaultMethod ?? "post";
+  const qrtlConfig = await Helpers.loadQrtlConfig(cwd);
+  const mcpOptions = typeof qrtlConfig?.mcp === "object" ? qrtlConfig.mcp : undefined;
   const skills = await buildSkillSummaries(cwd, manifest.name);
   const agents = await buildAgentSummaries(cwd, manifest.name, {
     pluginTools: artifacts.mcpTools.map((t) => t.id),
@@ -123,6 +125,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     basePath,
     defaultMethod,
     hasReadme,
+    mcpOptions,
   });
   await writeJsonToFile(join(out, "contents.json"), contents);
 }

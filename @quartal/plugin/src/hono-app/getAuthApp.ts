@@ -40,6 +40,11 @@ const DEFAULT_SWAGGER_CLIENT_ID = "swagger-test-client";
  */
 export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions): Promise<Hono> {
   config = config ?? {};
+  // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
+  // callers (tests, non-Astro hosts) may pass them explicitly instead.
+  if (config.mcp === undefined) {
+    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd()))?.mcp;
+  }
   const manifest = await Helpers.getPluginManifest(config.pluginRootFolder);
   let resolved: ResolvedOAuthOptions | undefined;
 
@@ -94,15 +99,15 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),
   });
-  registerPluginInfoRoutes(
-    app as Hono,
-    helper,
-    (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
-  );
   // Widget pages + assets stay unauthenticated: the sandboxed widget iframe carries no credentials
   // (auth middleware is scoped to /api/* and /mcp, not to /widget-assets).
   const widgets = config.widgetResources?.length ? config.widgetResources : await resolveWidgetEntries(config);
   helper.setWidgetCatalog(widgets.map((w) => ({ toolId: w.toolId, name: w.name })));
+  registerPluginInfoRoutes(app as Hono, helper, {
+    mcpOptions,
+    pluginRootFolder: config.pluginRootFolder,
+    getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
+  });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);
   await PluginMcpHelper.applyToApp(app as Hono, helper, config, widgets);
   registerPublicFolderRoutes(app as Hono, config.pluginRootFolder);

@@ -3,6 +3,7 @@ import type { PluginManifest } from "./PluginManifest.ts";
 import type { McpCatalogEntry } from "../mcp/McpCatalog.ts";
 import type {
   PluginAgentSummary,
+  PluginMcpServerEntry,
   PluginPromptEntry,
   PluginSkillSummary,
   PluginToolEntry,
@@ -11,7 +12,8 @@ import type {
 } from "./PluginOverview.ts";
 
 /**
- * Unified plugin overview served at `GET /plugin.json`.
+ * Unified plugin overview (the generated `contents.json`), served at
+ * `GET /com.quartal.plugin/contents.json`.
  */
 export interface PluginInfo extends PluginManifest {
   /** Whether a readme is available at {@link PluginLinks.readme}. */
@@ -30,6 +32,8 @@ export interface PluginInfo extends PluginManifest {
   resources: McpCatalogEntry[];
   /** MCP prompts exposed by this plugin (prompt-class functions from `src/prompts/`). */
   prompts: PluginPromptEntry[];
+  /** MCP servers of this plugin: hosted (relative URL) and external (absolute URL). */
+  mcpServers: PluginMcpServerEntry[];
   /** Relative URLs to detailed metadata endpoints. */
   links: PluginLinks;
 }

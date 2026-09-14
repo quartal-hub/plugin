@@ -26,7 +26,7 @@ export function titleFromName(name: string): string {
 /**
  * Scaffolds a new Quartal Plugin project into `<cwd>/<unscoped name>` from the answered options:
  * copies the static template files and generates the option-dependent ones (`package.json`,
- * `qrtl.config.ts`, `astro.config.mjs`, `README.md`, `src/tools/mod.ts`).
+ * `qrtl.config.ts`, `astro.config.mjs`, `README.md`, `AGENTS.md`, `src/tools/mod.ts`).
  * @param options Answered prompts.
  * @param cwd Directory the project directory is created under.
  * @returns The absolute path of the created project directory.
@@ -56,6 +56,7 @@ export async function scaffoldProject(options: CreatePluginOptions, cwd: string)
   await write("qrtl.config.ts", renderQrtlConfig(options));
   await write("astro.config.mjs", renderAstroConfig(options));
   await write("README.md", renderReadme(options));
+  await write("AGENTS.md", renderAgentsMd(options));
   await write("src/tools/mod.ts", renderToolsMod(options));
 
   if (options.sampleTool) {
@@ -113,13 +114,16 @@ function renderPackageJson(options: CreatePluginOptions): string {
 /** Renders `qrtl.config.ts` with the chosen auth mode and commented-out optional settings. */
 function renderQrtlConfig(options: CreatePluginOptions): string {
   const auth = options.auth ? "quartal-iam" : "anon";
+  const authEnvComment = options.auth
+    ? `\n  // Defaults derive from the plugin name; override with OAUTH_ISSUER / OAUTH_AUDIENCE /\n  // OAUTH_RESOURCE env vars when needed.`
+    : "";
   return `import { defineQrtlConfig } from "@quartal/plugin";
 
 // Plugin metadata and options — see https://plugin.quartal.com for the full reference.
 export default defineQrtlConfig({
   title: ${JSON.stringify(titleFromName(options.name))},
   description: ${JSON.stringify(options.description || "A Quartal Plugin.")},
-  // Auth mode: "anon" (no authentication) or "quartal-iam" (OAuth2 via Quartal Hub).
+  // Auth mode: "anon" (no authentication) or "quartal-iam" (OAuth2 via Quartal Hub).${authEnvComment}
   auth: ${JSON.stringify(auth)},
   // Logo and icons shown by MCP clients and the docs site:
   // style: {
@@ -134,20 +138,16 @@ export default defineQrtlConfig({
 
 /** Renders `astro.config.mjs` with the integrations the chosen widget framework needs. */
 function renderAstroConfig(options: CreatePluginOptions): string {
-  const auth = options.auth ? "quartal-iam" : "anon";
   const frameworkImport = options.widgets === "vue"
     ? `import vue from "@astrojs/vue";\n`
     : options.widgets === "react"
     ? `import react from "@astrojs/react";\n`
     : "";
   const integrations = options.widgets === "vue"
-    ? `[vue(), qrtlPlugin({ auth: "${auth}" })]`
+    ? `[vue(), qrtlPlugin()]`
     : options.widgets === "react"
-    ? `[react(), qrtlPlugin({ auth: "${auth}" })]`
-    : `[qrtlPlugin({ auth: "${auth}" })]`;
-  const authComment = options.auth
-    ? `  // Quartal auth (OAuth2/OIDC JWT bearer). Defaults derive from the plugin name;\n  // override with OAUTH_ISSUER / OAUTH_AUDIENCE / OAUTH_RESOURCE env vars when needed.\n`
-    : "";
+    ? `[react(), qrtlPlugin()]`
+    : `[qrtlPlugin()]`;
   return `import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
 ${frameworkImport}import qrtlPlugin from "@quartal/plugin/astro";
@@ -155,7 +155,7 @@ ${frameworkImport}import qrtlPlugin from "@quartal/plugin/astro";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-${authComment}  integrations: ${integrations},
+  integrations: ${integrations},
 });
 `;
 }
@@ -198,7 +198,7 @@ The plugin runs on <http://localhost:4321>:
 | \`/\` | Documentation site for your plugin |
 | \`/mcp\` | The MCP server — connect any MCP client here |
 | \`/api/<Class>/<method>\` | The generated OpenAPI / REST actions |
-| \`/plugin.json\` | The plugin manifest |
+| \`/plugin.json\` | The Agent Plugins manifest (\`/plugin.zip\` is the installable package) |
 | \`/widgets/<toolId>\` | Widget pages |
 | \`/skills/catalog.json\` | The Agent Skills catalog |
 
@@ -214,6 +214,73 @@ pnpm build
 node ./dist/server/entry.mjs
 \`\`\`
 `;
+}
+
+/**
+ * Renders `AGENTS.md`: the project conventions for coding agents (Claude Code, Cursor, Copilot,
+ * Codex and others read this file), adjusted to the chosen options.
+ */
+function renderAgentsMd(options: CreatePluginOptions): string {
+  const lines: string[] = [
+    `# ${titleFromName(options.name)} — guide for coding agents`,
+    "",
+    "This is a **Quartal Plugin**: an Astro app where plain TypeScript classes become MCP tools,",
+    "REST actions, widgets and Agent Skills. Full documentation: <https://plugin.quartal.com>",
+    "(machine-readable index: <https://plugin.quartal.com/llms.txt>).",
+    "",
+    "## Commands",
+    "",
+    "- `pnpm install` — install dependencies",
+    "- `pnpm dev` — dev server on <http://localhost:4321>",
+    "- `pnpm build && node ./dist/server/entry.mjs` — production build and run",
+    "",
+    "The server serves the plugin's docs site (with tool and widget testers) at `/`, the MCP server",
+    "at `/mcp`, REST actions at `/api/<Class>/<method>`, widget pages at `/widgets/<toolId>` and the",
+    "Agent Plugins manifest at `/plugin.json`.",
+    "",
+    "## Conventions",
+    "",
+    "- **Tools** are classes in `src/tools/`, exported from `src/tools/mod.ts`. Every public method",
+    "  of an exported class becomes an MCP tool and a REST action.",
+    "- **Schemas are generated** from the TypeScript types and JSDoc — including tags like",
+    "  `@format`, `@example` and `@visibility`. Never hand-write JSON Schema and never add a schema",
+    "  library (zod etc.); improve the types and JSDoc instead.",
+  ];
+  if (options.widgets !== "none") {
+    lines.push(
+      "- **Widgets** are Astro pages in `src/pages/widgets/`; a page's file name must be the id of",
+      "  the tool it visualizes (`sayHello.astro` is the UI for the `sayHello` tool).",
+    );
+  }
+  lines.push(
+    "- **Skills**: to ship know-how alongside the tools, add folders with a `SKILL.md` under",
+    "  `skills/`.",
+    "- **Plugin options** (title, description, auth, deploy) live in `qrtl.config.ts`.",
+    options.auth
+      ? "- **Auth**: this plugin uses Quartal Hub OAuth2 (`auth: \"quartal-iam\"`); OAUTH_ISSUER /\n" +
+        "  OAUTH_AUDIENCE / OAUTH_RESOURCE env vars override the name-derived defaults."
+      : "- **Auth**: this plugin is anonymous (`auth: \"anon\"` in `qrtl.config.ts`).",
+  );
+  if (options.sampleTool) {
+    lines.push(
+      "",
+      "`src/tools/HelloWorld.ts` is scaffolded sample code — replace it with real tools and update",
+      "the export in `src/tools/mod.ts`." +
+        (options.widgets !== "none"
+          ? " Rename `src/pages/widgets/sayHello.astro` to match the\nreplacement tool's id (or delete it)."
+          : ""),
+    );
+  }
+  lines.push(
+    "",
+    "## Verify changes",
+    "",
+    "1. `pnpm build` must succeed — the build analyzes the tool types and fails on schema problems.",
+    "2. Start `pnpm dev` and check the tools respond over MCP at `http://localhost:4321/mcp`",
+    "   (JSON-RPC `tools/list` / `tools/call`), or use the testers on the docs site at `/`.",
+    "",
+  );
+  return lines.join("\n");
 }
 
 /** Returns a copy of the record with alphabetically sorted keys (stable `package.json` output). */

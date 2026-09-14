@@ -1,5 +1,8 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import {
   buildPluginMiddlewareSource,
@@ -67,14 +70,26 @@ describe("createPluginMiddleware", () => {
 });
 
 describe("qrtlPlugin integration", () => {
-  function runSetup(output: string, options?: Parameters<typeof qrtlPlugin>[0]) {
+  const tempDirs: string[] = [];
+  async function tempPlugin(files: Record<string, string>): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), "qrtl-integ-"));
+    tempDirs.push(dir);
+    for (const [name, content] of Object.entries(files)) await writeFile(join(dir, name), content);
+    return dir;
+  }
+  afterEach(async () => {
+    await Promise.all(tempDirs.splice(0).map((d) => rm(d, { recursive: true, force: true })));
+  });
+
+  async function runSetup(output: string, options?: Parameters<typeof qrtlPlugin>[0], root = "/proj") {
     const integ = qrtlPlugin(options);
     let vitePlugins: { name: string }[] = [];
     let updatedConfig: Record<string, unknown> = {};
     let middleware: { entrypoint: string | URL; order: string } | undefined;
     const warnings: string[] = [];
+    const watched: (string | URL)[] = [];
     const opts: AstroConfigSetupOptions = {
-      config: { output, root: "/proj" },
+      config: { output, root },
       updateConfig: (c) => {
         updatedConfig = c;
         vitePlugins = ((c as { vite?: { plugins?: { name: string }[] } }).vite?.plugins) ?? [];
@@ -82,11 +97,23 @@ describe("qrtlPlugin integration", () => {
       addMiddleware: (m) => {
         middleware = m;
       },
+      addWatchFile: (p) => {
+        watched.push(p);
+      },
       logger: { warn: (m) => warnings.push(m), info: () => {} },
       command: "dev",
     };
-    integ.hooks["astro:config:setup"]!(opts);
-    return { integ, vitePlugins, updatedConfig, middleware, warnings };
+    await integ.hooks["astro:config:setup"]!(opts);
+    return { integ, vitePlugins, updatedConfig, middleware, warnings, watched };
+  }
+
+  /** The generated virtual middleware source from a setup's vite plugins. */
+  function middlewareSource(vitePlugins: { name: string }[]): string {
+    const plugin = vitePlugins.find((p) => p.name === "qrtl-plugin-middleware") as unknown as {
+      resolveId(id: string): string | undefined;
+      load(id: string): string | undefined;
+    };
+    return plugin.load(plugin.resolveId(PLUGIN_MIDDLEWARE_VIRTUAL_ID)!)!;
   }
 
   it("has the expected name and hook", () => {
@@ -95,8 +122,8 @@ describe("qrtlPlugin integration", () => {
     expect(typeof integ.hooks["astro:config:setup"]).toBe("function");
   });
 
-  it("adds the codegen + virtual-middleware vite plugins and mounts middleware", () => {
-    const { vitePlugins, middleware } = runSetup("server");
+  it("adds the codegen + virtual-middleware vite plugins and mounts middleware", async () => {
+    const { vitePlugins, middleware } = await runSetup("server");
     const names = vitePlugins.map((p) => p.name);
     expect(names).toContain("qrtl-plugin-codegen");
     expect(names).toContain("qrtl-plugin-middleware");
@@ -104,30 +131,44 @@ describe("qrtlPlugin integration", () => {
     expect(middleware?.order).toBe("pre");
   });
 
-  it("warns when output is not on-demand-capable", () => {
-    expect(runSetup("static").warnings.length).toBeGreaterThan(0);
-    expect(runSetup("server").warnings.length).toBe(0);
+  it("warns when output is not on-demand-capable", async () => {
+    expect((await runSetup("static")).warnings.length).toBeGreaterThan(0);
+    expect((await runSetup("server")).warnings.length).toBe(0);
   });
 
-  it("hides the Astro dev toolbar by default, keeps it with devToolbar: true", () => {
-    expect(runSetup("server").updatedConfig.devToolbar).toEqual({ enabled: false });
-    expect(runSetup("server", { devToolbar: true }).updatedConfig.devToolbar).toBeUndefined();
+  it("hides the Astro dev toolbar by default, keeps it with devToolbar: true", async () => {
+    expect((await runSetup("server")).updatedConfig.devToolbar).toEqual({ enabled: false });
+    expect((await runSetup("server", { devToolbar: true })).updatedConfig.devToolbar).toBeUndefined();
   });
 
-  it("virtual-middleware plugin resolves/loads generated server source", () => {
-    const { vitePlugins } = runSetup("server");
-    const plugin = vitePlugins.find((p) => p.name === "qrtl-plugin-middleware") as unknown as {
-      resolveId(id: string): string | undefined;
-      load(id: string): string | undefined;
-    };
-    const resolved = plugin.resolveId(PLUGIN_MIDDLEWARE_VIRTUAL_ID);
-    expect(resolved).toBe("\0" + PLUGIN_MIDDLEWARE_VIRTUAL_ID);
-    const src = plugin.load(resolved!)!;
+  it("virtual-middleware plugin resolves/loads generated server source", async () => {
+    const { vitePlugins } = await runSetup("server");
+    const src = middlewareSource(vitePlugins);
     expect(src).toContain("tools.registry.ts");
     expect(src).toContain("prompts.registry.ts");
     expect(src).toContain("promptModules");
     expect(src).toContain("getAnonApp");
     expect(src).toContain("createPluginMiddleware");
+  });
+
+  it("reads the auth mode from qrtl.config and watches the config file", async () => {
+    const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "quartal-iam" };' });
+    const { vitePlugins, watched, warnings } = await runSetup("server", undefined, root);
+    expect(middlewareSource(vitePlugins)).toContain("getAuthApp");
+    expect(watched).toContain(join(root, "qrtl.config.mjs"));
+    expect(warnings.length).toBe(0);
+  });
+
+  it("fails the build when qrtl.config exists but cannot be loaded", async () => {
+    const root = await tempPlugin({ "qrtl.config.mjs": "export default {" });
+    await expect(runSetup("server", undefined, root)).rejects.toThrow(/qrtl\.config\.mjs/);
+  });
+
+  it("deprecated qrtlPlugin({ auth }) still wins over qrtl.config and warns", async () => {
+    const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "anon" };' });
+    const { vitePlugins, warnings } = await runSetup("server", { auth: "quartal-iam" }, root);
+    expect(middlewareSource(vitePlugins)).toContain("getAuthApp");
+    expect(warnings.some((w) => w.includes("deprecated"))).toBe(true);
   });
 });
 

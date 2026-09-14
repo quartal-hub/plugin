@@ -6,7 +6,11 @@
   "private": true,
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/quartal-hub/plugin.git", "directory": "samples/auth-agent" },
-  "scripts": { "dev": "astro dev", "build": "astro build", "preview": "astro preview" },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
   "dependencies": {
     "@astrojs/node": "^11.0.0",
     "@quartal/plugin": "workspace:*",

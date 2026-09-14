@@ -140,6 +140,7 @@ export class PluginApiHelper {
       defaultMethod: this.defaultMethod,
       hasReadme: !!this.readmeContent && this.readmeContent !== "No README.md found in the plugin.",
       origin,
+      mcpOptions: typeof this.config.mcp === "object" ? this.config.mcp : undefined,
     });
   }
 

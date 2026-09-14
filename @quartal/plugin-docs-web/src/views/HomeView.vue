@@ -33,5 +33,8 @@ onMounted(async () => {
     <template #mcp-copy>
       <CopyButton :text="mcpUrl" />
     </template>
+    <template #server-copy="{ url }">
+      <CopyButton :text="url" />
+    </template>
   </PluginAbout>
 </template>

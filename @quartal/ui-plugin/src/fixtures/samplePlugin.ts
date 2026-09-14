@@ -115,7 +115,12 @@ export const samplePlugin: PluginInfo = {
     { name: "ui://widgets/calculator_multiply.html", title: "Calculator widget", description: "Widget HTML for multiply." },
   ],
   prompts: [],
+  mcpServers: [{ name: "sample-plugin", url: "/mcp", toolCount: 2 }],
   links: {
+    manifest: "/plugin.json",
+    mcpConfig: "/mcp.json",
+    packageZip: "/plugin.zip",
+    contents: "/com.quartal.plugin/contents.json",
     openApi: "/open-api.json",
     types: "/types.json",
     mcpServer: "/mcp-server.json",

@@ -29,6 +29,15 @@ from this repo.
 - `pnpm run typecheck` — `vue-tsc`/`tsc` across packages (kept out of `build`).
 - `pnpm run lint` — ESLint import-hygiene rules (`lint:fix` auto-fixes import order).
 
+## Documentation
+
+The detailed documentation of the plugin project's features lives in the `website/` folder
+(`website/src/content/docs/`). It documents **existing** features with language and presentation
+that make sense to an outside person looking to create plugins — never narrate history or
+decisions ("this was changed because…"); describe the present state only. Internal plans and
+design documents live in `docs/` (e.g. [docs/agent-plugins-alignment.md](./docs/agent-plugins-alignment.md)).
+Distribution/marketplace planning continues in the separate Quartal Hub project.
+
 ## Code organization
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full rules. Summary: one primary artifact per
@@ -66,8 +75,10 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 ## Run a plugin locally
 
 - Any `@samples/*`: `cd samples/<name> && pnpm install && npm run dev` → `astro dev`.
-  - `POST /api/<Class>/<method>`, docs SPA at `/`, `/plugin.json`, `/skills/catalog.json`, MCP at `/mcp`,
-    widgets at `/widgets/<toolId>`, agents at `/agents/catalog.json`.
+  - `POST /api/<Class>/<method>`, docs SPA at `/`, Agent Plugins manifest at `/plugin.json` (package at
+    `/plugin.zip`, MCP config at `/mcp.json`, overview at `/com.quartal.plugin/contents.json`),
+    `/skills/catalog.json`, MCP at `/mcp` (+ `/mcp/tools.json` REST mirror), widgets at
+    `/widgets/<toolId>`, agents at `/agents/catalog.json`.
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).
 - `@quartal/ui-plugin` Storybook: `pnpm --filter @quartal/ui-plugin storybook` (port 6007).
 - Refresh the vendored docs SPA after a `ui-plugin`/SPA change: `pnpm --filter @quartal/plugin-docs-web build`.
