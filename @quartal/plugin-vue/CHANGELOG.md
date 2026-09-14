@@ -1,5 +1,13 @@
 # @quartal/plugin-vue
 
+## 0.5.5
+
+### Patch Changes
+
+- Updated dependencies [aed3d80]
+- Updated dependencies [aed3d80]
+  - @quartal/plugin@0.7.0
+
 ## 0.5.4
 
 ### Patch Changes

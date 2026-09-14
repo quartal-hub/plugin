@@ -1,5 +1,12 @@
 # @quartal/ui-plugin
 
+## 0.7.0
+
+### Minor Changes
+
+- aed3d80: The plugin docs SPA shows all MCP servers of a plugin: the front-page server list, the left-navi
+  server count, and a server table in the MCP view with copyable absolute endpoint URLs.
+
 ## 0.6.2
 
 ### Patch Changes

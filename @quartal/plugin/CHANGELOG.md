@@ -1,5 +1,30 @@
 # @quartal/plugin
 
+## 0.7.0
+
+### Minor Changes
+
+- aed3d80: Align plugin outputs with the Agent Plugins 1.0 standard: `GET /plugin.json` serves the standard
+  manifest (the Quartal overview moved to `GET /com.quartal.plugin/contents.json`), `GET /mcp.json`
+  serves the standard `mcpServers` config, and `GET /plugin.zip` serves the whole installable
+  package (dual Claude manifests, skills, agents, README, Quartal extension). MCP list results are
+  also mirrored as REST (`GET /mcp/tools.json`, `/mcp/prompts.json`), and a plugin can declare
+  multiple named MCP servers — hosted at `/mcp/<name>` or external — via the `mcp.servers` section
+  of `qrtl.config`. `@quartal/plugin-core` carries the new manifest and multi-server model types.
+- aed3d80: `qrtl.config.ts` is now the single source of plugin configuration. The `qrtlPlugin()` Astro
+  integration reads the auth mode from `qrtl.config` — the `qrtlPlugin({ auth })` option is
+  deprecated (it still wins when passed, with a warning) — fails the build when a config file
+  exists but cannot be loaded instead of silently falling back to anonymous, and watches the config
+  file so edits restart the dev server. Every `package.json` identity field (`version`, `license`,
+  `homepage`, `author`, `repository`, `keywords`, in addition to the existing `name` and
+  `description`) can now also be set in `qrtl.config`, which takes precedence; `package.json` is
+  the fallback.
+
+### Patch Changes
+
+- Updated dependencies [aed3d80]
+  - @quartal/plugin-core@0.7.0
+
 ## 0.6.1
 
 ### Patch Changes
