@@ -18,7 +18,6 @@ import {
   getOAuthContextFromKv,
   getProtectedResourceMetadataDoc,
   getProtectedResourceMetadataUrl,
-  getTokenEndpoint,
   oauthAuthMiddleware,
   type OAuthOptions,
   type QuartalAuthMode,
@@ -26,14 +25,12 @@ import {
   resolveOAuthOptions,
   unauthorized,
 } from "../oauth/oauthAuth.ts";
+import { registerOAuthLoginRoutes } from "./oauthLoginRoutes.ts";
 
 /** Maps a qrtl.config `auth` value to the OAuth default-resolution mode. */
 function toAuthMode(auth: string | undefined): QuartalAuthMode {
   return auth === "custom" ? "custom" : "quartal-hub";
 }
-
-/** Default client_id pre-filled in the Swagger UI Authorize dialog when nothing else is supplied. */
-const DEFAULT_SWAGGER_CLIENT_ID = "swagger-test-client";
 
 /**
  * Returns a Hono app with OAuth2 / OIDC JWT bearer authentication. The qrtl.config `auth` mode
@@ -60,15 +57,13 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
 
   if (!config.auth) {
     resolved = resolveOAuthOptions(oauth, mode);
-    const tokenUrl = await getTokenEndpoint({ issuer: resolved.issuer, tokenUrl: oauth?.tokenUrl });
-    const clientId = oauth?.clientId ?? DEFAULT_SWAGGER_CLIENT_ID;
-    const swaggerScopes: Record<string, string> = {};
-    for (const s of resolved.scopes) swaggerScopes[s] = s;
+    // Plain HTTP bearer: the docs site obtains the token through the /oauth/login flow (the same
+    // CIMD method MCP clients use) and injects it into Swagger's requests.
     config.auth = {
-      name: "oauth2Password",
-      type: "oauth2",
-      flows: { password: { tokenUrl, scopes: swaggerScopes } },
-      clientId,
+      name: "bearerAuth",
+      type: "http",
+      scheme: "bearer",
+      bearerFormat: "JWT",
       middleware: oauthAuthMiddleware(oauth, mode),
     };
   }
@@ -102,6 +97,8 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     const metadata = (url: string) => getProtectedResourceMetadataDoc(oauthResolved, url);
     app.get("/.well-known/oauth-protected-resource", (c) => c.json(metadata(c.req.url)));
     app.get("/.well-known/oauth-protected-resource/:path{.+}", (c) => c.json(metadata(c.req.url)));
+    // Browser login for the docs site (CIMD client metadata + /oauth/login + /oauth/callback).
+    registerOAuthLoginRoutes(app as Hono, oauthResolved, manifest.title ?? manifest.name);
   }
 
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;

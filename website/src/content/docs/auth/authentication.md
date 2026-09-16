@@ -61,6 +61,27 @@ those details, use `auth: "custom"`.
 The scaffolder sets this up for you: answer yes to the authentication question (or pass `--auth`
 to `pnpm create @quartal/plugin`).
 
+### Logging in on the docs site
+
+An authenticated plugin's docs site shows a **Log in** button in the top bar. It runs the same
+OAuth flow MCP clients use — authorization code + PKCE with a CIMD client:
+
+- A **deployed plugin is its own OAuth client**: it serves its client metadata document at
+  `/.well-known/oauth/client-metadata.json`, and that URL is the `client_id`.
+- On **localhost**, the authorization server cannot fetch a localhost URL, so the login uses the
+  shared metadata document published at
+  `https://plugin.quartal.com/.well-known/oauth/client-metadata.json`, whose redirect URI is
+  `http://localhost:4321/oauth/callback` (the default dev port).
+
+The flow is server-driven — `/oauth/login` redirects to the authorization server and
+`/oauth/callback` exchanges the code server-side — so it does not depend on the authorization
+server's CORS behavior. The resulting token is held in the browser session and injected into
+the Swagger UI's *Try it out* requests automatically; the *Authorize* dialog still accepts a
+manually pasted bearer token, which then takes precedence.
+
+In `"custom"` mode the same flow uses the pre-registered `OAUTH_CLIENT_ID` instead of CIMD —
+see below.
+
 > **Test tier.** The shared `quartal-hub-test` scope and audience mean a token issued for one
 > quartal-hub plugin is currently valid at every quartal-hub plugin. That is acceptable for test
 > data only. Before production use, this moves to per-plugin audiences — natively via RFC 8707
@@ -86,8 +107,8 @@ Keycloak, Okta, Zitadel, …):
 | `OAUTH_RESOURCE` | one of these | The canonical URI of this plugin as an OAuth resource server (RFC 8707), e.g. `https://my-plugin.example.com`. Published in the resource metadata; also the default audience. When unset, the resource is derived from each request's origin. |
 | `OAUTH_SCOPE` | no | Scope(s) this plugin requires (space-separated). Advertised in the 401 challenge and the resource metadata. The OIDC user-info scopes `profile email` are always added. |
 | `OAUTH_JWKS_URI` | no | Explicit JWKS endpoint. Default: discovered from the OIDC configuration. |
-| `OAUTH_TOKEN_URL` | no | Explicit token endpoint (used by the Swagger UI *Authorize* dialog). Default: discovered. |
-| `OAUTH_CLIENT_ID` | no | Client id pre-filled in the Swagger UI *Authorize* dialog (default `swagger-test-client`). |
+| `OAUTH_TOKEN_URL` | no | Explicit token endpoint (used by the docs-site login flow). Default: discovered. |
+| `OAUTH_CLIENT_ID` | for docs login | Pre-registered public client id used by the docs-site **Log in** button. Auth0 and Entra ID do not support CIMD, so register the plugin as a public (PKCE, no secret) client with redirect URI `<plugin-origin>/oauth/callback` and put its id here. Without it, the docs-site login attempts CIMD. |
 
 Set the variables in the shell / hosting platform the plugin runs in.
 
@@ -99,6 +120,7 @@ Auth0 stamps into access tokens — use your plugin's canonical URL. Then:
 ```bash
 OAUTH_ISSUER=https://YOUR_TENANT.auth0.com/
 OAUTH_AUDIENCE=https://my-plugin.example.com   # the API Identifier, verbatim
+OAUTH_CLIENT_ID=...                            # for the docs-site login, see below
 ```
 
 Notes:
@@ -107,6 +129,8 @@ Notes:
 - Auth0 signs with RS256 by default; discovery provides the JWKS. Nothing else to set.
 - For interactive MCP clients, enable **Dynamic Application Registration** (tenant settings) so
   clients can register themselves after discovering the server through the RFC 9728 metadata.
+- For the docs-site **Log in** button, create a **Native** application with callback URL
+  `<plugin-origin>/oauth/callback` and set its client id as `OAUTH_CLIENT_ID`.
 
 ### Microsoft Entra ID
 
@@ -117,6 +141,7 @@ Register an application (Entra admin center → App registrations), then **Expos
 OAUTH_ISSUER=https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0
 OAUTH_AUDIENCE=api://YOUR_APP_CLIENT_ID        # the Application ID URI
 OAUTH_SCOPE=api://YOUR_APP_CLIENT_ID/.default  # or a named scope you exposed
+OAUTH_CLIENT_ID=YOUR_CLIENT_APP_ID             # for the docs-site login, see below
 ```
 
 Notes:
@@ -128,6 +153,10 @@ Notes:
 - Entra ID does **not** support dynamic client registration: every MCP client (Claude, MCPJam, …)
   must be pre-registered as its own app registration with its redirect URIs. This makes Entra a
   poor fit for ad-hoc MCP clients; it works well for a fixed, known set of clients.
+- For the docs-site **Log in** button, add `<plugin-origin>/oauth/callback` as a redirect URI on
+  the **Mobile and desktop applications** platform (a public client — the token exchange happens
+  server-side without a client secret; the *SPA* platform would reject it, and *Web* would demand
+  a secret) and set that app registration's client id as `OAUTH_CLIENT_ID`.
 
 ### What the OAuth server must provide
 
@@ -164,6 +193,7 @@ environment variables do, plus overrides such as `algorithms`, `additionalScopes
 | `POST /api/<Class>/<method>` | Bearer token required. |
 | `ALL /mcp`, `/mcp/<server>` | Bearer token required; unauthenticated calls get the RFC 9728 challenge. |
 | `GET /.well-known/oauth-protected-resource` | Public (this is how clients find your auth server). |
+| `GET /.well-known/oauth/client-metadata.json`, `/oauth/login`, `/oauth/callback` | Public (the docs-site login flow — how a browser session obtains a token). |
 | Docs site, `/widgets/*`, `/widget-assets/*`, `public/` | Public. |
 
 Changing `auth` is picked up on dev-server restart; `qrtl.config.ts` is watched, so saving it

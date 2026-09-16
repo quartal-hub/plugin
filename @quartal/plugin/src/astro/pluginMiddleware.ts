@@ -18,6 +18,7 @@ export type MiddlewareOnRequest = (
 const SERVER_PREFIXES = [
   "/api",
   "/mcp",
+  "/oauth",
   "/skills",
   "/agents",
   "/icons",

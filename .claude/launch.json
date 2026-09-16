@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "auth-agent",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@samples/auth-agent", "dev"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "samples/auth-agent", "run", "dev"],
       "port": 4321
     }
   ]

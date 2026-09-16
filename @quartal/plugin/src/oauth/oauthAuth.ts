@@ -73,7 +73,12 @@ export interface OAuthOptions {
   /** Explicit token endpoint URL. If unset, discovered from OIDC config. Defaults to env `OAUTH_TOKEN_URL`. */
   tokenUrl?: string;
 
-  /** OAuth client_id to pre-fill in the Swagger UI Authorize dialog. Defaults to env `OAUTH_CLIENT_ID`. */
+  /**
+   * OAuth client_id for the docs-site login flow. In `"custom"` mode this is a client
+   * pre-registered at the authorization server (env fallback `OAUTH_CLIENT_ID`) — Auth0 and
+   * Microsoft Entra ID do not support CIMD. When unset, the login flow uses CIMD: the plugin's
+   * own client metadata document URL is the client_id.
+   */
   clientId?: string;
 
   /** Allowed JWS algorithms. Defaults to `["RS256", "ES256"]`. */
@@ -100,6 +105,8 @@ export interface ResolvedOAuthOptions {
   documentationUrl?: string;
   /** JWKS endpoint URL; if omitted, discovered from `${issuer}/.well-known/openid-configuration`. */
   jwksUri?: string;
+  /** Pre-registered client_id for the docs-site login flow; unset means CIMD (the plugin's own metadata URL). */
+  clientId?: string;
   /** Allowed JWT signing algorithms (default: `["RS256", "ES256"]`). */
   algorithms: string[];
   /** Max cache TTL in milliseconds for a verified context in the plugin cache. */
@@ -167,6 +174,7 @@ export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode =
   let resource: string | undefined;
   let scope: string | string[] | undefined;
   let jwksUri: string | undefined;
+  let clientId: string | undefined;
 
   if (mode === "custom") {
     issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined);
@@ -186,6 +194,7 @@ export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode =
     }
     scope = opts?.scope ?? (process.env.OAUTH_SCOPE || undefined);
     jwksUri = opts?.jwksUri ?? (process.env.OAUTH_JWKS_URI || undefined);
+    clientId = opts?.clientId ?? (process.env.OAUTH_CLIENT_ID || undefined);
   } else {
     issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined) ?? QUARTAL_HUB_ISSUER;
     audience = opts?.audience ?? QUARTAL_HUB_AUDIENCE;
@@ -194,6 +203,8 @@ export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode =
     // the same plugin passes client resource-validation on localhost and deployed alike.
     resource = opts?.resource;
     jwksUri = opts?.jwksUri;
+    // quartal-hub docs-site login uses CIMD; an explicit programmatic clientId still wins.
+    clientId = opts?.clientId;
   }
 
   const additionalScopes = opts?.additionalScopes !== undefined ? normalizeScopes(opts.additionalScopes) : DEFAULT_ADDITIONAL_SCOPES;
@@ -205,6 +216,7 @@ export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode =
     scopes,
     documentationUrl: opts?.documentationUrl,
     jwksUri,
+    clientId,
     algorithms: opts?.algorithms ?? DEFAULT_ALGORITHMS,
     cacheTtlMs: opts?.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS,
     claimsToContext: opts?.claimsToContext ?? defaultClaimsToContext,
@@ -353,6 +365,19 @@ export async function getTokenEndpoint(
     throw new Error(`OIDC discovery did not return token_endpoint for ${opts.issuer}`);
   }
   return config.token_endpoint;
+}
+
+/**
+ * Resolves the OAuth2 authorization endpoint URL from the issuer's OIDC config.
+ * Used by the docs-site login flow to build the browser redirect.
+ * @param issuer The authorization-server issuer URL.
+ */
+export async function getAuthorizationEndpoint(issuer: string): Promise<string> {
+  const config = await getOidcConfig(issuer);
+  if (!config.authorization_endpoint) {
+    throw new Error(`OIDC discovery did not return authorization_endpoint for ${issuer}`);
+  }
+  return config.authorization_endpoint;
 }
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();

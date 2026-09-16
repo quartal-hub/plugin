@@ -20,6 +20,7 @@ declare module "swagger-ui-dist/swagger-ui-es-bundle.js" {
     tryItOutEnabled?: boolean;
     requestSnippetsEnabled?: boolean;
     persistAuthorization?: boolean;
+    requestInterceptor?: (req: { headers: Record<string, string> }) => { headers: Record<string, string> };
   }
 
   export default function SwaggerUIBundle(config: SwaggerUiConfig): unknown;
