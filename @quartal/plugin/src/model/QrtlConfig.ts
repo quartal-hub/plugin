@@ -43,8 +43,11 @@ export interface QrtlConfig {
   };
   /** MCP server options, or `false` to disable the MCP server. */
   mcp?: McpServerOptions | boolean;
-  /** Auth mode: `"anon"` (default) or `"quartal-iam"` (Keycloak / OIDC JWT bearer). */
-  auth?: "anon" | "quartal-iam";
+  /**
+   * Auth mode: `"anon"` (default, no authentication), `"quartal-hub"` (OAuth2 via Quartal Hub —
+   * zero-config, test environment), or `"custom"` (own OAuth2/OIDC server via `OAUTH_*` env vars).
+   */
+  auth?: "anon" | "quartal-hub" | "custom";
   /** Deployment target metadata (org/app), used by deploy tooling. */
   deploy?: { org?: string; app?: string };
   /** Shared and per-widget CSP for the sandboxed MCP Apps iframes. */

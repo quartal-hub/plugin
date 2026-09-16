@@ -83,7 +83,7 @@ describe("scaffoldProject", () => {
     expect(tool).toContain("QuartalPluginContext");
 
     const qrtlConfig = await readFile(join(dir, "qrtl.config.ts"), "utf8");
-    expect(qrtlConfig).toContain('auth: "quartal-iam"');
+    expect(qrtlConfig).toContain('auth: "quartal-hub"');
 
     const astroConfig = await readFile(join(dir, "astro.config.mjs"), "utf8");
     expect(astroConfig).toContain("qrtlPlugin()");

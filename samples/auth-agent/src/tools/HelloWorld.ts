@@ -41,6 +41,10 @@ export class HelloWorld {
     return others;
   }
 
+  getTokenInfo(_input: any, ctx: QuartalPluginContext): { token: string } {
+    return { token: ctx.token || "No token" };
+  }
+
   private privateSayHello(name: string, ctx: QuartalPluginContext): string {
     return `Hello with this, ${name}! (${ctx.email}, ${ctx.uid})`;
   }

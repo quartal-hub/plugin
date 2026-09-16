@@ -17,6 +17,11 @@ for a consumer of the package, not for a reviewer of the diff.
 
 Commit the generated file in `.changeset/` along with your changes.
 
+If the release will bump `@quartal/plugin`, `@quartal/plugin-core`, or `@quartal/plugin-vue`, also
+update `@quartal/create-plugin/src/dependencyVersions.ts` to the new ranges and add a
+`@quartal/create-plugin` changeset: the Version Packages PR rewrites internal dependency ranges in
+`package.json` files only, not the ranges the scaffolder writes into new projects.
+
 ## How a release happens
 
 1. Changesets accumulate on `main` as PRs merge.

@@ -90,8 +90,8 @@ used across layers belong in `model/` (or in `@quartal/plugin-core` if consumed 
 ## Changesets
 
 Any change to a **published** package needs a changeset — `@quartal/plugin`, `@quartal/plugin-core`,
-`@quartal/plugin-vue`, and `@quartal/ui-plugin`. The samples and `@quartal/plugin-docs-web` are
-private and need none.
+`@quartal/plugin-vue`, `@quartal/ui-plugin`, and `@quartal/create-plugin`. The samples and
+`@quartal/plugin-docs-web` are private and need none.
 
 ```bash
 pnpm changeset
@@ -103,6 +103,12 @@ work. Releases are cut from these, so a missing changeset means your change ship
 bump or a changelog entry.
 
 A README change also needs one: a README only reaches npm as part of a new version.
+
+**When a changeset bumps `@quartal/plugin`, `@quartal/plugin-core`, or `@quartal/plugin-vue`, also
+update `@quartal/create-plugin/src/dependencyVersions.ts` and add a `@quartal/create-plugin`
+changeset.** That file holds the version ranges the scaffolder writes into new projects, and the
+release automation does not touch it — without a manual update and a create-plugin release, the
+published scaffolder keeps emitting the previous ranges.
 
 ## Comments
 

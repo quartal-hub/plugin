@@ -8,6 +8,6 @@ export default defineQrtlConfig({
     icons: [{ src: "https://cdn.salaxy.com/img/brand/icon-192.png", mimeType: "image/png", sizes: ["192x192"] }],
   },
   /** TODO: This probably does not work currently => Still needs implementation. */
-  auth: "quartal-iam",
+  auth: "quartal-hub",
   deploy: { org: "quartal", app: "salaxy-agent" },
 });

@@ -8,10 +8,11 @@ import type { AuthContext, Avatar, QuartalPluginContext } from "../model/index.t
 /**
  * Options for generic OAuth / OIDC JWT bearer-token authentication.
  *
- * Any option left undefined falls back to an environment variable (OAUTH_ISSUER, OAUTH_AUDIENCE,
- * OAUTH_JWKS_URI, OAUTH_RESOURCE, OAUTH_SCOPE). `issuer` and at least one of `audience`/`resource`
- * are required. `jwksUri` is optional: when missing, the URI is discovered from
- * `${issuer}/.well-known/openid-configuration`.
+ * How an option left undefined resolves depends on the {@link QuartalAuthMode}: in `"custom"`
+ * mode it falls back to the corresponding environment variable (OAUTH_ISSUER, OAUTH_AUDIENCE,
+ * OAUTH_JWKS_URI, OAUTH_RESOURCE, OAUTH_SCOPE); in `"quartal-hub"` mode the Quartal Hub test
+ * environment supplies fixed values and only `OAUTH_ISSUER` is honored. `jwksUri` is optional:
+ * when missing, the URI is discovered from `${issuer}/.well-known/openid-configuration`.
  */
 export interface OAuthOptions {
   /** Expected `iss` claim and base URL for OIDC discovery. Defaults to env `OAUTH_ISSUER`. */
@@ -116,9 +117,26 @@ function normalizeScopes(scope: string | string[] | undefined): string[] {
   return scope.split(/\s+/).filter((s) => s.length > 0);
 }
 
-// Quartal-specific dev defaults; will be replaced once issuer/host are renamed.
-const DEFAULT_DEV_ISSUER = "https://iam2026.test.qrtl.com/realms/salaxy-test";
-const DEFAULT_HOST_SUFFIX = "quartal.deno.net";
+/**
+ * How OAuth defaults are resolved:
+ *
+ * - `"quartal-hub"` — the Quartal Hub test environment. Scope, audience and issuer are fixed
+ *   (only the issuer is overridable, via `OAUTH_ISSUER`, to point at another IAM instance);
+ *   the RFC 9728 `resource` is derived from each request's origin so the same configuration
+ *   works on localhost and deployed.
+ * - `"custom"` — bring-your-own OAuth2/OIDC server (Auth0, Microsoft Entra ID, …): everything
+ *   comes from the `OAUTH_*` environment variables or explicit `OAuthOptions`.
+ */
+export type QuartalAuthMode = "quartal-hub" | "custom";
+
+// `quartal-hub` mode: one shared TEST-tier identity for every plugin. The scope triggers the
+// Keycloak audience mapper; the audience is a fixed identifier string, not a served URL.
+// TODO(production, Oct–Nov 2026): a token for this shared audience is valid at every
+// quartal-hub plugin. Before production data, move to per-plugin audiences — natively via
+// RFC 8707 resource indicators if Keycloak 26.8 ships them, else per-plugin client scopes.
+const QUARTAL_HUB_ISSUER = "https://iam2026.test.qrtl.com/realms/salaxy-test";
+const QUARTAL_HUB_SCOPE = "quartal-hub-test";
+const QUARTAL_HUB_AUDIENCE = "https://hub.test.qrtl.com";
 
 /**
  * Scopes always merged with the per-service scope so CIMD-derived clients (e.g. Claude, MCPJam)
@@ -131,53 +149,62 @@ const DEFAULT_HOST_SUFFIX = "quartal.deno.net";
  */
 const DEFAULT_ADDITIONAL_SCOPES = ["profile", "email"];
 
-/** Strips the `@org/` prefix from a scoped npm-style plugin name (e.g. `@samples/auth-agent` → `auth-agent`). */
-function stripOrgPrefix(pluginName: string | undefined): string | undefined {
-  if (!pluginName) return undefined;
-  return pluginName.replace(/^@[^/]+\//, "");
-}
-
 /**
- * Resolves an `OAuthOptions` (possibly empty) into a fully-populated `ResolvedOAuthOptions`
- * by layering env vars (`OAUTH_*`) and Quartal-specific defaults derived from `pluginName`
- * over the caller-supplied values. Throws if no audience can be determined.
+ * Resolves an `OAuthOptions` (possibly empty) into a fully-populated `ResolvedOAuthOptions`.
+ *
+ * `"quartal-hub"` (the default) uses the fixed Quartal Hub test-environment values; only the
+ * issuer may be redirected via `OAUTH_ISSUER` (other `OAUTH_*` variables are ignored — the mode
+ * is deliberately zero-config). `"custom"` layers the `OAUTH_*` env vars under the caller-supplied
+ * values and throws when no issuer or audience can be determined.
+ *
+ * Explicit `opts` fields (the typed programmatic API) win over both, in either mode.
  * @param opts Caller-supplied OAuth overrides.
- * @param pluginName Plugin name used to derive default resource and scope values.
+ * @param mode Default-resolution mode; see {@link QuartalAuthMode}.
  */
-export function resolveOAuthOptions(opts?: OAuthOptions, pluginName?: string): ResolvedOAuthOptions {
-  const envIssuer = process.env.OAUTH_ISSUER || undefined;
-  const envAudience = process.env.OAUTH_AUDIENCE || undefined;
-  const envJwksUri = process.env.OAUTH_JWKS_URI || undefined;
-  const envResource = process.env.OAUTH_RESOURCE || undefined;
-  const envScope = process.env.OAUTH_SCOPE || undefined;
+export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode = "quartal-hub"): ResolvedOAuthOptions {
+  let issuer: string | undefined;
+  let audience: string | string[] | undefined;
+  let resource: string | undefined;
+  let scope: string | string[] | undefined;
+  let jwksUri: string | undefined;
 
-  // Convention: a microservice's resource URI and Keycloak scope name both derive from the
-  // unscoped plugin name (e.g. `@samples/auth-agent` → `auth-agent`). Used only as a
-  // fallback — explicit `opts` and env vars override.
-  const appName = stripOrgPrefix(pluginName);
-  const defaultResource = appName ? `https://${appName}.${DEFAULT_HOST_SUFFIX}` : undefined;
-
-  const issuer = opts?.issuer ?? envIssuer ?? DEFAULT_DEV_ISSUER;
-  const resource = opts?.resource ?? envResource ?? defaultResource;
-  // Per RFC 8707 the audience matches the canonical resource URI; fall back to `resource` when audience is not set.
-  const audience = opts?.audience ?? envAudience ?? resource;
-  if (!audience) {
-    throw new Error(
-      "OAuth audience is required for token validation per RFC 8707 / MCP spec. " +
-        "Set OAUTH_AUDIENCE or OAUTH_RESOURCE, or pass `audience`/`resource` in OAuthOptions, " +
-        "or supply a `pluginName` so the framework can derive a default resource.",
-    );
+  if (mode === "custom") {
+    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined);
+    if (!issuer) {
+      throw new Error(
+        'auth mode "custom" requires an issuer: set OAUTH_ISSUER or pass `issuer` in OAuthOptions.',
+      );
+    }
+    resource = opts?.resource ?? (process.env.OAUTH_RESOURCE || undefined);
+    // Per RFC 8707 the audience matches the canonical resource URI; fall back to `resource` when audience is not set.
+    audience = opts?.audience ?? (process.env.OAUTH_AUDIENCE || undefined) ?? resource;
+    if (!audience) {
+      throw new Error(
+        "OAuth audience is required for token validation per RFC 8707 / MCP spec. " +
+          "Set OAUTH_AUDIENCE or OAUTH_RESOURCE, or pass `audience`/`resource` in OAuthOptions.",
+      );
+    }
+    scope = opts?.scope ?? (process.env.OAUTH_SCOPE || undefined);
+    jwksUri = opts?.jwksUri ?? (process.env.OAUTH_JWKS_URI || undefined);
+  } else {
+    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined) ?? QUARTAL_HUB_ISSUER;
+    audience = opts?.audience ?? QUARTAL_HUB_AUDIENCE;
+    scope = opts?.scope ?? QUARTAL_HUB_SCOPE;
+    // `resource` stays unset: the RFC 9728 metadata derives it from each request's origin, so
+    // the same plugin passes client resource-validation on localhost and deployed alike.
+    resource = opts?.resource;
+    jwksUri = opts?.jwksUri;
   }
-  const baseScopes = normalizeScopes(opts?.scope ?? envScope ?? appName);
+
   const additionalScopes = opts?.additionalScopes !== undefined ? normalizeScopes(opts.additionalScopes) : DEFAULT_ADDITIONAL_SCOPES;
-  const scopes = Array.from(new Set([...baseScopes, ...additionalScopes]));
+  const scopes = Array.from(new Set([...normalizeScopes(scope), ...additionalScopes]));
   return {
     issuer,
     audience,
     resource,
     scopes,
     documentationUrl: opts?.documentationUrl,
-    jwksUri: opts?.jwksUri ?? envJwksUri,
+    jwksUri,
     algorithms: opts?.algorithms ?? DEFAULT_ALGORITHMS,
     cacheTtlMs: opts?.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS,
     claimsToContext: opts?.claimsToContext ?? defaultClaimsToContext,
@@ -210,13 +237,27 @@ export function getProtectedResourceMetadataUrl(
  * Returns the OAuth Protected Resource Metadata document body (RFC 9728).
  * Mount this at `/.well-known/oauth-protected-resource` so MCP clients (incl. Claude) can
  * discover the authorization server after a 401 response.
+ *
+ * When no `resource` is configured, it is derived from the request's origin — RFC 9728 requires
+ * the advertised resource to match the URL the client actually connects to, so deriving it keeps
+ * one configuration valid on localhost and deployed.
  * @param resolved Resolved OAuth options for the protected resource.
+ * @param requestUrl Current request URL; its origin is the `resource` fallback.
  */
 export function getProtectedResourceMetadataDoc(
   resolved: ResolvedOAuthOptions,
+  requestUrl?: string,
 ): Record<string, unknown> {
+  let resource = resolved.resource;
+  if (!resource && requestUrl) {
+    try {
+      resource = new URL(requestUrl).origin;
+    } catch {
+      // fall through with resource unset
+    }
+  }
   const doc: Record<string, unknown> = {
-    resource: resolved.resource,
+    resource,
     authorization_servers: [resolved.issuer],
     bearer_methods_supported: ["header"],
   };
@@ -371,14 +412,14 @@ function computeExpireIn(claims: JWTPayload, cacheTtlMs: number): number {
  * On success the middleware sets `c.var.context` to a QuartalPluginContext and caches it in the plugin cache keyed by the token.
  * On failure (missing header, bad token, failed verification) it responds with 401.
  *
- * @param opts OAuth options. Any unset field falls back to env vars (OAUTH_ISSUER / OAUTH_AUDIENCE / OAUTH_JWKS_URI).
- * @param pluginName Plugin name used to derive default OAuth resource and scope values.
+ * @param opts OAuth options; unset fields resolve per the mode (see {@link resolveOAuthOptions}).
+ * @param mode Default-resolution mode; see {@link QuartalAuthMode}.
  */
 export function oauthAuthMiddleware(
   opts?: OAuthOptions,
-  pluginName?: string,
+  mode?: QuartalAuthMode,
 ): MiddlewareHandler<{ Variables: { context: QuartalPluginContext } }> {
-  const resolved = resolveOAuthOptions(opts, pluginName);
+  const resolved = resolveOAuthOptions(opts, mode);
   return createMiddleware(async (c, next) => {
     const resourceMetadataUrl = getProtectedResourceMetadataUrl(resolved, c.req.url);
     const challenge = { resourceMetadataUrl, scopes: resolved.scopes };

@@ -91,7 +91,7 @@ export {
   resolveOAuthOptions,
   unauthorized,
 } from "./oauth/oauthAuth.ts";
-export type { OAuthOptions, ResolvedOAuthOptions } from "./oauth/oauthAuth.ts";
+export type { OAuthOptions, QuartalAuthMode, ResolvedOAuthOptions } from "./oauth/oauthAuth.ts";
 
 // Runtime request serving (Hono API app + MCP)
 export { PluginApiHelper } from "./hono-app/PluginApiHelper.ts";

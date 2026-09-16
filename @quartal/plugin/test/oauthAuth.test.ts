@@ -30,45 +30,82 @@ afterEach(() => {
   }
 });
 
-describe("resolveOAuthOptions", () => {
-  it("derives resource + scope from the plugin name and applies defaults", () => {
-    const r = resolveOAuthOptions(undefined, "@samples/auth-agent");
-    expect(r.resource).toBe("https://auth-agent.quartal.deno.net");
-    expect(r.audience).toBe("https://auth-agent.quartal.deno.net");
-    expect(r.scopes).toEqual(expect.arrayContaining(["auth-agent", "profile", "email"]));
+describe("resolveOAuthOptions — quartal-hub mode (default)", () => {
+  it("applies the fixed Quartal Hub test-environment defaults", () => {
+    const r = resolveOAuthOptions();
+    expect(r.issuer).toContain("iam2026.test.qrtl.com");
+    expect(r.audience).toBe("https://hub.test.qrtl.com");
+    expect(r.scopes).toEqual(expect.arrayContaining(["quartal-hub-test", "profile", "email"]));
     expect(r.algorithms).toEqual(["RS256", "ES256"]);
-    expect(r.issuer).toContain("iam2026.test.qrtl.com"); // dev default issuer
+    expect(r.resource).toBeUndefined(); // derived per request in the metadata document
   });
 
-  it("reads issuer/audience from environment variables", () => {
+  it("honors OAUTH_ISSUER but ignores the other OAUTH_* variables", () => {
     process.env.OAUTH_ISSUER = "https://id.example.com/realms/x";
     process.env.OAUTH_AUDIENCE = "https://api.example.com";
+    process.env.OAUTH_SCOPE = "other-scope";
+    process.env.OAUTH_RESOURCE = "https://other.example.com";
     const r = resolveOAuthOptions();
     expect(r.issuer).toBe("https://id.example.com/realms/x");
-    expect(r.audience).toBe("https://api.example.com");
+    expect(r.audience).toBe("https://hub.test.qrtl.com");
+    expect(r.scopes).toEqual(expect.arrayContaining(["quartal-hub-test"]));
+    expect(r.scopes).not.toContain("other-scope");
+    expect(r.resource).toBeUndefined();
   });
 
   it("lets explicit options win over env and defaults", () => {
     process.env.OAUTH_ISSUER = "https://env-issuer";
     const r = resolveOAuthOptions({ issuer: "https://opt-issuer", audience: "aud" });
     expect(r.issuer).toBe("https://opt-issuer");
+    expect(r.audience).toBe("aud");
+  });
+});
+
+describe("resolveOAuthOptions — custom mode", () => {
+  it("reads issuer/audience from environment variables", () => {
+    process.env.OAUTH_ISSUER = "https://id.example.com/realms/x";
+    process.env.OAUTH_AUDIENCE = "https://api.example.com";
+    const r = resolveOAuthOptions(undefined, "custom");
+    expect(r.issuer).toBe("https://id.example.com/realms/x");
+    expect(r.audience).toBe("https://api.example.com");
+  });
+
+  it("falls back to OAUTH_RESOURCE as the audience", () => {
+    process.env.OAUTH_ISSUER = "https://id.example.com";
+    process.env.OAUTH_RESOURCE = "https://plugin.example.com";
+    const r = resolveOAuthOptions(undefined, "custom");
+    expect(r.audience).toBe("https://plugin.example.com");
+    expect(r.resource).toBe("https://plugin.example.com");
+  });
+
+  it("throws when no issuer is configured", () => {
+    process.env.OAUTH_AUDIENCE = "https://api.example.com";
+    expect(() => resolveOAuthOptions(undefined, "custom")).toThrow(/issuer/i);
   });
 
   it("throws when no audience can be determined", () => {
-    expect(() => resolveOAuthOptions()).toThrow(/audience is required/i);
+    process.env.OAUTH_ISSUER = "https://id.example.com";
+    expect(() => resolveOAuthOptions(undefined, "custom")).toThrow(/audience is required/i);
   });
 });
 
 describe("Protected Resource Metadata (RFC 9728)", () => {
-  it("builds the metadata document and discovery URL", () => {
-    const r = resolveOAuthOptions({ issuer: "https://iss", resource: "https://api.example.com" }, "auth-agent");
+  it("builds the metadata document and discovery URL from a fixed resource", () => {
+    const r = resolveOAuthOptions({ issuer: "https://iss", resource: "https://api.example.com", scope: "my-scope" }, "custom");
     const doc = getProtectedResourceMetadataDoc(r);
     expect(doc.resource).toBe("https://api.example.com");
     expect(doc.authorization_servers).toEqual(["https://iss"]);
-    expect(doc.scopes_supported).toEqual(expect.arrayContaining(["auth-agent"]));
+    expect(doc.scopes_supported).toEqual(expect.arrayContaining(["my-scope"]));
 
     const url = getProtectedResourceMetadataUrl(r);
     expect(url).toBe("https://api.example.com/.well-known/oauth-protected-resource");
+  });
+
+  it("derives the resource from the request origin when none is configured", () => {
+    const r = resolveOAuthOptions(); // quartal-hub: no fixed resource
+    const doc = getProtectedResourceMetadataDoc(r, "http://localhost:4321/.well-known/oauth-protected-resource");
+    expect(doc.resource).toBe("http://localhost:4321");
+    expect(doc.authorization_servers).toEqual([r.issuer]);
   });
 });
 
@@ -90,7 +127,7 @@ describe("oauthAuthMiddleware", () => {
 
   function appWithAuth() {
     const app = new Hono<{ Variables: { context: QuartalPluginContext } }>();
-    app.use("/me", oauthAuthMiddleware({ issuer: "https://iss", audience: "aud" }, "auth-agent"));
+    app.use("/me", oauthAuthMiddleware({ issuer: "https://iss", audience: "aud" }));
     app.get("/me", (c) => c.json(c.var.context));
     return app;
   }
