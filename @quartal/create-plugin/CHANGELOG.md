@@ -1,5 +1,11 @@
 # @quartal/create-plugin
 
+## 0.8.0
+
+### Minor Changes
+
+- 8b460f9: Scaffolded plugins now use `auth: "quartal-hub"` and depend on `@quartal/plugin@^0.8.0` / `@quartal/plugin-core@^0.7.0` — the previously published scaffolder still emitted `^0.6.0` ranges.
+
 ## 0.7.0
 
 ### Minor Changes

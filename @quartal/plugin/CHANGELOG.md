@@ -1,5 +1,16 @@
 # @quartal/plugin
 
+## 0.8.0
+
+### Minor Changes
+
+- 8b460f9: Docs-site login: authenticated plugins get a **Log in** button in the docs top bar, running the same OAuth flow MCP clients use (authorization code + PKCE with a CIMD client). The plugin serves its own client metadata document at `/.well-known/oauth/client-metadata.json`; `/oauth/login` starts the flow and `/oauth/callback` exchanges the code server-side, so no authorization-server CORS is needed. On localhost the shared metadata document on plugin.quartal.com is the client. The token is injected into Swagger UI *Try it out* requests; the Swagger security scheme is now plain HTTP bearer (the OAuth2 password flow and the `swagger-test-client` default are removed). `OAUTH_CLIENT_ID` now names a pre-registered public client for the docs login in `custom` mode (Auth0 / Entra ID, which lack CIMD).
+- 8b460f9: Auth modes reworked: the authenticated mode is now `auth: "quartal-hub"`. It is zero-config — fixed Quartal Hub test-environment scope (`quartal-hub-test`), audience (`https://hub.test.qrtl.com`) and issuer, with only `OAUTH_ISSUER` overridable; the RFC 9728 `resource` derives from each request's origin so localhost and deployed instances need no configuration. A new `auth: "custom"` mode connects to any OAuth2 / OIDC server (Auth0, Microsoft Entra ID, …) via the `OAUTH_*` environment variables; `OAUTH_ISSUER` is required there. The `resolveOAuthOptions` / `oauthAuthMiddleware` second parameter is now the auth mode instead of a plugin name, and per-plugin-name scope/resource derivation is removed.
+
+### Patch Changes
+
+- 9422615: Docs site: hide Swagger UI's Authorize button and per-operation lock icons for authenticated plugins. The docs-site top-bar login now provides the bearer token (injected into Try-it-out requests), so Swagger's own auth controls were redundant and confusing.
+
 ## 0.7.0
 
 ### Minor Changes
