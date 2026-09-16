@@ -20,8 +20,9 @@ onMounted(() => {
       showCommonExtensions: true,
       tryItOutEnabled: true,
       requestSnippetsEnabled: true,
-      persistAuthorization: true,
-      // The top-bar login provides the bearer token; a manually authorized value still wins.
+      // The top-bar login handles auth and injects the token below, so Swagger's own auth UI
+      // (Authorize button + per-operation locks) is hidden in the template — persisting it would
+      // keep a stale, now-hidden authorization.
       requestInterceptor: (req: { headers: Record<string, string> }) => {
         if (auth.token.value && !req.headers.Authorization && !req.headers.authorization) {
           req.headers.Authorization = `Bearer ${auth.token.value}`;
@@ -45,3 +46,13 @@ onBeforeUnmount(() => {
     <div ref="container" class="q-plugin-swagger-view__ui" />
   </div>
 </template>
+
+<style scoped>
+/* Authentication is driven by the docs-site top-bar login (token injected via requestInterceptor),
+   so Swagger's own auth controls are redundant and confusing: hide the Authorize bar and the
+   per-operation lock buttons. */
+.q-plugin-swagger-view :deep(.scheme-container),
+.q-plugin-swagger-view :deep(.authorization__btn) {
+  display: none;
+}
+</style>
