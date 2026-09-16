@@ -39,7 +39,7 @@ The starter kit asks for:
 - **Name** — the npm package / directory name (required).
 - **Description** — optional one-liner.
 - **Quartal Hub authentication** — yes/no. Yes scaffolds OAuth2 with the default Quartal auth
-  (`auth: "quartal-iam"`); no scaffolds an anonymous plugin (`auth: "anon"`).
+  (`auth: "quartal-hub"`); no scaffolds an anonymous plugin (`auth: "anon"`).
 - **Sample tool** — yes/no (default yes): a `HelloWorld` class under `src/tools/`.
 - **Widgets** — None / Vue (default) / React / Plain JavaScript: a `sayHello` widget page under
   `src/pages/widgets/`.

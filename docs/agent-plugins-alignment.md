@@ -66,7 +66,7 @@ Vite plugin `qrtlCodegenPlugin.ts`. Gitignored, regenerated on change.
 - Grouping is only class-derived (`PluginToolGroup` / OpenAPI tags).
 - External MCP servers are declarable only inside agent files (`AgentMcpServer`), as pass-through
   data for the host.
-- Auth modes: `anon` | `quartal-iam`.
+- Auth modes: `anon` | `quartal-hub` | `custom`.
 
 ## Proposed target
 

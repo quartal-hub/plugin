@@ -36,11 +36,11 @@ const WIDGETS_PAGES_DIR = "src/pages/widgets";
  */
 export interface QrtlPluginOptions {
   /**
-   * Auth mode override: `"anon"` (`getAnonApp`) or `"quartal-iam"` (`getAuthApp`).
+   * Auth mode override: `"anon"` (`getAnonApp`) or `"quartal-hub"` / `"custom"` (`getAuthApp`).
    * @deprecated Set `auth` in `qrtl.config.ts` instead. When passed, this option wins over the
    * config file (and logs a deprecation warning).
    */
-  auth?: "anon" | "quartal-iam";
+  auth?: "anon" | "quartal-hub" | "custom";
   /**
    * Whether to show the Astro dev toolbar in `astro dev` (default: `false`). Plugins are mostly
    * widget/API surfaces where the toolbar gets in the way, so the integration hides it centrally;
@@ -58,14 +58,16 @@ export interface QrtlPluginOptions {
  */
 export function buildPluginMiddlewareSource(
   opts: {
-    auth: "anon" | "quartal-iam";
+    auth: "anon" | "quartal-hub" | "custom";
     root?: string;
     registryImport: string;
     promptsRegistryImport?: string;
     qrtlPluginDir?: string;
   },
 ): string {
-  const appFn = opts.auth === "quartal-iam" ? "getAuthApp" : "getAnonApp";
+  // Any non-anon mode gets the auth app; getAuthApp reads the exact mode (quartal-hub / custom)
+  // from qrtl.config at runtime.
+  const appFn = opts.auth === "anon" ? "getAnonApp" : "getAuthApp";
   const rootArg = opts.root ? `, pluginRootFolder: ${JSON.stringify(opts.root)}` : "";
   const pkgDirArg = opts.qrtlPluginDir ? `, qrtlPluginDir: ${JSON.stringify(opts.qrtlPluginDir)}` : "";
   const promptsImport = opts.promptsRegistryImport

@@ -7,7 +7,7 @@ export interface CreatePluginOptions {
   name: string;
   /** One-line description used in `package.json` and `qrtl.config.ts`. May be empty. */
   description: string;
-  /** `true` scaffolds Quartal Hub authentication (OAuth2, `auth: "quartal-iam"`); `false` scaffolds `auth: "anon"`. */
+  /** `true` scaffolds Quartal Hub authentication (OAuth2, `auth: "quartal-hub"`); `false` scaffolds `auth: "anon"`. */
   auth: boolean;
   /** Whether to scaffold the sample tool class (`src/tools/HelloWorld.ts`). */
   sampleTool: boolean;

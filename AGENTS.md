@@ -38,6 +38,14 @@ decisions ("this was changed because…"); describe the present state only. Inte
 design documents live in `docs/` (e.g. [docs/agent-plugins-alignment.md](./docs/agent-plugins-alignment.md)).
 Distribution/marketplace planning continues in the separate Quartal Hub project.
 
+## No backward compatibility (pre-production)
+
+Do not add backward-compatibility features — legacy config values, deprecated aliases, runtime
+fallbacks for renamed options, migration warnings — until the product is in production. We are not
+in wide deployment: backward compatibility adds harmful noise without bringing value. When
+something is renamed or reshaped, update every reference in this repo (code, samples, docs, tests)
+and let the changeset describe the new state.
+
 ## Code organization
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full rules. Summary: one primary artifact per

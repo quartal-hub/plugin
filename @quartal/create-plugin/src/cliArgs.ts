@@ -25,7 +25,7 @@ scaffold without a terminal: pnpm create @quartal/plugin my-plugin --yes
 
 Options:
   -d, --description <text>   One-line description (default: "")
-      --auth                 Quartal Hub authentication (OAuth2, auth: "quartal-iam")
+      --auth                 Quartal Hub authentication (OAuth2, auth: "quartal-hub")
       --no-auth              Anonymous plugin, auth: "anon" (default)
       --sample-tool          Scaffold the HelloWorld sample tool (default)
       --no-sample-tool       Skip the sample tool

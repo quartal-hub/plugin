@@ -2,16 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "website",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["website/node_modules/astro/bin/astro.mjs", "dev", "--root", "website", "--port", "4325"],
-      "port": 4325
-    },
-    {
-      "name": "test1",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["samples/test1/node_modules/astro/bin/astro.mjs", "dev", "--root", "samples/test1", "--port", "4326"],
-      "port": 4326
+      "name": "auth-agent",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "samples/auth-agent", "run", "dev"],
+      "port": 4321
     }
   ]
 }

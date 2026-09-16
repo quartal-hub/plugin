@@ -165,12 +165,12 @@ describe("Helpers.getPluginManifest", () => {
   it("loads qrtl.config.mjs (default export)", async () => {
     const dir = await tempPkg({
       "package.json": JSON.stringify({ name: "@samples/esm", version: "0.1.0" }),
-      "qrtl.config.mjs": "export default { title: 'ESM Configured', auth: 'quartal-iam' };",
+      "qrtl.config.mjs": "export default { title: 'ESM Configured', auth: 'quartal-hub' };",
     });
     const m = await Helpers.getPluginManifest(dir);
     expect(m.title).toBe("ESM Configured");
     const cfg = await Helpers.loadQrtlConfig(dir);
-    expect(cfg?.auth).toBe("quartal-iam");
+    expect(cfg?.auth).toBe("quartal-hub");
   });
 
 });

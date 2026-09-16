@@ -1,0 +1,13 @@
+{
+  "client_id": "https://plugin.quartal.com/.well-known/oauth/client-metadata.json",
+  "client_name": "Quartal Plugin (local development)",
+  "client_uri": "https://plugin.quartal.com",
+  "redirect_uris": [
+    "http://localhost:4321/oauth/callback",
+    "http://127.0.0.1:4321/oauth/callback"
+  ],
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "scope": "quartal-hub-test profile email"
+}

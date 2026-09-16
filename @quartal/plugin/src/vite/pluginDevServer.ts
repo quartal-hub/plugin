@@ -25,7 +25,7 @@ export interface PluginDevServerOptions {
   /** Plugin root (`pluginRootFolder`). */
   cwd: string;
   /** Auth mode. */
-  auth: "anon" | "quartal-iam";
+  auth: "anon" | "quartal-hub" | "custom";
   /** Generated-artifact directory relative to `cwd` (e.g. `src/qrtl-plugin`). */
   qrtlPluginDir: string;
   /** Absolute path to the generated `tools.registry.ts` (imported for tool execution). */
@@ -116,7 +116,7 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
         ...(toolModules ? { toolModules } : {}),
         ...(promptModules ? { promptModules } : {}),
       };
-      return options.auth === "quartal-iam" ? await getAuthApp(config) : await getAnonApp(config);
+      return options.auth === "anon" ? await getAnonApp(config) : await getAuthApp(config);
     })();
     return appPromise;
   };

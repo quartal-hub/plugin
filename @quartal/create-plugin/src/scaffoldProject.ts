@@ -113,9 +113,9 @@ function renderPackageJson(options: CreatePluginOptions): string {
 
 /** Renders `qrtl.config.ts` with the chosen auth mode and commented-out optional settings. */
 function renderQrtlConfig(options: CreatePluginOptions): string {
-  const auth = options.auth ? "quartal-iam" : "anon";
+  const auth = options.auth ? "quartal-hub" : "anon";
   const authEnvComment = options.auth
-    ? `\n  // Defaults derive from the plugin name; override with OAUTH_ISSUER / OAUTH_AUDIENCE /\n  // OAUTH_RESOURCE env vars when needed.`
+    ? `\n  // "quartal-hub" is preconfigured for the Quartal Hub test environment; set OAUTH_ISSUER\n  // to point at another IAM instance. "custom" reads all OAUTH_* env vars instead.`
     : "";
   return `import { defineQrtlConfig } from "@quartal/plugin";
 
@@ -123,7 +123,8 @@ function renderQrtlConfig(options: CreatePluginOptions): string {
 export default defineQrtlConfig({
   title: ${JSON.stringify(titleFromName(options.name))},
   description: ${JSON.stringify(options.description || "A Quartal Plugin.")},
-  // Auth mode: "anon" (no authentication) or "quartal-iam" (OAuth2 via Quartal Hub).${authEnvComment}
+  // Auth mode: "anon" (no authentication), "quartal-hub" (OAuth2 via Quartal Hub), or
+  // "custom" (your own OAuth2 / OIDC server).${authEnvComment}
   auth: ${JSON.stringify(auth)},
   // Logo and icons shown by MCP clients and the docs site:
   // style: {
@@ -257,8 +258,8 @@ function renderAgentsMd(options: CreatePluginOptions): string {
     "  `skills/`.",
     "- **Plugin options** (title, description, auth, deploy) live in `qrtl.config.ts`.",
     options.auth
-      ? "- **Auth**: this plugin uses Quartal Hub OAuth2 (`auth: \"quartal-iam\"`); OAUTH_ISSUER /\n" +
-        "  OAUTH_AUDIENCE / OAUTH_RESOURCE env vars override the name-derived defaults."
+      ? "- **Auth**: this plugin uses Quartal Hub OAuth2 (`auth: \"quartal-hub\"`) — preconfigured\n" +
+        "  for the Quartal Hub test environment; set OAUTH_ISSUER to point at another IAM instance."
       : "- **Auth**: this plugin is anonymous (`auth: \"anon\"` in `qrtl.config.ts`).",
   );
   if (options.sampleTool) {

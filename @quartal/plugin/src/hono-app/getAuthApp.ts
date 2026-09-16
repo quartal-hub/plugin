@@ -18,48 +18,53 @@ import {
   getOAuthContextFromKv,
   getProtectedResourceMetadataDoc,
   getProtectedResourceMetadataUrl,
-  getTokenEndpoint,
   oauthAuthMiddleware,
   type OAuthOptions,
+  type QuartalAuthMode,
   type ResolvedOAuthOptions,
   resolveOAuthOptions,
   unauthorized,
 } from "../oauth/oauthAuth.ts";
+import { registerOAuthLoginRoutes } from "./oauthLoginRoutes.ts";
 
-/** Default client_id pre-filled in the Swagger UI Authorize dialog when nothing else is supplied. */
-const DEFAULT_SWAGGER_CLIENT_ID = "swagger-test-client";
+/** Maps a qrtl.config `auth` value to the OAuth default-resolution mode. */
+function toAuthMode(auth: string | undefined): QuartalAuthMode {
+  return auth === "custom" ? "custom" : "quartal-hub";
+}
 
 /**
- * Returns a Hono app with Quartal IAM (OIDC / JWT bearer) authentication.
+ * Returns a Hono app with OAuth2 / OIDC JWT bearer authentication. The qrtl.config `auth` mode
+ * picks the defaults: `"quartal-hub"` (Quartal Hub test environment, zero-config) or `"custom"`
+ * (own OAuth2/OIDC server via `OAUTH_*` env vars).
  *
  * The middleware verifies incoming JWTs against the issuer's JWKS (discovered via
  * `${issuer}/.well-known/openid-configuration` or supplied directly) and exposes the resulting
  * QuartalPluginContext on `c.var.context`. Verified contexts are cached via the pluggable {@link PluginCache}.
  * @param config Optional app configuration.
- * @param oauth Optional OAuth options. Any unset field falls back to env vars (OAUTH_ISSUER / … ).
+ * @param oauth Optional OAuth options; explicit fields win over mode defaults and env vars.
  */
 export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions): Promise<Hono> {
   config = config ?? {};
-  // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
-  // callers (tests, non-Astro hosts) may pass them explicitly instead.
+  // `qrtl.config` authors both the `mcp` options (server name, multi-server map) and the auth
+  // mode; direct callers (tests, non-Astro hosts) may pass `mcp` / `oauth` explicitly instead.
+  const qrtlConfig = await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd());
   if (config.mcp === undefined) {
-    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd()))?.mcp;
+    config.mcp = qrtlConfig?.mcp;
   }
+  const mode = toAuthMode(qrtlConfig?.auth);
   const manifest = await Helpers.getPluginManifest(config.pluginRootFolder);
   let resolved: ResolvedOAuthOptions | undefined;
 
   if (!config.auth) {
-    resolved = resolveOAuthOptions(oauth, manifest.name);
-    const tokenUrl = await getTokenEndpoint({ issuer: resolved.issuer, tokenUrl: oauth?.tokenUrl });
-    const clientId = oauth?.clientId ?? DEFAULT_SWAGGER_CLIENT_ID;
-    const swaggerScopes: Record<string, string> = {};
-    for (const s of resolved.scopes) swaggerScopes[s] = s;
+    resolved = resolveOAuthOptions(oauth, mode);
+    // Plain HTTP bearer: the docs site obtains the token through the /oauth/login flow (the same
+    // CIMD method MCP clients use) and injects it into Swagger's requests.
     config.auth = {
-      name: "oauth2Password",
-      type: "oauth2",
-      flows: { password: { tokenUrl, scopes: swaggerScopes } },
-      clientId,
-      middleware: oauthAuthMiddleware(oauth, manifest.name),
+      name: "bearerAuth",
+      type: "http",
+      scheme: "bearer",
+      bearerFormat: "JWT",
+      middleware: oauthAuthMiddleware(oauth, mode),
     };
   }
 
@@ -86,10 +91,14 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
 
   // OAuth Protected Resource Metadata (RFC 9728) — unauthenticated so MCP clients can discover the
   // authorization server after a 401. Both root and path-aware forms are mounted (MCP 2025-11-25).
+  // Built per request: when no fixed `resource` is configured it derives from the request origin.
   if (resolved) {
-    const metadata = getProtectedResourceMetadataDoc(resolved);
-    app.get("/.well-known/oauth-protected-resource", (c) => c.json(metadata));
-    app.get("/.well-known/oauth-protected-resource/:path{.+}", (c) => c.json(metadata));
+    const oauthResolved = resolved;
+    const metadata = (url: string) => getProtectedResourceMetadataDoc(oauthResolved, url);
+    app.get("/.well-known/oauth-protected-resource", (c) => c.json(metadata(c.req.url)));
+    app.get("/.well-known/oauth-protected-resource/:path{.+}", (c) => c.json(metadata(c.req.url)));
+    // Browser login for the docs site (CIMD client metadata + /oauth/login + /oauth/callback).
+    registerOAuthLoginRoutes(app as Hono, oauthResolved, manifest.title ?? manifest.name);
   }
 
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;

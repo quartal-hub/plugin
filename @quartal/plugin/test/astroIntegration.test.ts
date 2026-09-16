@@ -152,7 +152,7 @@ describe("qrtlPlugin integration", () => {
   });
 
   it("reads the auth mode from qrtl.config and watches the config file", async () => {
-    const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "quartal-iam" };' });
+    const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "quartal-hub" };' });
     const { vitePlugins, watched, warnings } = await runSetup("server", undefined, root);
     expect(middlewareSource(vitePlugins)).toContain("getAuthApp");
     expect(watched).toContain(join(root, "qrtl.config.mjs"));
@@ -166,21 +166,24 @@ describe("qrtlPlugin integration", () => {
 
   it("deprecated qrtlPlugin({ auth }) still wins over qrtl.config and warns", async () => {
     const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "anon" };' });
-    const { vitePlugins, warnings } = await runSetup("server", { auth: "quartal-iam" }, root);
+    const { vitePlugins, warnings } = await runSetup("server", { auth: "quartal-hub" }, root);
     expect(middlewareSource(vitePlugins)).toContain("getAuthApp");
     expect(warnings.some((w) => w.includes("deprecated"))).toBe(true);
   });
 });
 
 describe("buildPluginMiddlewareSource", () => {
-  it("uses getAnonApp for anon and getAuthApp for quartal-iam", () => {
+  it("uses getAnonApp for anon and getAuthApp for quartal-hub and custom", () => {
     const anon = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
     expect(anon).toContain("getAnonApp");
     expect(anon).not.toContain("getAuthApp");
 
-    const iam = buildPluginMiddlewareSource({ auth: "quartal-iam", root: "/proj", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
-    expect(iam).toContain("getAuthApp");
-    expect(iam).toContain('pluginRootFolder: "/proj"');
+    const hub = buildPluginMiddlewareSource({ auth: "quartal-hub", root: "/proj", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
+    expect(hub).toContain("getAuthApp");
+    expect(hub).toContain('pluginRootFolder: "/proj"');
+
+    const custom = buildPluginMiddlewareSource({ auth: "custom", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
+    expect(custom).toContain("getAuthApp");
   });
 
   it("imports and passes promptModules when a prompts registry is given", () => {

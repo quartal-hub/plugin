@@ -29,7 +29,7 @@ export default defineQrtlConfig({
     logo: "https://cdn.example.com/logo.png",
     icons: [{ src: "https://cdn.example.com/icon.png", mimeType: "image/png", sizes: ["128x128"] }],
   },
-  auth: "quartal-iam",
+  auth: "quartal-hub",
   deploy: { org: "my-org", app: "my-plugin" },
 });
 ```
@@ -71,15 +71,18 @@ The authentication mode of the whole plugin — it selects how the server app is
 the REST API and the MCP server:
 
 - **`"anon"`** (default) — no authentication.
-- **`"quartal-iam"`** — OAuth2 / OIDC JWT bearer authentication. Incoming JWTs are verified
-  against the issuer's JWKS; tools receive a `QuartalPluginContext` as their second parameter.
+- **`"quartal-hub"`** — OAuth2 / OIDC JWT bearer authentication via Quartal Hub, zero-config
+  (fixed test-environment scope, audience and issuer; only `OAUTH_ISSUER` is overridable).
+  Tools receive a `QuartalPluginContext` as their second parameter.
+- **`"custom"`** — the same JWT bearer authentication against your own OAuth2 / OIDC server
+  (Auth0, Microsoft Entra ID, Keycloak, …), configured entirely with environment variables:
+  `OAUTH_ISSUER` (required), `OAUTH_AUDIENCE` / `OAUTH_RESOURCE` (at least one), `OAUTH_SCOPE`,
+  `OAUTH_JWKS_URI`, `OAUTH_TOKEN_URL`, `OAUTH_CLIENT_ID`.
 
-With `"quartal-iam"`, sensible defaults derive from the plugin name; override them with
-environment variables where needed: `OAUTH_ISSUER`, `OAUTH_AUDIENCE`, `OAUTH_RESOURCE`,
-`OAUTH_SCOPE`, `OAUTH_JWKS_URI`, `OAUTH_TOKEN_URL`, `OAUTH_CLIENT_ID`. `OAUTH_ISSUER` and at
-least one of `OAUTH_AUDIENCE` / `OAUTH_RESOURCE` must resolve. Widget pages and their assets stay
-unauthenticated (the sandboxed widget iframe carries no credentials); auth is enforced on
-`/api/*` and `/mcp`.
+Widget pages and their assets stay unauthenticated (the sandboxed widget iframe carries
+no credentials); auth is enforced on `/api/*` and `/mcp`. See
+[Authentication](/docs/auth/authentication/) for the full reference including Auth0 and
+Microsoft Entra ID recipes.
 
 Changing `auth` requires a dev-server restart in `astro dev` — the config file is watched, so the
 restart happens automatically when you save it.
