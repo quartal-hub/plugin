@@ -14,7 +14,7 @@ const COMPATIBILITY_DATE = "2026-08-01";
 /**
  * Cloudflare Workers target.
  *
- * Unlike Railway and Deno Deploy this one uploads a *finished* bundle: wrangler ships the built
+ * Unlike Railway and Vercel this one uploads a *finished* bundle: wrangler ships the built
  * Worker, so the build runs locally and `buildsLocally` is true.
  *
  * KNOWN BLOCKER — a Worker has no real filesystem. Workers expose `node:fs` over a virtual FS whose

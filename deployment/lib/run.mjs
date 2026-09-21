@@ -27,6 +27,8 @@ export function run(command, args, options = {}) {
     cwd,
     stdio: "inherit",
     env: env ? { ...process.env, ...env } : process.env,
+    // Windows: npm/npx/railway/vercel are .cmd shims, which Node refuses to spawn without a shell.
+    shell: process.platform === "win32",
   });
 
   if (result.error?.code === "ENOENT") {
@@ -53,6 +55,9 @@ export function run(command, args, options = {}) {
  * @param versionArgs Arguments that make the CLI print its version.
  */
 export function hasCommand(command, versionArgs = ["--version"]) {
-  const result = spawnSync(command, versionArgs, { stdio: "ignore" });
+  const result = spawnSync(command, versionArgs, {
+    stdio: "ignore",
+    shell: process.platform === "win32",
+  });
   return !result.error && result.status === 0;
 }

@@ -1,8 +1,9 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { fail, info } from "./log.mjs";
 import { readJson } from "./project.mjs";
+import { run } from "./run.mjs";
 
 /** Directory names (relative to the repo root) that hold workspace packages. */
 const WORKSPACE_DIRS = ["@quartal", "samples"];
@@ -47,9 +48,17 @@ function toRegistryRange(spec, version) {
 }
 
 /**
- * Copies a workspace package into the stage's `vendor/` folder, keeping only what npm needs to
- * install it (`package.json` + whatever the package's `files` field publishes). Nested
- * `workspace:` dependencies are vendored recursively and rewired to relative `file:` paths.
+ * Packs a workspace package into a tarball under the stage's `vendor/` folder, keeping only what
+ * npm needs to install it (`package.json` + whatever the package's `files` field publishes).
+ *
+ * Tarballs, not directories: npm installs a `file:` *directory* as a symlink in `node_modules`,
+ * which breaks module tracers that recreate symlinks (Vercel's nft — dangling links inside the
+ * function bundle, EPERM on Windows). A `file:` *tarball* installs as a real copy everywhere.
+ *
+ * Nested `workspace:` dependencies are packed recursively but referenced by their registry range:
+ * a relative `file:` path inside a tarball would not survive extraction, so instead every packed
+ * package is also added to the stage's own dependencies (see {@link resolveWorkspaceDeps}), and its
+ * version satisfies the nested range.
  * @param name Package name to vendor.
  * @param context `{ index, stageDir, vendored }` shared across the recursion.
  */
@@ -61,8 +70,11 @@ function vendorPackage(name, context) {
   if (!source) fail(`Workspace package "${name}" was not found in ${WORKSPACE_DIRS.map((d) => `${d}/`).join(" or ")}.`);
 
   const folder = name.replace(/^@/, "").replace(/\//g, "-");
-  const dest = join(stageDir, VENDOR_DIR, folder);
-  vendored.set(name, folder);
+  const tarball = `${folder}-${source.pkg.version}.tgz`;
+  vendored.set(name, tarball);
+
+  const vendorDir = join(stageDir, VENDOR_DIR);
+  const dest = join(vendorDir, folder);
   mkdirSync(dest, { recursive: true });
 
   const published = new Set([...(source.pkg.files ?? ["dist"]), "package.json", "README.md", "LICENSE"]);
@@ -84,14 +96,18 @@ function vendorPackage(name, context) {
     manifest[field] = Object.fromEntries(
       Object.entries(deps).map(([dep, spec]) => {
         if (!String(spec).startsWith("workspace:")) return [dep, spec];
-        const nestedFolder = vendorPackage(dep, context);
-        return [dep, `file:../${nestedFolder}`];
+        const nested = index.get(dep);
+        vendorPackage(dep, context);
+        return [dep, toRegistryRange(spec, nested.pkg.version)];
       }),
     );
   }
   writeFileSync(join(dest, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-  info(`vendored ${name} -> ${VENDOR_DIR}/${folder}`);
-  return folder;
+
+  run("npm", ["pack", "--silent", "--pack-destination", ".."], { cwd: dest });
+  rmSync(dest, { recursive: true, force: true });
+  info(`vendored ${name} -> ${VENDOR_DIR}/${tarball}`);
+  return tarball;
 }
 
 /**
@@ -120,6 +136,13 @@ export function resolveWorkspaceDeps({ pkg, repoRoot, stageDir, linkMode }) {
         info(`${dep} ${spec} -> ${deps[dep]}`);
       }
     }
+  }
+
+  // Transitively packed packages (e.g. plugin-core behind plugin) must install from their tarballs
+  // too: their ranges inside other tarballs resolve against what the stage itself installs.
+  for (const [name, tarball] of context.vendored) {
+    pkg.dependencies ??= {};
+    pkg.dependencies[name] = `file:./${VENDOR_DIR}/${tarball}`;
   }
   return { vendored: [...context.vendored.keys()] };
 }

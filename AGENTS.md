@@ -98,9 +98,10 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 plugins themselves. `pnpm deploy-plugin <target> <project>` (i.e. `node deployment/deploy.mjs`)
 stages the plugin as a standalone npm package under `.deploy/<target>/<project>/` (rewriting
 `workspace:*`, swapping in the target's Astro adapter) and hands it to the platform CLI. Targets:
-`railway` (works), `deno` (Deno Deploy), `cloudflare` (blocked — a Worker has no filesystem, and the
-runtime reads skills/agents/artifacts from disk). `--dry-run` prints every command without running
-it. Full docs: [deployment/README.md](./deployment/README.md).
+`vercel` (previews by default, `-- --prod` for production), `railway` (works), `cloudflare`
+(blocked — a Worker has no filesystem, and the runtime reads skills/agents/artifacts from disk;
+see [docs/cloudflare-workers-plan.md](./docs/cloudflare-workers-plan.md)). `--dry-run` prints every
+command without running it. Full docs: [deployment/README.md](./deployment/README.md).
 
 ## UI styling (Bootstrap skins)
 

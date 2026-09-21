@@ -1,18 +1,18 @@
 # Deploying Quartal plugins
 
-Scripts for deploying the sample plugins in [`samples/`](../samples) to **Deno Deploy**,
-**Cloudflare Workers** and **Railway**.
+Scripts for deploying the sample plugins in [`samples/`](../samples) to **Vercel**, **Railway**
+and **Cloudflare Workers**.
 
 ```bash
 node deployment/deploy.mjs <target> <project> [options]
 pnpm deploy-plugin <target> <project> [options]   # same thing, via the root script
 ```
 
-| Target       | Platform            | Adapter                 | Status                                    |
-| ------------ | ------------------- | ----------------------- | ----------------------------------------- |
-| `railway`    | Railway             | `@astrojs/node`         | Works — verified end to end               |
-| `deno`       | Deno Deploy         | `@deno/astro-adapter`   | Builds; deploy needs an account to verify |
-| `cloudflare` | Cloudflare Workers  | `@astrojs/cloudflare`   | Blocked — see [Cloudflare](#cloudflare-workers) |
+| Target       | Platform           | Adapter                 | Status                                          |
+| ------------ | ------------------ | ----------------------- | ----------------------------------------------- |
+| `vercel`     | Vercel             | `@astrojs/vercel`       | Ready — needs `--link local` until `@quartal/plugin` > 0.8.0 is published |
+| `railway`    | Railway            | `@astrojs/node`         | Works — verified end to end                     |
+| `cloudflare` | Cloudflare Workers | `@astrojs/cloudflare`   | Blocked — see [Cloudflare](#cloudflare-workers) |
 
 Everything lives in this one folder; nothing is added to the plugins themselves. A plugin is
 identified by its directory name under `samples/`, and its remote name comes from the `deploy`
@@ -24,8 +24,9 @@ deploy: { org: "quartal", app: "test1" },
 
 ```bash
 node deployment/deploy.mjs list                        # targets + deployable plugins
+node deployment/deploy.mjs vercel test1 --link local   # preview deploy to Vercel
+node deployment/deploy.mjs vercel test1 --link local -- --prod
 node deployment/deploy.mjs railway test1               # deploy test1 to Railway
-node deployment/deploy.mjs deno test1 --create         # first deploy: create the app too
 node deployment/deploy.mjs cloudflare test1 --stage-only
 node deployment/deploy.mjs railway test1 --dry-run     # print every command, run nothing
 node deployment/deploy.mjs --help
@@ -55,25 +56,59 @@ target goes through the same two phases.
   export default defineConfig({ ...base, adapter: node({ mode: "standalone" }) });
   ```
 
-- the platform's own config file is written (`railway.json`, `deno.json`, `wrangler.jsonc`).
+- the platform's own config file is written (`vercel.json`, `railway.json`, `wrangler.jsonc`).
 
 Because the generated config keeps the standard name, `npm run build` produces the right output
 whether it runs locally or on the platform's builder.
 
-**2. Deploy** — the stage directory is handed to the platform CLI. Railway and Deno Deploy build the
+**2. Deploy** — the stage directory is handed to the platform CLI. Vercel and Railway build the
 uploaded sources themselves; Cloudflare uploads a bundle, so that target builds locally first.
 
 ### Link modes
 
 | `--link`             | `@quartal/*` resolves to                        | Use when                                  |
 | -------------------- | ----------------------------------------------- | ----------------------------------------- |
-| `registry` (default) | the published packages on npm (`^0.5.0`)        | normal deploys                            |
-| `local`              | copies of the built workspace packages, vendored into `vendor/` and wired up with `file:` | validating an unpublished change, or before the packages are published |
+| `registry` (default) | the published packages on npm                   | normal deploys                            |
+| `local`              | tarballs packed from the built workspace packages (`vendor/*.tgz`, `file:` specifiers) | validating an unpublished change, or before the packages are published |
 
-`--link local` requires `pnpm run build:libs` first — it copies each package's `dist/`, so an
-unbuilt package is an error rather than a silently stale deploy.
+`--link local` requires `pnpm run build:libs` first — it packs each package's `dist/`, so an
+unbuilt package is an error rather than a silently stale deploy. Tarballs, not directories: npm
+installs a `file:` directory as a symlink in `node_modules`, which module tracers (Vercel's nft)
+turn into dangling links inside the function bundle — and which Windows refuses to create at all.
+A tarball installs as a real copy everywhere.
 
 ## Targets
+
+### Vercel
+
+Astro SSR on Vercel Functions (Node.js runtime, Fluid compute). Vercel builds the uploaded sources
+(`npm install` → `astro build`), but the function it assembles contains only *traced modules* and
+runs in `/var/task` — not next to the plugin's files. Two things bridge that gap:
+
+1. The generated `astro.config.mjs` walks the stage at build time and passes everything the plugin
+   runtime reads per request to the adapter's `includeFiles`: `package.json`, `README.md`,
+   `qrtl.config.*`, the generated `src/qrtl-plugin/*.json`, `skills/`, `agents/`, `public/`, and
+   the docs SPA vendored inside `@quartal/plugin`.
+2. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
+   time does not exist in `/var/task`, so `Helpers.resolvePluginRoot` falls back to the function's
+   `process.cwd()` (or the `QRTL_PLUGIN_ROOT` env var). **Until that version is on npm, deploy with
+   `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel function.
+
+```bash
+pnpm run build:libs                                       # once, for --link local
+node deployment/deploy.mjs vercel test1 --link local     # preview deployment
+node deployment/deploy.mjs vercel test1 --link local -- --prod
+```
+
+- Authenticate with `npx vercel login`, or set `VERCEL_TOKEN` (forwarded as `--token`). Set the
+  org with `--org` / `deploy.org` (forwarded as `--scope`).
+- The first deploy creates the project (`vercel link --yes --project <app>`); deploys are
+  **previews** unless `--prod` is passed through. Preview vs production doubles as the
+  test/prod environment split, each with its own env vars (`npx vercel env add`).
+- Auth plugins (`auth: "custom"`) need their `OAUTH_*` env vars set per environment before the
+  deploy that uses them.
+- `--build` pre-flights locally: the Vercel adapter writes `.vercel/output/`, so the function
+  bundle (`.vercel/output/functions/_render.func/`) can be inspected without a remote build.
 
 ### Railway
 
@@ -95,32 +130,6 @@ node deployment/deploy.mjs railway test1
 Verified locally against the published `@quartal/*` packages: staging + `npm install` +
 `astro build` + `npm start` serves `/plugin.json` (16 tools, 8 skills, 3 agents),
 `/skills/catalog.json`, `/agents/catalog.json`, `/open-api.json` and the docs SPA at `/`.
-
-### Deno Deploy
-
-Deno Deploy builds the uploaded sources (`npm install` → `npm run build`) and then runs
-`dist/server/entry.mjs` under Deno in *dynamic* runtime mode, against a real `node_modules` tree —
-so the runtime's `node:fs` reads behave as they do under Node.
-
-```bash
-node deployment/deploy.mjs deno test1 --create   # first time
-node deployment/deploy.mjs deno test1            # after that
-```
-
-- Uses the **`deno deploy`** subcommand built into the Deno CLI (Deno ≥ 2.4.2), not `deployctl`:
-  Deno Deploy Classic shut down in July 2026 and `deployctl` only ever targeted Classic.
-- `--create` runs `deno deploy create` with the build configuration pinned explicitly
-  (`--do-not-use-detected-build-config`), so a change to the platform's framework auto-detection
-  can't silently alter how a plugin is built. It performs the first deploy as well.
-- The generated `deno.json` carries `deploy.org` / `deploy.app` / `deploy.entrypoint`, plus
-  `nodeModulesDir: "manual"` so Deno uses the npm-installed tree rather than resolving npm
-  specifiers itself.
-- Authenticate with `deno deploy login`, or set `DENO_DEPLOY_TOKEN` in CI. `--region us|eu|global`.
-- `@deno/astro-adapter` listens on port 8085 locally; Deno Deploy routes to whatever `Deno.serve`
-  binds.
-
-Staging and the build are verified locally. The deploy itself is not — that needs a Deno Deploy
-account, so treat the first `--create` run as the real test.
 
 ### Cloudflare Workers
 
@@ -148,23 +157,9 @@ cannot resolve `@quartal/plugin`, its `import.meta.url` fallback is not a usable
 call fixed, the plugin would still come up with no tools, skills, agents or docs, because none of the
 artifacts above are readable.
 
-Making Cloudflare a real target is a change in `@quartal/plugin`, roughly:
-
-1. **Generated artifacts as modules.** Have the codegen emit an importable module (e.g.
-   `src/qrtl-plugin/artifacts.ts` re-exporting the JSON) and have the middleware pass it to
-   `getAnonApp({ artifacts })`, so `PluginApiHelper` prefers injected artifacts over disk reads.
-   This is the one change that turns "empty plugin" into "working plugin".
-2. **Manifest at build time.** Resolve `package.json` + `qrtl.config.*` during codegen and inject
-   the result, instead of reading and `import()`ing at request time.
-3. **Docs SPA assets.** Make `getPkgDocsWebStaticRoot()` fail soft, and serve the SPA from a bundled
-   asset map or a CDN URL rather than a `node_modules` path.
-4. **Skills, agents and `public/`.** Emit a bundled file map at build time (Workers Assets already
-   serves `dist/client`, so `public/` could route through the `ASSETS` binding instead).
-
-Steps 1–3 are also worth doing for their own sake: they remove per-request disk I/O from the hot
-path on every platform.
-
-Until then the useful commands are:
+Making Cloudflare a real target is a change in `@quartal/plugin`, not in these scripts. The full
+work plan lives in [docs/cloudflare-workers-plan.md](../docs/cloudflare-workers-plan.md). Until it
+lands, the useful commands are:
 
 ```bash
 node deployment/deploy.mjs cloudflare test1 --stage-only   # build the Worker bundle
@@ -182,8 +177,6 @@ for it, or Astro sessions turned off.
 | `--org <name>`      | Platform org/owner. Default: `deploy.org` from `qrtl.config.ts`          |
 | `--app <name>`      | Remote app/service name. Default: `deploy.app`, else the directory name  |
 | `--link <mode>`     | `registry` (default) or `local` — see [link modes](#link-modes)          |
-| `--region <region>` | Deno Deploy region: `us`, `eu` or `global` (default `us`)                |
-| `--create`          | Create the remote app before deploying (Deno Deploy)                     |
 | `--build`           | Build in the stage even when the platform builds remotely (pre-flight)   |
 | `--no-build`        | Skip the local build                                                    |
 | `--stage-only`      | Stage (and build, where applicable) without deploying                   |
@@ -195,8 +188,8 @@ for it, or Astro sessions turned off.
 
 | Target       | CLI                                                     | Auth                                              |
 | ------------ | ------------------------------------------------------- | ------------------------------------------------- |
+| `vercel`     | run via `npx vercel` (no install needed)                | `npx vercel login`, or `VERCEL_TOKEN`             |
 | `railway`    | `npm i -g @railway/cli`                                 | `railway login`, or `RAILWAY_TOKEN`               |
-| `deno`       | Deno ≥ 2.4.2 (<https://deno.com>)                       | `deno deploy login`, or `DENO_DEPLOY_TOKEN`       |
 | `cloudflare` | bundled `wrangler` (run via `npx` inside the stage)     | `npx wrangler login`, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
 
 Node ≥ 22 for the scripts themselves. They use only Node built-ins — no extra dependencies.
@@ -220,7 +213,7 @@ deployment/
     workspaceDeps.mjs     rewrite workspace:* (registry ranges, or vendored copies)
     stage.mjs             build .deploy/<target>/<project>/, install + build in it
   targets/
+    vercel.mjs
     railway.mjs
-    deno.mjs
     cloudflare.mjs
 ```

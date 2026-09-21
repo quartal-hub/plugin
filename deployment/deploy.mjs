@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Deploys a sample plugin from `samples/` to Deno Deploy, Cloudflare Workers or Railway.
+ * Deploys a sample plugin from `samples/` to Vercel, Railway or Cloudflare Workers.
  *
  *   node deployment/deploy.mjs <target> <project> [options]
  *
@@ -19,11 +19,11 @@ import { DeployError, done, fail, info, step } from "./lib/log.mjs";
 import { listProjects, loadProject } from "./lib/project.mjs";
 import { buildStage, createStage } from "./lib/stage.mjs";
 import cloudflare from "./targets/cloudflare.mjs";
-import deno from "./targets/deno.mjs";
 import railway from "./targets/railway.mjs";
+import vercel from "./targets/vercel.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TARGETS = new Map([deno, cloudflare, railway].map((t) => [t.id, t]));
+const TARGETS = new Map([vercel, railway, cloudflare].map((t) => [t.id, t]));
 const LINK_MODES = new Set(["registry", "local"]);
 
 const HELP = `
@@ -42,8 +42,6 @@ Options
   --link <mode>      How workspace deps are resolved: registry (default) | local
                      registry -> published @quartal/* from npm
                      local    -> copy the built workspace packages into the stage
-  --region <region>  Deno Deploy region: us | eu | global (default us)
-  --create           First deploy: create the remote app before deploying (Deno Deploy)
   --build            Build inside the stage even when the platform builds remotely
   --no-build         Skip the local build (Cloudflare builds locally by default)
   --stage-only       Stage (and build, if applicable) but do not deploy
@@ -54,8 +52,9 @@ Options
 Anything after a bare -- is passed straight through to the platform CLI.
 
 Examples
+  node deployment/deploy.mjs vercel test1 --link local
+  node deployment/deploy.mjs vercel test1 --link local -- --prod
   node deployment/deploy.mjs railway test1
-  node deployment/deploy.mjs deno test1 --create --region eu
   node deployment/deploy.mjs cloudflare test1 --stage-only
   node deployment/deploy.mjs railway test1 --link local --dry-run
 `.trimStart();
@@ -66,8 +65,6 @@ Examples
 function parseArgs(argv) {
   const options = {
     linkMode: "registry",
-    region: "us",
-    create: false,
     build: undefined,
     stageOnly: false,
     force: false,
@@ -90,8 +87,6 @@ function parseArgs(argv) {
       case "--org": options.org = value(); break;
       case "--app": options.app = value(); break;
       case "--link": options.linkMode = value(); break;
-      case "--region": options.region = value(); break;
-      case "--create": options.create = true; break;
       case "--build": options.build = true; break;
       case "--no-build": options.build = false; break;
       case "--stage-only": options.stageOnly = true; break;
@@ -167,8 +162,6 @@ async function main() {
     project,
     app,
     org,
-    region: options.region,
-    create: options.create,
     dryRun: options.dryRun,
     force: options.force,
     extraArgs: options.extraArgs,

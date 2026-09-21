@@ -123,7 +123,7 @@ export function createStage({ project, target, repoRoot, linkMode, dryRun }) {
 
 /**
  * Installs and builds inside a stage. Only needed for platforms that upload a finished artifact
- * (Cloudflare); Deno Deploy and Railway build the uploaded sources themselves, so there the build
+ * (Cloudflare); Vercel and Railway build the uploaded sources themselves, so there the build
  * is opt-in via `--build` as a pre-flight check.
  * @param options `{ stageDir, dryRun }`.
  */
