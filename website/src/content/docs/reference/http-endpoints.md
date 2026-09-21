@@ -96,3 +96,16 @@ site at `/` — Astro renders your page, and the `.html` redirects above are rel
 machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep working
 unchanged, so the plugin stays fully functional. The page is detected when the server starts;
 restart `astro dev` after adding or removing it.
+
+Want your own branding *and* the docs UI? Mount it on your page from
+[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) — the
+package README has a complete `index.astro` example:
+
+```astro
+<div id="docs"></div>
+<script>
+  import "@quartal/plugin-docs-web/style.css";
+  import { mountPluginDocs } from "@quartal/plugin-docs-web";
+  mountPluginDocs(document.getElementById("docs")!);
+</script>
+```
