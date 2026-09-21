@@ -6,7 +6,7 @@ import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
-import { getAnonApp, Helpers, buildArtifactsModuleSource } from "../src/index.ts";
+import { getAnonApp, Helpers, buildArtifactsModuleSource, collectPluginFileMap } from "../src/index.ts";
 import type { PluginRuntimeArtifacts } from "../src/index.ts";
 
 // Verifies the build-time artifacts snapshot fully replaces the disk reads: the app is assembled
@@ -36,6 +36,7 @@ async function loadFixtureArtifacts(): Promise<PluginRuntimeArtifacts> {
     widgetResources: [
       { toolId: "add", uri: "ui://widgets/add.html", name: "Injected widget", pagePath: "/widgets/add" },
     ],
+    files: await collectPluginFileMap(fixtureDir),
   };
 }
 
@@ -102,6 +103,48 @@ describe("getAnonApp with injected artifacts (no disk reads)", () => {
     const body = await res.text();
     expect(body).toContain('"tools"');
     expect(body).toContain("add");
+  });
+
+  it("serves the skills catalog, files and zips from the file map", async () => {
+    const res = await app.request("/skills/catalog.json");
+    expect(res.status).toBe(200);
+    const catalog = await res.json() as { skills: { name: string }[] };
+    const names = catalog.skills.map((s) => s.name);
+    expect(names).toContain("coin-flipper");
+    expect(names.length).toBeGreaterThanOrEqual(4);
+
+    const md = await app.request("/skills/coin-flipper/SKILL.md");
+    expect(md.status).toBe(200);
+    expect(await md.text()).toContain("coin-flipper");
+
+    const zip = await app.request("/skills/coin-flipper.zip");
+    expect(zip.status).toBe(200);
+    expect(zip.headers.get("Content-Type")).toBe("application/zip");
+    expect((await zip.arrayBuffer()).byteLength).toBeGreaterThan(100);
+
+    // Unknown skill → 404. (Traversal is inherently safe here: map lookups are exact-match, and
+    // the URL layer normalizes ".." before the handler runs.)
+    expect((await app.request("/skills/nope.zip")).status).toBe(404);
+  });
+
+  it("serves the agents catalog and agent markdown from the file map", async () => {
+    const res = await app.request("/agents/catalog.json");
+    expect(res.status).toBe(200);
+    const catalog = await res.json() as { agents: { name: string }[] };
+    expect(catalog.agents.map((a) => a.name)).toContain("greeter");
+
+    const md = await app.request("/agents/greeter.md");
+    expect(md.status).toBe(200);
+    expect((await md.text()).length).toBeGreaterThan(0);
+  });
+
+  it("assembles /plugin.zip from the file map and injected readme", async () => {
+    const res = await app.request("/plugin.zip");
+    expect(res.status).toBe(200);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(bytes.length).toBeGreaterThan(500);
+    // The zip contains the injected README (stored uncompressed, so the text is findable).
+    expect(new TextDecoder("latin1").decode(bytes)).toContain("# Injected readme");
   });
 
   it("uses the injected widget entries without discovery", async () => {

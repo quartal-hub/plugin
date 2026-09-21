@@ -10,6 +10,7 @@ import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "../ho
 import { mcpServerDisplayName } from "../hono-app/pluginMetadata.ts";
 import { discoverWidgets } from "../widgets/discoverWidgets.ts";
 import { toWidgetEntries, WIDGET_PAGES_DIR } from "../widgets/runtimeWidgets.ts";
+import { collectPluginFileMap } from "./collectFileMap.ts";
 
 /**
  * Options for generating the `qrtl-plugin/` artifacts.
@@ -146,6 +147,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
       auth: qrtlConfig?.auth ?? "anon",
       mcp: qrtlConfig?.mcp,
       widgetResources,
+      files: await collectPluginFileMap(cwd),
     });
     await writeFile(join(out, "artifacts.ts"), source);
   }
@@ -160,7 +162,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
  * @param values The build-time-resolved fields to inline.
  */
 export function buildArtifactsModuleSource(
-  values: Pick<PluginRuntimeArtifacts, "manifest" | "readme" | "auth" | "mcp" | "widgetResources">,
+  values: Pick<PluginRuntimeArtifacts, "manifest" | "readme" | "auth" | "mcp" | "widgetResources" | "files">,
 ): string {
   const literal = (v: unknown) => JSON.stringify(v, null, 2).replace(/\n/g, "\n  ");
   const optional = (key: "readme" | "mcp") =>
@@ -189,6 +191,7 @@ export function buildArtifactsModuleSource(
     `  auth: ${JSON.stringify(values.auth)},`,
     ...optional("mcp"),
     `  widgetResources: ${literal(values.widgetResources)},`,
+    `  files: ${literal(values.files ?? [])},`,
     `};`,
     ``,
   ].join("\n");

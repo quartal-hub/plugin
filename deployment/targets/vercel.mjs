@@ -9,17 +9,15 @@ const VERCEL_ADAPTER = "^11.0.0";
  *
  * Vercel builds the uploaded sources itself, but unlike Railway the built server does not run next
  * to the plugin's files: the function is assembled from traced modules and runs in `/var/task`.
- * The generated metadata, manifest, qrtl.config and widget entries ride inside the bundle (the
- * codegen's `artifacts.ts` module), and the docs UI shell is fetched from the Quartal Plugins
- * website at runtime — so only what the runtime genuinely reads from disk per request — `skills/`,
- * `agents/`, `public/` and `README.md` (packaged into `/plugin.zip`) — is forced into the function
- * via the adapter's `includeFiles`. The generated Astro config computes that list at build time
- * (see `astroImports` below), and `@quartal/plugin` resolves its root back to the function's cwd
- * at runtime (`Helpers.resolvePluginRoot`), since the absolute path baked in at build time does
- * not exist in `/var/task`.
+ * That needs no configuration any more: the codegen's `artifacts.ts` module carries the generated
+ * metadata, manifest, qrtl.config, widget entries AND the skills/agents/README file map inside the
+ * server bundle, the docs UI shell is fetched from the Quartal Plugins website at runtime, and
+ * `public/` is served by Vercel's static layer (Astro ships it into the static output). So the
+ * adapter needs no `includeFiles`, and `@quartal/plugin` resolves its root back to the function's
+ * cwd at runtime (`Helpers.resolvePluginRoot`) purely as a safety net.
  *
- * Requires `@quartal/plugin` > 0.8.0 (resolvePluginRoot + artifacts module + docs shell). Until
- * that is published, deploy with `--link local` so the stage vendors the fixed workspace build.
+ * Requires `@quartal/plugin` > 0.8.0 (artifacts module + file map + docs shell). Until that is
+ * published, deploy with `--link local` so the stage vendors the fixed workspace build.
  */
 export default {
   id: "vercel",
@@ -29,28 +27,8 @@ export default {
   /** Not used by Vercel (functions have no start script), but keeps `npm start` meaningful locally. */
   startCommand: "node ./dist/server/entry.mjs",
   buildsLocally: false,
-  astroImports: [
-    `import vercel from "@astrojs/vercel";`,
-    `import { existsSync, readdirSync } from "node:fs";`,
-    `import { join } from "node:path";`,
-    ``,
-    `// The plugin runtime reads these from disk per request (the generated metadata/manifest ride`,
-    `// inside the bundle as the codegen's artifacts module); a Vercel function only contains traced`,
-    `// modules, so every file is forced in via includeFiles (paths relative to this config file).`,
-    `const walk = (dir) =>`,
-    `  existsSync(dir)`,
-    `    ? readdirSync(dir, { withFileTypes: true }).flatMap((e) =>`,
-    `        e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)])`,
-    `    : [];`,
-    `const includeFiles = [`,
-    `  // Packaged into /plugin.zip and served by the skill/agent/public routes.`,
-    `  "README.md",`,
-    `  ...walk("skills"),`,
-    `  ...walk("agents"),`,
-    `  ...walk("public"),`,
-    `];`,
-  ],
-  astroOverrides: [`adapter: vercel({ includeFiles }),`],
+  astroImports: [`import vercel from "@astrojs/vercel";`],
+  astroOverrides: [`adapter: vercel(),`],
 
   files: ({ project }) => ({
     "vercel.json": `${JSON.stringify(

@@ -1,10 +1,17 @@
 import { join } from "node:path";
 import type { Hono } from "hono";
 
-import type { AgentDefinition, AgentsCatalog, AgentsCatalogResponse, PluginManifest } from "../model/index.ts";
+import type {
+  AgentDefinition,
+  AgentsCatalog,
+  AgentsCatalogResponse,
+  PluginFileMapEntry,
+  PluginManifest,
+} from "../model/index.ts";
+import { fileMapGet, fileMapText } from "../helpers/fileMap.ts";
 import { Helpers } from "../helpers/Helpers.ts";
-import { discoverSkills } from "../hono-app/skillDiscovery.ts";
-import { discoverAgents, type DiscoverAgentsOptions } from "./discoverAgents.ts";
+import { discoverSkills, skillsFromFileMap } from "../hono-app/skillDiscovery.ts";
+import { agentsFromFileMap, discoverAgents, type DiscoverAgentsOptions } from "./discoverAgents.ts";
 import { isValidAgentName } from "./resolveAgent.ts";
 import { toAgentMarkdown } from "./toAgentMarkdown.ts";
 
@@ -12,6 +19,8 @@ import { toAgentMarkdown } from "./toAgentMarkdown.ts";
 export interface AgentRoutesOptions extends Omit<DiscoverAgentsOptions, "pluginSkills"> {
   /** Skill names of this plugin. Discovered from `skills/` when omitted. */
   pluginSkills?: readonly string[];
+  /** Build-time file map; when present, agents (and skill names) come from it instead of disk. */
+  fileMap?: readonly PluginFileMapEntry[];
 }
 
 function enrichCatalog(catalog: AgentsCatalog, origin: string): AgentsCatalogResponse {
@@ -30,10 +39,19 @@ function enrichCatalog(catalog: AgentsCatalog, origin: string): AgentsCatalogRes
 }
 
 /** Serves the agent's markdown: the authored file for markdown agents, a rendering for JSON ones. */
-async function agentMarkdown(baseDir: string, agent: AgentDefinition): Promise<string> {
+async function agentMarkdown(
+  baseDir: string,
+  agent: AgentDefinition,
+  fileMap?: readonly PluginFileMapEntry[],
+): Promise<string> {
   if (agent.source.toLowerCase().endsWith(".md")) {
-    const raw = await Helpers.readIfExists(join(baseDir, agent.source));
-    if (raw) return raw;
+    if (fileMap) {
+      const entry = fileMapGet(fileMap, agent.source.replaceAll("\\", "/"));
+      if (entry) return fileMapText(entry);
+    } else {
+      const raw = await Helpers.readIfExists(join(baseDir, agent.source));
+      if (raw) return raw;
+    }
   }
   return toAgentMarkdown(agent);
 }
@@ -53,12 +71,16 @@ export function registerAgentRoutes(
   options: AgentRoutesOptions = {},
 ): void {
   const baseDir = pluginRootFolder ?? process.cwd();
+  const fileMap = options.fileMap;
 
   const loadCatalog = async (): Promise<AgentsCatalog> => {
     const info = manifest ?? await Helpers.getPluginManifest(baseDir);
     const pluginSkills = options.pluginSkills ??
-      (await discoverSkills(baseDir, info.name)).skills.map((s) => s.name);
-    return await discoverAgents(baseDir, info.name, { ...options, pluginSkills });
+      (fileMap ? skillsFromFileMap(fileMap, info.name) : await discoverSkills(baseDir, info.name))
+        .skills.map((s) => s.name);
+    return fileMap
+      ? agentsFromFileMap(fileMap, info.name, { ...options, pluginSkills })
+      : await discoverAgents(baseDir, info.name, { ...options, pluginSkills });
   };
 
   const findAgent = async (name: string): Promise<AgentDefinition | null> => {
@@ -76,7 +98,7 @@ export function registerAgentRoutes(
     const name = (c.req.param("file") ?? "").replace(/\.md$/, "");
     const agent = await findAgent(name);
     if (!agent) return c.text("Not found", 404);
-    const markdown = await agentMarkdown(baseDir, agent);
+    const markdown = await agentMarkdown(baseDir, agent, fileMap);
     return c.body(markdown, 200, { "Content-Type": "text/markdown; charset=utf-8" });
   });
 

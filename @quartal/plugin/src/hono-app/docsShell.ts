@@ -13,6 +13,9 @@ export const DEFAULT_DOCS_WEB_URL = "https://plugin.quartal.com/plugin-index/";
 /** How long a fetched shell is served before re-fetching (running servers pick up UI updates). */
 const SHELL_TTL_MS = 60 * 60 * 1000;
 
+/** Abort a shell fetch after this long: a hanging upstream must fail the docs route, not wedge it. */
+const SHELL_FETCH_TIMEOUT_MS = 10_000;
+
 /**
  * Resolves the docs shell URL: the `QRTL_DOCS_WEB_URL` env var wins (per-deployment override,
  * self-hosted copies, the local website dev server), then the configured value, then the published
@@ -48,13 +51,22 @@ export function rewriteDocsShellHtml(html: string, shellUrl: string): string {
  * when no copy has ever been fetched (the route answers 503, and the next request retries).
  * @param shellUrl The docs shell URL (http(s) or file).
  */
+async function fetchWithTimeout(url: URL): Promise<string | undefined> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(SHELL_FETCH_TIMEOUT_MS) });
+  if (!res.ok) return undefined;
+  return await res.text();
+}
+
 export function createDocsShellFetcher(shellUrl: string): () => Promise<string | undefined> {
   let cached: { html: string; at: number } | undefined;
   let pending: Promise<string | undefined> | undefined;
 
   const fetchShell = async (): Promise<string | undefined> => {
     try {
-      const html = await readStaticText(new URL(shellUrl));
+      const url = new URL(shellUrl);
+      const html = url.protocol === "file:"
+        ? await readStaticText(url)
+        : await fetchWithTimeout(url);
       if (html) cached = { html, at: Date.now() };
       return cached?.html;
     } catch {

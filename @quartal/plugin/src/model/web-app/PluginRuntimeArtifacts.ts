@@ -6,6 +6,7 @@ import type {
   PluginManifest,
 } from "@quartal/plugin-core";
 import type { McpServerOptions } from "./McpServerOptions.ts";
+import type { PluginFileMapEntry } from "./PluginFileMapEntry.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
 
 /**
@@ -44,4 +45,6 @@ export interface PluginRuntimeArtifacts {
   mcp?: McpServerOptions | boolean;
   /** Widget entries resolved at build time (`src/pages/widgets/` + the `qrtl.config` `widgets` section). */
   widgetResources?: WidgetEntry[];
+  /** The `skills/` and `agents/` trees captured at build time (contents inlined). */
+  files?: PluginFileMapEntry[];
 }

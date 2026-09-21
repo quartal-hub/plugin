@@ -13,16 +13,14 @@ as `pnpm create @quartal/plugin` scaffolds it — no access to the framework's s
 ## What every deployment needs
 
 1. **A build**: `npm run build` (Astro generates the `qrtl-plugin/` artifacts and the server
-   bundle in `dist/`).
+   bundle in `dist/`). The build captures everything the plugin serves — metadata, configuration,
+   `skills/`, `agents/`, `README.md` — inside the server bundle, so the deployed app is
+   self-contained on every platform (requires `@quartal/plugin` 0.9.0+).
 2. **An adapter that matches the platform.** The scaffolded project uses `@astrojs/node` in
    standalone mode, which is right for platforms that run a long-lived Node server (Railway,
    Fly.io, a container, a VM). Serverless platforms need their own adapter — the platform guide
    tells you which line to change in `astro.config.mjs`.
-3. **The plugin's files next to the server.** At request time the plugin serves your `skills/`,
-   `agents/` and `public/` folders, `README.md` and the generated metadata. Platforms that run
-   the whole project directory (Railway) get this for free; serverless platforms need the guide's
-   config so those files ship inside the function.
-4. **Environment variables, if your plugin uses `auth: "custom"`**: the `OAUTH_ISSUER`,
+3. **Environment variables, if your plugin uses `auth: "custom"`**: the `OAUTH_ISSUER`,
    `OAUTH_SCOPE`, … variables described in [Authentication](/docs/auth/authentication) must be set
    per environment on the platform. `auth: "anon"` and `auth: "quartal-hub"` need no variables.
 
@@ -32,7 +30,7 @@ as `pnpm create @quartal/plugin` scaffolds it — no access to the framework's s
 | --- | --- | --- |
 | [Vercel](/docs/deploying/deploy-vercel) | Serverless function (Node runtime) | Supported |
 | [Railway](/docs/deploying/deploy-railway) | Long-lived Node container | Supported |
-| [Cloudflare Workers](/docs/deploying/deploy-cloudflare) | Worker (edge isolate) | **Not supported yet** |
+| [Cloudflare Workers](/docs/deploying/deploy-cloudflare) | Worker (edge isolate) | **Early support** |
 
 ## Test and production environments
 

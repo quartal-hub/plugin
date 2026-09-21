@@ -1,11 +1,10 @@
 # Cloudflare Workers support — work plan
 
-Status: **items 1–3 done, 4–6 remaining.** The `cloudflare` deployment target
-([deployment/README.md](../deployment/README.md)) stages and builds a valid Worker bundle today,
-and with the artifacts module + remote docs shell the historical "500 on every route" failure is
-gone — what remains is the disk-backed content serving (skills/agents/public and `/plugin.zip`,
-item 4) and the platform config + verification passes. This document is the plan for closing that
-gap in `@quartal/plugin`. Strategically, Workers is the target we want for Quartal Hub:
+Status: **items 1–4 and 6 done — a plugin serves fully in `wrangler dev`.** The remaining steps
+are publishing `@quartal/plugin` > 0.8.0 and exercising the first authenticated `wrangler deploy`
+(plus whatever item 5 config that surfaces). The `cloudflare` deployment target
+([deployment/README.md](../deployment/README.md)) stages, builds and deploys without a `--force`
+guard. Strategically, Workers is the target we want for Quartal Hub:
 near-zero cold starts, ~$5/mo for hundreds of sites, and first-class APIs (DNS, custom hostnames,
 Workers for Platforms) for provisioning tenant environments programmatically.
 
@@ -17,20 +16,12 @@ only the modules bundled into the Worker), `/tmp` (per-request, counts against t
 limit). `process.cwd()` is `/bundle`. Nothing outside the bundle is readable, and directories that
 were never bundled cannot be enumerated.
 
-With items 1–3 done, the runtime's remaining per-request disk reads are the content routes:
-
-| What it reads                                   | Where                                          |
-| ----------------------------------------------- | ---------------------------------------------- |
-| `skills/` (discovery, files, zip assembly)      | `skillDiscovery` / `skillRoutes` / `skillZip`  |
-| `agents/`                                       | `discoverAgents` / `agentRoutes`               |
-| `public/`                                       | `publicFolderRoutes`                           |
-| `README.md` (into `/plugin.zip`)                | `buildAgentPluginZip`                          |
-
-Everything else is already Worker-compatible: the generated metadata, manifest, config and widget
-entries ride inside the bundle (items 1–2), the docs shell is fetched over HTTP (item 3), widget
-resources are served from the live Astro pages (fetch-based), and Hono, `jose`, the MCP SDK's
-streamable-HTTP transport and the sessions story (`@astrojs/cloudflare` uses a KV binding) all run
-on Workers.
+With items 1–4 done, nothing in the runtime needs a filesystem: the generated metadata, manifest,
+config, widget entries and the skills/agents/README file map ride inside the bundle (items 1–2, 4),
+the docs shell is fetched over HTTP (item 3), widget resources are served from the live Astro pages
+(fetch-based), `public/` ships as Workers static assets, and Hono, `jose` and the MCP SDK's
+streamable-HTTP transport all run on Workers. The disk reads remain only as fallbacks for Node
+hosts, dev and tests.
 
 ## Design principle
 
@@ -69,49 +60,44 @@ crashed workerd are deleted, and a plugin's own `src/pages/index.*` now override
 entirely. Verified end to end against a local website preview, including the lazy Swagger/ReDoc
 chunks loading cross-origin.
 
-### 4. Skills, agents and `public/` from a build-time file map
+### 4. Skills, agents and README from a build-time file map — **done**
 
-- Codegen emits a manifest of `skills/` and `agents/` (paths + metadata + file contents or asset
-  references). Discovery (`skillDiscovery`, `discoverAgents`) prefers the manifest; directory walks
-  remain the dev/Node fallback.
-- `skillZip` assembles zips from the manifest's contents instead of `readdir`/`readFile`.
-- `public/` routes through the `ASSETS` binding on Workers (Astro already ships `public/` into
-  `dist/client`); `publicFolderRoutes` keeps the disk path as fallback.
+Codegen captures the `skills/` and `agents/` trees into the artifacts module (`files`:
+`PluginFileMapEntry[]`, text inlined as UTF-8, binaries base64, a warning above 1 MB per file).
+The runtime prefers the map everywhere: skill discovery/files/zips (`skillsFromFileMap`, exact-path
+lookups), agent discovery/markdown (`agentsFromFileMap`), and `/plugin.zip` (assembled from the map
+plus the injected README). Directory walks remain the dev/Node fallback. `public/` needed no map at
+all: Astro ships it into the static output, and every platform's static layer (Vercel filesystem
+handler, Workers assets) serves it before the function runs.
 
-### 5. Platform config in the deployment target
+### 5. Platform config in the deployment target — partially open
 
-Already staged by `deployment/targets/cloudflare.mjs`; to revisit when the runtime lands:
+- Compatibility date 2026-08-01 with `nodejs_compat`: **verified working in `wrangler dev`** —
+  the [astro#15434](https://github.com/withastro/astro/issues/15434) `process` v2 issue did not
+  manifest with the current Astro 7 + adapter 14.x combination.
+- No `SESSION` KV binding is configured: plugins don't use Astro sessions. Add a KV namespace id
+  to `wrangler.jsonc` for plugins whose own pages need them.
+- Env vars (`OAUTH_*`, `QRTL_DOCS_WEB_URL`) become Worker vars/secrets; `nodejs_compat` populates
+  `process.env`, which the runtime reads.
+- **Open:** whatever the first authenticated `wrangler deploy` surfaces (routes, workers.dev
+  subdomain, custom domain).
 
-- Compatibility date: keep ≥ 2025-09-01 (virtual `node:fs`). **Known sharp edge:** with dates ≥
-  2025-09-15, the native `process` v2 makes Astro SSR return `[object Object]`
-  ([withastro/astro#15434](https://github.com/withastro/astro/issues/15434)) — set the
-  `disable_nodejs_process_v2` compatibility flag until Astro fixes it.
-- `SESSION` KV namespace binding (the adapter requests it), or disable Astro sessions.
-- Bundle budget: the Worker size limit is 64 MiB uncompressed (raised 2026-09), so bundling skill
-  contents is viable; static assets are limited to 25 MiB/file and are free to serve.
-- Env vars (`OAUTH_*` for `auth: "custom"`) become Worker secrets/vars; on Workers they arrive per
-  request via bindings, but `nodejs_compat` populates `process.env`, which the oauth code reads.
+### 6. Verification — **done in `wrangler dev`**
 
-### 6. Verification harness
+The full acceptance list passes in workerd locally (`--stage-only` + `npx wrangler dev` in the
+stage): `/plugin.json`, `/open-api.json` (16 paths), `/skills/catalog.json` + skill files + skill
+zips, `/agents/catalog.json` + agent markdown, `/plugin.zip`, `/mcp` `tools/list`, REST execution,
+widget pages, and the docs shell at `/` (fail-soft 503 without network; 200 with a reachable shell
+URL passed as a Worker var). The `--force` guard is removed from the cloudflare target.
 
-The deployment stage is the harness — no new infrastructure:
+One hard-won note: the docs-shell fetch now has a 10 s abort — a hanging upstream fetch (workerd's
+loopback quirk in local dev surfaced it) must 503 the docs page, never wedge the Worker.
 
-```bash
-node deployment/deploy.mjs cloudflare test1 --stage-only   # build the Worker bundle
-cd .deploy/cloudflare/test1 && npx wrangler dev            # run it in workerd locally
-npx wrangler deploy --dry-run                              # validate the upload offline
-```
+## Remaining
 
-Acceptance: in `wrangler dev`, `/plugin.json`, `/open-api.json`, `/skills/catalog.json` (and a
-skill zip download), `/agents/catalog.json`, `/mcp` `tools/list`, a widget page, and the docs SPA
-at `/` all answer as they do on the Railway stage. Then remove the `--force` guard from the
-cloudflare target.
-
-## Suggested order
-
-4 next (largest item; skills zip last) → 5/6 (config + verification) → publish
-`@quartal/plugin`, flip the target's status in `deployment/README.md`, and update the website's
-Cloudflare deployment guide (drop its "not supported yet" warning).
+Publish `@quartal/plugin` (> 0.8.0), run the first authenticated `wrangler deploy`, fix whatever it
+surfaces (item 5), then update the website's Cloudflare deployment guide into a real step-by-step
+(drop its "not supported yet" warning).
 
 ## Later: Quartal Hub provisioning (out of scope here)
 

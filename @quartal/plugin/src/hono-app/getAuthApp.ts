@@ -108,11 +108,13 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   }
 
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
+  const fileMap = artifacts?.files;
   registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin, docsWebUrl: config.docsWebUrl });
-  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
+  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),
+    fileMap,
   });
   // Widget pages + assets stay unauthenticated: the sandboxed widget iframe carries no credentials
   // (auth middleware is scoped to /api/* and /mcp, not to /widget-assets).
@@ -123,6 +125,8 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   registerPluginInfoRoutes(app as Hono, helper, {
     mcpOptions,
     pluginRootFolder: config.pluginRootFolder,
+    fileMap,
+    readme: artifacts?.readme,
     getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
   });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);

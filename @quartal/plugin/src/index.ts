@@ -42,10 +42,12 @@ export {
   toAgentSummary,
 } from "./hono-app/buildPluginInfo.ts";
 export type { BuildPluginInfoInput } from "./hono-app/buildPluginInfo.ts";
-export { discoverSkills, isValidSkillName, parseSkillFrontmatter } from "./hono-app/skillDiscovery.ts";
+export { discoverSkills, isValidSkillName, parseSkillFrontmatter, skillsFromFileMap } from "./hono-app/skillDiscovery.ts";
+export { collectPluginFileMap } from "./code/collectFileMap.ts";
+export { fileMapBytes, fileMapGet, fileMapSize, fileMapText, fileMapUnder } from "./helpers/fileMap.ts";
 
 // Agents: discovery from `agents/`, normalization of the Claude agent format, and serving.
-export { AGENTS_DIR, discoverAgents } from "./agents/discoverAgents.ts";
+export { AGENTS_DIR, agentsFromFileMap, discoverAgents } from "./agents/discoverAgents.ts";
 export type { DiscoverAgentsOptions } from "./agents/discoverAgents.ts";
 export { parseAgentFile } from "./agents/parseAgentFile.ts";
 export type { ParsedAgentFile } from "./agents/parseAgentFile.ts";
@@ -145,6 +147,7 @@ export type {
   McpServersConfig,
   McpStdioServerConfig,
   PluginAppConfig,
+  PluginFileMapEntry,
   PluginRuntimeArtifacts,
   QuartalPluginExtension,
   ToolModuleRegistry,

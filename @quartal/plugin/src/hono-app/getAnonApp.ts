@@ -40,11 +40,13 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   const app: OpenAPIHono = helper.getApiApp();
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
 
+  const fileMap = config.artifacts?.files;
   registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin, docsWebUrl: config.docsWebUrl });
-  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
+  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),
+    fileMap,
   });
   const widgets = config.widgetResources?.length
     ? config.widgetResources
@@ -53,6 +55,8 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   registerPluginInfoRoutes(app as Hono, helper, {
     mcpOptions,
     pluginRootFolder: config.pluginRootFolder,
+    fileMap,
+    readme: config.artifacts?.readme,
     getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
   });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);

@@ -102,9 +102,10 @@ plugins themselves. `pnpm deploy-plugin <target> <project>` (i.e. `node deployme
 stages the plugin as a standalone npm package under `.deploy/<target>/<project>/` (rewriting
 `workspace:*`, swapping in the target's Astro adapter) and hands it to the platform CLI. Targets:
 `vercel` (previews by default, `-- --prod` for production), `railway` (works), `cloudflare`
-(blocked — a Worker has no filesystem, and the runtime reads skills/agents/artifacts from disk;
-see [docs/cloudflare-workers-plan.md](./docs/cloudflare-workers-plan.md)). `--dry-run` prints every
-command without running it. Full docs: [deployment/README.md](./deployment/README.md).
+(works in `wrangler dev`; first real deploy unverified — see
+[docs/cloudflare-workers-plan.md](./docs/cloudflare-workers-plan.md)). Serverless targets need
+`--link local` until `@quartal/plugin` > 0.8.0 is published. `--dry-run` prints every command
+without running it. Full docs: [deployment/README.md](./deployment/README.md).
 
 ## UI styling (Bootstrap skins)
 

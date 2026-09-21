@@ -12,7 +12,7 @@ pnpm deploy-plugin <target> <project> [options]   # same thing, via the root scr
 | ------------ | ------------------ | ----------------------- | ----------------------------------------------- |
 | `vercel`     | Vercel             | `@astrojs/vercel`       | Ready — needs `--link local` until `@quartal/plugin` > 0.8.0 is published |
 | `railway`    | Railway            | `@astrojs/node`         | Works — verified end to end                     |
-| `cloudflare` | Cloudflare Workers | `@astrojs/cloudflare`   | Blocked — see [Cloudflare](#cloudflare-workers) |
+| `cloudflare` | Cloudflare Workers | `@astrojs/cloudflare`   | Works in `wrangler dev` (needs `--link local`); first real deploy unverified |
 
 Everything lives in this one folder; nothing is added to the plugins themselves. A plugin is
 identified by its directory name under `samples/`, and its remote name comes from the `deploy`
@@ -83,20 +83,14 @@ A tarball installs as a real copy everywhere.
 
 Astro SSR on Vercel Functions (Node.js runtime, Fluid compute). Vercel builds the uploaded sources
 (`npm install` → `astro build`), but the function it assembles contains only *traced modules* and
-runs in `/var/task` — not next to the plugin's files. Four things bridge that gap:
-
-1. The codegen's `artifacts.ts` module carries the generated metadata, manifest, README,
-   `qrtl.config` runtime options and widget entries *inside the server bundle*, so none of those
-   need to exist on disk in the function.
-2. The docs UI shell is fetched from the Quartal Plugins website at runtime (`docsShell.ts`), so
-   no docs assets ship with the function either.
-3. The generated `astro.config.mjs` walks the stage at build time and passes what the runtime
-   still genuinely reads from disk to the adapter's `includeFiles`: `skills/`, `agents/`,
-   `public/` and `README.md` (packaged into `/plugin.zip`).
-4. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
-   time does not exist in `/var/task`, so `Helpers.resolvePluginRoot` falls back to the function's
-   `process.cwd()` (or the `QRTL_PLUGIN_ROOT` env var). **Until that version is on npm, deploy with
-   `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel function.
+runs in `/var/task` — not next to the plugin's files. With `@quartal/plugin` > 0.8.0 that needs no
+configuration: the codegen's `artifacts.ts` module carries the generated metadata, manifest,
+`qrtl.config` options, widget entries **and the skills/agents/README file map** inside the server
+bundle; the docs UI shell is fetched from the Quartal Plugins website at runtime; and `public/`
+ships in Vercel's static output, served before the function. The adapter runs with no options, and
+`Helpers.resolvePluginRoot` keeps the relocated cwd safe as a fallback. **Until that version is on
+npm, deploy with `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel
+function.
 
 ```bash
 pnpm run build:libs                                       # once, for --link local
@@ -137,38 +131,27 @@ Verified locally against the published `@quartal/*` packages: staging + `npm ins
 
 ### Cloudflare Workers
 
-**Blocked today.** The stage builds and the bundle is valid, but the Worker cannot serve a Quartal
-plugin, and no amount of deployment scripting changes that. `deploy.mjs` therefore stages and builds
-this target but refuses to deploy without `--force`.
+Astro SSR on the Workers runtime (workerd) — a *finished* bundle: wrangler ships the Worker that
+`@astrojs/cloudflare` builds locally, so this target builds in the stage before deploying.
 
-A Worker has no filesystem. `node:fs` exists (with `nodejs_compat` and a compatibility date of
-2025-09-01 or later) but over a virtual FS whose `process.cwd()` is `/bundle` and which contains
-only the modules that ended up in the Worker bundle. The generated metadata, manifest and config
-already ride inside the bundle (the artifacts module), and the docs shell is fetched over HTTP —
-but the content routes still read the plugin root per request:
-
-| What                                        | Where it happens                            |
-| ------------------------------------------- | ------------------------------------------- |
-| `skills/`                                    | `skillDiscovery` / `skillRoutes` / `skillZip` |
-| `agents/`                                    | `discoverAgents` / `agentRoutes`            |
-| `public/`                                    | `publicFolderRoutes`                        |
-| `README.md` (into `/plugin.zip`)             | `buildAgentPluginZip`                       |
-
-On a Worker those directories do not exist, so a deployed plugin would serve its metadata, docs,
-API and MCP tools but no skills, agents, public files or `/plugin.zip`.
-
-Making Cloudflare a real target is a change in `@quartal/plugin`, not in these scripts. The full
-work plan lives in [docs/cloudflare-workers-plan.md](../docs/cloudflare-workers-plan.md) (item 4:
-build-time file maps). Until it lands, the useful commands are:
+A Worker has no real filesystem, and with `@quartal/plugin` > 0.8.0 it needs none: the codegen's
+`artifacts.ts` module carries the generated metadata, manifest, `qrtl.config` options, widget
+entries and the skills/agents/README file map inside the bundle; the docs UI shell is fetched from
+the Quartal Plugins website at runtime; and `public/` ships as Workers static assets. **Until that
+version is on npm, stage with `--link local`.**
 
 ```bash
-node deployment/deploy.mjs cloudflare test1 --stage-only   # build the Worker bundle
-cd .deploy/cloudflare/test1 && npx wrangler dev            # reproduce the runtime failure
-cd .deploy/cloudflare/test1 && npx wrangler deploy --dry-run
+node deployment/deploy.mjs cloudflare test1 --link local --stage-only   # build the Worker bundle
+cd .deploy/cloudflare/test1 && npx wrangler dev                         # run it in workerd locally
+node deployment/deploy.mjs cloudflare test1 --link local               # authenticated deploy
 ```
 
-`@astrojs/cloudflare` also requests a `SESSION` KV binding; a real deploy needs a KV namespace id
-for it, or Astro sessions turned off.
+Verified in `wrangler dev`: `/plugin.json`, `/open-api.json` (16 paths), skills (catalog, files,
+zips), agents, `/plugin.zip`, MCP `tools/list`, REST execution, widget pages and the docs shell
+all serve. **The first authenticated deploy has not been exercised yet — treat it as the real
+test.** Authenticate with `npx wrangler login` or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
+Plugins do not use Astro sessions, so no `SESSION` KV binding is configured; add a KV namespace id
+to `wrangler.jsonc` if your own pages need sessions.
 
 ## Options
 

@@ -1,15 +1,14 @@
 ---
 title: "Deploy to Vercel"
-description: "Step-by-step: swap in the Vercel adapter, include the plugin's runtime files, and deploy preview + production."
+description: "Step-by-step: swap in the Vercel adapter and deploy preview + production."
 section: deploying
 order: 2
 ---
 
-Vercel runs the plugin as a serverless function on the Node.js runtime. Two things differ from a
-plain Astro deployment: the function must **include the plugin's content files** (skills, agents,
-public assets), and it needs `@quartal/plugin` **0.9.0 or newer** — from that version on, the
-generated metadata, manifest and configuration ride inside the server bundle itself, and the
-runtime locates the remaining files inside the relocated function at runtime.
+Vercel runs the plugin as a serverless function on the Node.js runtime. The only change from a
+plain plugin project is the adapter — with `@quartal/plugin` **0.9.0 or newer**, everything the
+plugin serves (generated metadata, configuration, skills, agents, README) rides inside the server
+bundle, and `public/` files are served by Vercel's static layer automatically.
 
 ## 1. Install the Vercel adapter
 
@@ -21,40 +20,22 @@ npm install @astrojs/vercel
 
 ## 2. Update `astro.config.mjs`
 
-Replace the Node adapter with the Vercel adapter, and pass it the content files the plugin serves
-from disk at request time (the generated metadata and configuration are already inside the server
-bundle and need no listing):
+Replace the Node adapter with the Vercel adapter:
 
 ```js
 import { defineConfig } from "astro/config";
 import vercel from "@astrojs/vercel";
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
 import qrtlPlugin from "@quartal/plugin/astro";
-
-// The plugin serves these files per request; a Vercel function only contains
-// traced modules, so they must be forced in via includeFiles.
-const walk = (dir) =>
-  existsSync(dir)
-    ? readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-        e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)])
-    : [];
-const includeFiles = [
-  "README.md",
-  ...walk("skills"),
-  ...walk("agents"),
-  ...walk("public"),
-];
 
 export default defineConfig({
   output: "server",
-  adapter: vercel({ includeFiles }),
+  adapter: vercel(),
   integrations: [qrtlPlugin()],
 });
 ```
 
 If your project uses a widget framework, keep its integration (`vue()`, `react()`, …) in
-`integrations` — only the adapter changes.
+`integrations` — only the adapter line changes.
 
 ## 3. Deploy
 
@@ -90,7 +71,7 @@ curl https://<your-deployment>.vercel.app/plugin.json
 
 Then open the deployment URL in a browser: the docs site should show your tools, skills and
 agents. If routes answer 500, check the function logs in the Vercel dashboard; the most common
-cause is a missing file in `includeFiles` (step 2) or an outdated `@quartal/plugin`.
+cause is an outdated `@quartal/plugin` (0.9.0 or newer is required on Vercel).
 
 ## Notes
 
