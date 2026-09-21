@@ -1,5 +1,15 @@
 # @quartal/plugin-vue
 
+## 0.5.7
+
+### Patch Changes
+
+- Updated dependencies [f9e9208]
+- Updated dependencies [f9e9208]
+- Updated dependencies [f9e9208]
+- Updated dependencies [f9e9208]
+  - @quartal/plugin@0.9.0
+
 ## 0.5.6
 
 ### Patch Changes
