@@ -1,5 +1,58 @@
 # @quartal/plugin
 
+## 0.9.0
+
+### Minor Changes
+
+- f9e9208: Build-time artifacts module: codegen now emits `qrtl-plugin/artifacts.ts`, an importable snapshot
+  of everything the runtime previously read from disk per request — the generated JSON artifacts
+  (tools, OpenAPI, types, contents, MCP tools/prompts), the resolved manifest, the README text, the
+  `qrtl.config` auth mode and `mcp` options, and the resolved widget entries. The generated Astro
+  middleware imports it and passes it to `getAnonApp`/`getAuthApp` via the new
+  `PluginAppConfig.artifacts` field (`PluginRuntimeArtifacts`). When present, the snapshot is
+  authoritative (no `qrtl.config` disk load, no runtime widget discovery); absent fields fall back
+  to the existing disk reads, so tests and non-Astro hosts keep working.
+  
+  This makes bundled deployments self-contained: a serverless function or Worker serves the plugin's
+  metadata, docs, MCP catalog and widgets without `package.json`, `qrtl.config.*` or
+  `src/qrtl-plugin/*.json` existing on disk. Only `skills/`, `agents/`, `public/`, `README.md` (for
+  `/plugin.zip`) and the docs SPA assets still come from disk.
+- f9e9208: Docs UI from the published shell, and `src/pages/index.*` overrides it.
+  
+  The docs page at `/` is no longer served from files vendored inside this package. Instead the
+  runtime fetches the chrome-less shell page published on the Quartal Plugins website
+  (`https://plugin.quartal.com/plugin-index/` by default), rewrites its asset URLs to the shell's
+  origin, injects the plugin's skin, and serves the result from the plugin's own origin — so the
+  SPA's data fetches and the OAuth login flow stay same-origin while no docs assets ship with the
+  plugin (the npm package shrinks by ~5 MB, and the `createRequire().resolve()` lookup that crashed
+  edge runtimes is gone). The shell is cached in memory with a 1-hour TTL, a failed re-fetch falls
+  back to the cached copy, and an unreachable shell fails soft (503 on the docs page only — API and
+  MCP are unaffected). Override the URL with the `QRTL_DOCS_WEB_URL` env var (self-hosted copies,
+  the local website dev server, `file:` fixtures in tests) or `PluginAppConfig.docsWebUrl`.
+  
+  A plugin can now also ship its own landing page: when `src/pages/index.*` exists, Astro renders it
+  at `/` (the docs shell and the legacy `.html` redirects are released to Astro), while the machine
+  routes (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills/agents) always stay served. Detected at
+  config time — restart the dev server after adding or removing the page.
+  
+  `/assets/*` is no longer claimed by the plugin server: docs assets load from the shell's origin,
+  and a plugin's own `public/assets/` files are served by Astro like any other static assets.
+- f9e9208: Build-time file map: the artifacts module now carries the `skills/` and `agents/` trees
+  (`files: PluginFileMapEntry[]`, text inlined as UTF-8, binaries base64), and the runtime prefers
+  it everywhere — skill discovery, skill files and zip downloads (`skillsFromFileMap`), agent
+  discovery and markdown (`agentsFromFileMap`), and `/plugin.zip` (assembled from the map plus the
+  injected README). Directory walks remain the fallback for dev, tests and Node hosts.
+  
+  With this, a deployed plugin needs no files on disk at all: serverless functions require no
+  `includeFiles`-style configuration, and a plugin serves fully under Cloudflare's Workers runtime
+  (verified with `wrangler dev` — tools, MCP, skills, agents, zips, widgets and the docs shell).
+  The docs-shell fetch also gained a 10-second timeout so an unreachable shell URL fails the docs
+  page soft instead of hanging requests.
+
+### Patch Changes
+
+- f9e9208: Resolve the plugin root at runtime instead of trusting the baked build-time path. `getAnonApp` / `getAuthApp` now run the configured `pluginRootFolder` through `Helpers.resolvePluginRoot`: a `QRTL_PLUGIN_ROOT` env var wins, a configured folder is used only when it exists on disk, and otherwise the root falls back to `process.cwd()`. This makes the runtime work on serverless platforms (Vercel, Netlify) that build the app in one directory and run it in another.
+
 ## 0.8.0
 
 ### Minor Changes
