@@ -174,3 +174,28 @@ describe("Helpers.getPluginManifest", () => {
   });
 
 });
+
+describe("Helpers.resolvePluginRoot", () => {
+  it("keeps a configured root that exists on disk", async () => {
+    const dir = await tempPkg({});
+    expect(Helpers.resolvePluginRoot(dir)).toBe(dir);
+  });
+
+  it("falls back to cwd when the configured root does not exist (relocated serverless bundle)", () => {
+    expect(Helpers.resolvePluginRoot(join(tmpdir(), "qrtl-does-not-exist", "app"))).toBe(process.cwd());
+  });
+
+  it("falls back to cwd when nothing is configured", () => {
+    expect(Helpers.resolvePluginRoot(undefined)).toBe(process.cwd());
+  });
+
+  it("lets QRTL_PLUGIN_ROOT override everything", async () => {
+    const dir = await tempPkg({});
+    process.env.QRTL_PLUGIN_ROOT = dir;
+    try {
+      expect(Helpers.resolvePluginRoot("/somewhere/else")).toBe(dir);
+    } finally {
+      delete process.env.QRTL_PLUGIN_ROOT;
+    }
+  });
+});

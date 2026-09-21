@@ -45,9 +45,12 @@ function toAuthMode(auth: string | undefined): QuartalAuthMode {
  */
 export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions): Promise<Hono> {
   config = config ?? {};
+  // The baked build-time root may not exist on the running host (serverless bundlers relocate the
+  // app); resolve it once here so every route below reads from a directory that actually exists.
+  config.pluginRootFolder = Helpers.resolvePluginRoot(config.pluginRootFolder);
   // `qrtl.config` authors both the `mcp` options (server name, multi-server map) and the auth
   // mode; direct callers (tests, non-Astro hosts) may pass `mcp` / `oauth` explicitly instead.
-  const qrtlConfig = await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd());
+  const qrtlConfig = await Helpers.loadQrtlConfig(config.pluginRootFolder);
   if (config.mcp === undefined) {
     config.mcp = qrtlConfig?.mcp;
   }

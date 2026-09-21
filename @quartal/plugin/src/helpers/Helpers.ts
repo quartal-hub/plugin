@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -29,6 +30,22 @@ export class Helpers {
       if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return undefined;
       throw e;
     }
+  }
+
+  /**
+   * Resolves the plugin root for runtime file reads (manifest, `qrtl.config`, skills, agents,
+   * `public/`, generated `qrtl-plugin/` artifacts). The configured value is an absolute path baked
+   * in at build time; serverless platforms run the function in a different directory than the build
+   * (e.g. Vercel builds in `/vercel/path0` and runs in `/var/task`), so a baked path that does not
+   * exist on the running host must not win over `process.cwd()`. Precedence:
+   * `QRTL_PLUGIN_ROOT` env var, then the configured folder when it exists on disk, then `process.cwd()`.
+   * @param configured Plugin root folder baked in at build time (absolute), if any.
+   */
+  static resolvePluginRoot(configured?: string): string {
+    const fromEnv = process.env.QRTL_PLUGIN_ROOT;
+    if (fromEnv) return fromEnv;
+    if (configured && existsSync(configured)) return configured;
+    return process.cwd();
   }
 
   /**

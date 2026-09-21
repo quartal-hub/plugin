@@ -24,10 +24,13 @@ import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runt
  */
 export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   config = config ?? {};
+  // The baked build-time root may not exist on the running host (serverless bundlers relocate the
+  // app); resolve it once here so every route below reads from a directory that actually exists.
+  config.pluginRootFolder = Helpers.resolvePluginRoot(config.pluginRootFolder);
   // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
   // callers (tests, non-Astro hosts) may pass them explicitly instead.
   if (config.mcp === undefined) {
-    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd()))?.mcp;
+    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder))?.mcp;
   }
   const helper = new PluginApiHelper("/api", config);
   await helper.init();
