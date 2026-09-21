@@ -1,14 +1,12 @@
 ---
-title: "Deploy to Vercel"
-description: "Step-by-step: swap in the Vercel adapter and deploy preview + production."
+title: "Vercel"
+description: "Deploy to Vercel.com, which provides probably the easiest inegrations to Astro.build"
 section: deploying
 order: 2
 ---
 
 Vercel runs the plugin as a serverless function on the Node.js runtime. The only change from a
-plain plugin project is the adapter — with `@quartal/plugin` **0.9.0 or newer**, everything the
-plugin serves (generated metadata, configuration, skills, agents, README) rides inside the server
-bundle, and `public/` files are served by Vercel's static layer automatically.
+plain plugin project is the adapter — with `@quartal/plugin`.
 
 ## 1. Install the Vercel adapter
 
@@ -70,11 +68,4 @@ curl https://<your-deployment>.vercel.app/plugin.json
 ```
 
 Then open the deployment URL in a browser: the docs site should show your tools, skills and
-agents. If routes answer 500, check the function logs in the Vercel dashboard; the most common
-cause is an outdated `@quartal/plugin` (0.9.0 or newer is required on Vercel).
-
-## Notes
-
-- Vercel's Hobby plan does not allow commercial use; a commercial plugin needs a Pro team.
-- A custom domain is a CNAME: add the domain in the Vercel project settings and create the DNS
-  record it prints.
+agents. If routes answer 500, check the function logs in the Vercel dashboard.

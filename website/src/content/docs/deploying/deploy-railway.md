@@ -1,6 +1,6 @@
 ---
-title: "Deploy to Railway"
-description: "Step-by-step: run the plugin as a long-lived Node server on Railway — no adapter change needed."
+title: "Railway"
+description: "Deploy as docker image to Railway. Similar approach works to other PaaS / container-based hosting environments (Heroku, Render, Fly.io)."
 section: deploying
 order: 3
 ---

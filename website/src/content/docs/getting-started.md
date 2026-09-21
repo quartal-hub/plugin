@@ -75,3 +75,5 @@ Build and run like any server-output Astro site — then deploy to
 pnpm build
 node ./dist/server/entry.mjs
 ```
+
+See some [examples of deployment in](/docs/deploying/deploying/)

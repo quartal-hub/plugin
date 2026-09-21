@@ -1,6 +1,6 @@
 ---
-title: "Deploying a plugin"
-description: "What a Quartal Plugin needs from a hosting platform, and how the platform guides fit together."
+title: "Publish a plugin"
+description: "Overview of how to publish a Quartal plugin to web so that it can be used by other users."
 section: deploying
 order: 1
 ---
@@ -15,7 +15,7 @@ as `pnpm create @quartal/plugin` scaffolds it — no access to the framework's s
 1. **A build**: `npm run build` (Astro generates the `qrtl-plugin/` artifacts and the server
    bundle in `dist/`). The build captures everything the plugin serves — metadata, configuration,
    `skills/`, `agents/`, `README.md` — inside the server bundle, so the deployed app is
-   self-contained on every platform (requires `@quartal/plugin` 0.9.0+).
+   self-contained on every platform.
 2. **An adapter that matches the platform.** The scaffolded project uses `@astrojs/node` in
    standalone mode, which is right for platforms that run a long-lived Node server (Railway,
    Fly.io, a container, a VM). Serverless platforms need their own adapter — the platform guide
@@ -26,11 +26,11 @@ as `pnpm create @quartal/plugin` scaffolds it — no access to the framework's s
 
 ## Platform guides
 
-| Guide | Runs as | Status |
-| --- | --- | --- |
-| [Vercel](/docs/deploying/deploy-vercel) | Serverless function (Node runtime) | Supported |
-| [Railway](/docs/deploying/deploy-railway) | Long-lived Node container | Supported |
-| [Cloudflare Workers](/docs/deploying/deploy-cloudflare) | Worker (edge isolate) | **Early support** |
+| Guide | Runs as |
+| --- | --- |
+| [Vercel](/docs/deploying/deploy-vercel) | Serverless function (Node runtime) |
+| [Railway](/docs/deploying/deploy-railway) | Long-lived Node container |
+| [Cloudflare Workers](/docs/deploying/deploy-cloudflare) | Worker (edge isolate) |
 
 ## Test and production environments
 

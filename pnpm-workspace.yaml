@@ -8,6 +8,7 @@ allowBuilds:
   core-js: false
   unrs-resolver: true
   vue-demi: true
+  workerd: true
 # pnpm's minimumReleaseAge default of 1440 minutes makes a freshly published
 # version unresolvable for 24h; first-party packages are exempt. A bare pattern
 # with no @version covers every version, and '*' is a glob.
