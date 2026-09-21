@@ -65,7 +65,7 @@ folders.
 | `@quartal/plugin`          | The Astro integration + Vite codegen plugin + Hono runtime for creating plugins (npm)         |
 | `@quartal/plugin-vue`      | Vue bindings for widgets (composables over the framework-agnostic `@quartal/plugin/widget`)   |
 | `@quartal/ui-plugin`       | Vue artifact UI components (workspace pkg; Storybook here)                                    |
-| `@quartal/plugin-docs-web` | Docs SPA; its `build` vendors into `@quartal/plugin/static/plugin-docs-web` (see its README)  |
+| `@quartal/plugin-docs-web` | Docs SPA library; the website's `/plugin-index` page publishes it as the shell every plugin fetches and serves at `/` |
 | `@quartal/website`         | Marketing + docs web site for the product (`website/`, Astro + Vue, static; not published)   |
 
 Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private, not published).
@@ -89,8 +89,23 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
     `/widgets/<toolId>`, agents at `/agents/catalog.json`.
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).
 - `@quartal/ui-plugin` Storybook: `pnpm --filter @quartal/ui-plugin storybook` (port 6007).
-- Refresh the vendored docs SPA after a `ui-plugin`/SPA change: `pnpm --filter @quartal/plugin-docs-web build`.
+- The docs UI ships via the website: plugins fetch `https://plugin.quartal.com/plugin-index/` at runtime
+  (`docsShell.ts`). After a `plugin-docs-web`/`ui-plugin` change, merging to main republishes the site and
+  every plugin picks it up (1 h shell cache). To test locally: run the website dev server and start the
+  plugin with `QRTL_DOCS_WEB_URL=http://localhost:4321/plugin-index/`.
 - For local MCP/widget testing we recommend [MCPJam](https://www.mcpjam.com/).
+
+## Deploy a plugin
+
+`deployment/` holds one script for every hosting target; nothing deploy-related lives in the
+plugins themselves. `pnpm deploy-plugin <target> <project>` (i.e. `node deployment/deploy.mjs`)
+stages the plugin as a standalone npm package under `.deploy/<target>/<project>/` (rewriting
+`workspace:*`, swapping in the target's Astro adapter) and hands it to the platform CLI. Targets:
+`vercel` (previews by default, `-- --prod` for production), `railway` (works), `cloudflare`
+(works in `wrangler dev`; first real deploy unverified — see
+[docs/cloudflare-workers-plan.md](./docs/cloudflare-workers-plan.md)). Serverless targets need
+`--link local` until `@quartal/plugin` > 0.8.0 is published. `--dry-run` prints every command
+without running it. Full docs: [deployment/README.md](./deployment/README.md).
 
 ## UI styling (Bootstrap skins)
 

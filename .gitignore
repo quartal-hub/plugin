@@ -146,3 +146,6 @@ vite.config.ts.timestamp-*
 
 # Astro generated types/cache (website)
 .astro/
+
+# Deployment staging trees (deployment/deploy.mjs)
+.deploy/

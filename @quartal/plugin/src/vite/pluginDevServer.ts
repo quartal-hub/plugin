@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import type { Hono } from "hono";
-import { isServerPath } from "../astro/pluginMiddleware.ts";
+import { isServerPath, isServerPathWithOwnIndexPage } from "../astro/pluginMiddleware.ts";
 import { getAnonApp } from "../hono-app/getAnonApp.ts";
 import { getAuthApp } from "../hono-app/getAuthApp.ts";
 import type { ToolModuleRegistry } from "../model/index.ts";
@@ -32,6 +32,8 @@ export interface PluginDevServerOptions {
   registryPath: string;
   /** Absolute path to the generated `prompts.registry.ts` (imported for prompt rendering). */
   promptsRegistryPath?: string;
+  /** The plugin ships its own `src/pages/index.*`: Astro renders `/` and the legacy `.html` redirects. */
+  ownIndexPage?: boolean;
 }
 
 /** Reads the whole request body from a Node `IncomingMessage`. */
@@ -148,7 +150,8 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
         // (/node_modules/…, /@id/…) — so in dev, allow CORS on everything.
         res.setHeader("Access-Control-Allow-Origin", "*");
         const pathname = (req.url ?? "/").split("?")[0];
-        if (!isServerPath(pathname)) {
+        const matches = options.ownIndexPage ? isServerPathWithOwnIndexPage : isServerPath;
+        if (!matches(pathname)) {
           next();
           return;
         }

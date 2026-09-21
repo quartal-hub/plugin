@@ -20,7 +20,7 @@ The framework is a pnpm workspace (Node 22+):
 | `@quartal/plugin` | The Astro integration + Vite codegen plugin + Hono runtime |
 | `@quartal/plugin-vue` | Vue bindings for widgets |
 | `@quartal/ui-plugin` | Vue artifact UI components (Storybook) |
-| `@quartal/plugin-docs-web` | The docs SPA vendored into every plugin |
+| `@quartal/plugin-docs-web` | The docs SPA library; the website's `/plugin-index` page publishes it as the shell every plugin serves at `/` |
 | `website` | This web site |
 | `samples/*` | Runnable example plugins |
 

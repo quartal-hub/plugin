@@ -75,10 +75,13 @@ export class PluginApiHelper {
   /** The README.md contents as the original Markdown. */
   public readmeContent: string | undefined;
 
-  /** Loads the manifest, README and the generated `qrtl-plugin/` metadata. */
+  /** Loads the manifest, README and the generated `qrtl-plugin/` metadata (preferring the injected
+   * build-time artifacts over disk reads). */
   public async init(): Promise<void> {
-    this.manifest = await Helpers.getPluginManifest(this.baseDir);
-    this.readmeContent = await Helpers.readIfExists(join(this.baseDir, "README.md")) ?? "No README.md found in the plugin.";
+    this.manifest = this.config.artifacts?.manifest ?? await Helpers.getPluginManifest(this.baseDir);
+    this.readmeContent = this.config.artifacts?.readme
+      ?? await Helpers.readIfExists(join(this.baseDir, "README.md"))
+      ?? "No README.md found in the plugin.";
     await this.prepareTools();
   }
 
@@ -410,36 +413,32 @@ export class PluginApiHelper {
     return params;
   }
 
-  /** Loads the generated `qrtl-plugin/` metadata into memory (also builds the Zod validators). */
+  /** Loads the generated `qrtl-plugin/` metadata into memory (also builds the Zod validators).
+   * Injected build-time artifacts win per field; disk is the fallback. */
   private async prepareTools(): Promise<void> {
+    const injected = this.config.artifacts;
     const hubDir = join(this.baseDir, this.qrtlPluginDir);
-    const codeJson = await Helpers.readIfExists(join(hubDir, "tools.json"));
-    if (!codeJson) {
+    const readJson = async <T>(file: string): Promise<T | undefined> => {
+      const raw = await Helpers.readIfExists(join(hubDir, file));
+      return raw ? JSON.parse(raw) as T : undefined;
+    };
+
+    const tools = injected?.tools ?? await readJson<{ files?: CodeFile[] }>("tools.json");
+    if (!tools) {
       this.codeFiles = [];
       this.zodCreator = null;
       this.functionDefs = null;
       return;
     }
+    this.codeFiles = loadCodeFiles(tools);
 
-    const parsed = JSON.parse(codeJson) as { files?: CodeFile[] };
-    this.codeFiles = loadCodeFiles(parsed);
-
-    const openApiJson = await Helpers.readIfExists(join(hubDir, "open-api.json"));
-    this.prebuiltOpenApi = openApiJson ? JSON.parse(openApiJson) as Record<string, unknown> : null;
-
-    const typesJson = await Helpers.readIfExists(join(hubDir, "types.json"));
-    this.prebuiltTypes = typesJson ? JSON.parse(typesJson) as unknown[] : null;
-
-    const contentsJson = await Helpers.readIfExists(join(hubDir, "contents.json"));
-    this.prebuiltContents = contentsJson ? JSON.parse(contentsJson) as PluginInfo : null;
-
-    const mcpToolsJson = await Helpers.readIfExists(join(hubDir, "mcp-tools.json"));
-    this.prebuiltMcpTools = mcpToolsJson ? (JSON.parse(mcpToolsJson) as { tools?: McpToolDescriptor[] }).tools ?? null : null;
-
-    const mcpPromptsJson = await Helpers.readIfExists(join(hubDir, "mcp-prompts.json"));
-    this.prebuiltMcpPrompts = mcpPromptsJson
-      ? (JSON.parse(mcpPromptsJson) as { prompts?: McpPromptDescriptor[] }).prompts ?? null
-      : null;
+    this.prebuiltOpenApi = injected?.openApi ?? await readJson<Record<string, unknown>>("open-api.json") ?? null;
+    this.prebuiltTypes = injected?.types ?? await readJson<unknown[]>("types.json") ?? null;
+    this.prebuiltContents = injected?.contents ?? await readJson<PluginInfo>("contents.json") ?? null;
+    this.prebuiltMcpTools =
+      (injected?.mcpTools ?? await readJson<{ tools?: McpToolDescriptor[] }>("mcp-tools.json"))?.tools ?? null;
+    this.prebuiltMcpPrompts =
+      (injected?.mcpPrompts ?? await readJson<{ prompts?: McpPromptDescriptor[] }>("mcp-prompts.json"))?.prompts ?? null;
 
     this.zodCreator = new ZodBuilder(this.codeFiles);
     this.functionDefs = this.zodCreator.getZodsForAllFunctions();

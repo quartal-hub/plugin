@@ -1,6 +1,6 @@
 import type { Hono } from "hono";
 import type { Implementation } from "@modelcontextprotocol/server";
-import type { McpServerOptions } from "../model/index.ts";
+import type { McpServerOptions, PluginFileMapEntry } from "../model/index.ts";
 import { QUARTAL_EXTENSION_NAMESPACE } from "../model/index.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import {
@@ -14,8 +14,12 @@ import { buildAgentPluginZip } from "../agent-plugin/buildAgentPluginZip.ts";
 export interface PluginInfoRouteOptions {
   /** MCP options (`qrtl.config` `mcp`) — the servers listed in `mcp.json`. */
   mcpOptions?: McpServerOptions;
-  /** Plugin root folder (skills/agents/README packaged into `plugin.zip`). */
+  /** Plugin root folder (skills/agents/README packaged into `plugin.zip` when no file map is given). */
   pluginRootFolder?: string;
+  /** Build-time file map; when present, `plugin.zip` is assembled from it instead of disk. */
+  fileMap?: readonly PluginFileMapEntry[];
+  /** README text resolved at build time (packaged into `plugin.zip` alongside the file map). */
+  readme?: string;
   /** Builds the MCP server implementation for a request origin (`/mcp-server.json`). */
   getMcpServer: (origin: string) => Implementation;
 }
@@ -68,6 +72,8 @@ export function registerPluginInfoRoutes(
       pluginInfo: await helper.getPluginInfo(origin),
       pluginRootFolder: options.pluginRootFolder ?? process.cwd(),
       widgetToolIds: widgetToolIds(),
+      ...(options.fileMap ? { fileMap: options.fileMap } : {}),
+      ...(options.readme !== undefined ? { readme: options.readme } : {}),
     });
     return c.body(new Uint8Array(zip), 200, {
       "Content-Type": "application/zip",

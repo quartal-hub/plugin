@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,7 @@ import {
   getAnonApp,
   PLUGIN_MIDDLEWARE_VIRTUAL_ID,
   isServerPath,
+  isServerPathWithOwnIndexPage,
   qrtlPlugin,
 } from "../src/index.ts";
 import type { AstroConfigSetupOptions } from "../src/astro/integration.ts";
@@ -26,16 +27,27 @@ describe("isServerPath", () => {
   it("matches Hono server routes", () => {
     const paths = [
       "/", "/api/Calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
-      "/agents/greeter.md", "/icons/0", "/plugin.json", "/assets/x.js", "/widget-assets/_astro/x.js",
+      "/agents/greeter.md", "/icons/0", "/plugin.json", "/widget-assets/_astro/x.js",
       "/.well-known/oauth-protected-resource",
     ];
     for (const p of paths) {
       expect(isServerPath(p), p).toBe(true);
     }
   });
-  it("lets Astro handle widget pages and its own assets", () => {
-    for (const p of ["/widgets/simpleSalary", "/_astro/index.abc.js", "/some-user-page", "/mcpanything"]) {
+  it("lets Astro handle widget pages, static assets and user pages", () => {
+    for (const p of ["/widgets/simpleSalary", "/_astro/index.abc.js", "/assets/x.js", "/some-user-page", "/mcpanything"]) {
       expect(isServerPath(p), p).toBe(false);
+    }
+  });
+});
+
+describe("isServerPathWithOwnIndexPage", () => {
+  it("releases the docs shell paths to Astro but keeps the machine routes", () => {
+    for (const p of ["/", "/mcp.html", "/swagger.html", "/docs.html", "/skills.html", "/agents.html"]) {
+      expect(isServerPathWithOwnIndexPage(p), p).toBe(false);
+    }
+    for (const p of ["/plugin.json", "/mcp", "/api/Calculator/add", "/oauth/login", "/open-api.json"]) {
+      expect(isServerPathWithOwnIndexPage(p), p).toBe(true);
     }
   });
 });
@@ -66,6 +78,14 @@ describe("createPluginMiddleware", () => {
     const res = await mw({ request: new Request("http://x/widgets/whatever") }, nextResponse);
     expect(res.status).toBe(299);
     expect(await res.text()).toBe("ASTRO");
+  });
+
+  it("with ownIndexPage, Astro renders / while machine routes stay delegated", async () => {
+    const mw = createPluginMiddleware(app, { ownIndexPage: true });
+    const index = await mw({ request: new Request("http://x/") }, nextResponse);
+    expect(index.status).toBe(299);
+    const machine = await mw({ request: new Request("http://x/plugin.json") }, nextResponse);
+    expect(machine.status).toBe(200);
   });
 });
 
@@ -151,6 +171,18 @@ describe("qrtlPlugin integration", () => {
     expect(src).toContain("createPluginMiddleware");
   });
 
+  it("detects src/pages/index.* and generates an ownIndexPage middleware", async () => {
+    const withIndex = await tempPlugin({});
+    await mkdir(join(withIndex, "src", "pages"), { recursive: true });
+    await writeFile(join(withIndex, "src", "pages", "index.astro"), "<h1>My landing page</h1>");
+    expect(middlewareSource((await runSetup("server", undefined, withIndex)).vitePlugins))
+      .toContain("{ ownIndexPage: true }");
+
+    const withoutIndex = await tempPlugin({});
+    expect(middlewareSource((await runSetup("server", undefined, withoutIndex)).vitePlugins))
+      .not.toContain("ownIndexPage");
+  });
+
   it("reads the auth mode from qrtl.config and watches the config file", async () => {
     const root = await tempPlugin({ "qrtl.config.mjs": 'export default { auth: "quartal-hub" };' });
     const { vitePlugins, watched, warnings } = await runSetup("server", undefined, root);
@@ -197,5 +229,18 @@ describe("buildPluginMiddlewareSource", () => {
 
     const withoutPrompts = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
     expect(withoutPrompts).not.toContain("promptModules");
+  });
+
+  it("imports and passes artifacts when an artifacts module is given", () => {
+    const src = buildPluginMiddlewareSource({
+      auth: "anon",
+      registryImport: "/src/qrtl-plugin/tools.registry.ts",
+      artifactsImport: "/src/qrtl-plugin/artifacts.ts",
+    });
+    expect(src).toContain('import { artifacts } from "/src/qrtl-plugin/artifacts.ts";');
+    expect(src).toContain(", artifacts");
+
+    const without = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
+    expect(without).not.toContain("artifacts");
   });
 });

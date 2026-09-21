@@ -42,9 +42,19 @@ export default defineConfig(({ mode }) => {
         "^/.*\\.(png|jpe?g|gif|webp|svg|ico|pdf|woff2?|ttf|eot|mp4|webm)$": apiTarget,
       },
     },
+    // Library build: a self-contained ES module (vue, router, redoc/swagger chunks bundled) that
+    // the website's /plugin-index page imports. `vite dev` still serves index.html for local SPA
+    // development against the proxy above.
     build: {
       outDir: "dist",
       emptyOutDir: true,
+      cssCodeSplit: false,
+      lib: {
+        entry: path.join(vueRoot, "src/mount.ts"),
+        formats: ["es"],
+        fileName: "plugin-docs-web",
+        cssFileName: "plugin-docs-web",
+      },
     },
   };
 });

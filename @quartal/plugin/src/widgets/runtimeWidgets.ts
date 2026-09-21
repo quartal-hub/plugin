@@ -3,7 +3,7 @@ import type { Hono } from "hono";
 
 import { Helpers } from "../helpers/Helpers.ts";
 import type { FetchWidgetHtml, WidgetCsp, WidgetEntry } from "../model/index.ts";
-import { discoverWidgets } from "./discoverWidgets.ts";
+import { discoverWidgets, type DiscoveredWidget } from "./discoverWidgets.ts";
 
 /**
  * Runtime widget serving. A widget MCP resource is the live Astro page (`/widgets/<toolId>`) fetched
@@ -28,6 +28,21 @@ export const WIDGET_PAGES_DIR = "src/pages/widgets";
  */
 export const WIDGET_ASSETS_PREFIX = "/widget-assets";
 
+/** Maps discovered widget pages to the {@link WidgetEntry} shape the app serves (MCP resource uri,
+ * live page path). Shared between runtime discovery and the build-time artifacts snapshot so both
+ * produce identical entries.
+ * @param discovered Widget pages with resolved names and CSP.
+ */
+export function toWidgetEntries(discovered: DiscoveredWidget[]): WidgetEntry[] {
+  return discovered.map((w) => ({
+    toolId: w.toolId,
+    uri: `ui://widgets/${w.toolId}.html`,
+    name: w.name,
+    pagePath: `/widgets/${w.toolId}`,
+    ...(w.csp ? { csp: w.csp } : {}),
+  }));
+}
+
 /**
  * Resolves the plugin's widget entries at runtime: discovers pages under `src/pages/widgets/` and
  * applies the `qrtl.config` `widgets` section (names, CSP) — the same read-from-disk model as the
@@ -39,14 +54,7 @@ export async function resolveWidgetEntries(config: {
 }): Promise<WidgetEntry[]> {
   const root = config.pluginRootFolder ?? process.cwd();
   const qrtl = await Helpers.loadQrtlConfig(root);
-  const discovered = await discoverWidgets(join(root, WIDGET_PAGES_DIR), qrtl?.widgets);
-  return discovered.map((w) => ({
-    toolId: w.toolId,
-    uri: `ui://widgets/${w.toolId}.html`,
-    name: w.name,
-    pagePath: `/widgets/${w.toolId}`,
-    ...(w.csp ? { csp: w.csp } : {}),
-  }));
+  return toWidgetEntries(await discoverWidgets(join(root, WIDGET_PAGES_DIR), qrtl?.widgets));
 }
 
 /** Attribute names whose root-relative URL values are rewritten to the widget-assets origin. */

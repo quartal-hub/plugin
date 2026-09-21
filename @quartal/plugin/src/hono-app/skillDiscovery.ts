@@ -1,6 +1,8 @@
 import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import type { SkillEntry, SkillFileEntry, SkillFrontmatter, SkillsCatalog } from "@quartal/plugin-core";
+import type { PluginFileMapEntry } from "../model/index.ts";
+import { fileMapSize, fileMapText, fileMapUnder } from "../helpers/fileMap.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { parseFrontmatter } from "../helpers/parseFrontmatter.ts";
 
@@ -137,36 +139,81 @@ export async function discoverSkills(baseDir: string, pluginName: string): Promi
     const raw = await Helpers.readIfExists(skillMdPath);
     if (!raw) continue;
 
-    let fm: SkillFrontmatter | null;
-    try {
-      fm = parseSkillFrontmatter(raw);
-    } catch (e) {
-      // A YAML error carries the offending line and column — pass it through verbatim.
-      console.warn(`[skillDiscovery] ${dirName}: ${e instanceof Error ? e.message : String(e)}`);
-      continue;
-    }
-    if (!fm) {
-      console.warn(`[skillDiscovery] ${dirName}: missing or invalid SKILL.md frontmatter`);
-      continue;
-    }
-    if (!isValidSkillName(fm.name)) {
-      console.warn(`[skillDiscovery] ${dirName}: invalid skill name "${fm.name}"`);
-      continue;
-    }
-    if (fm.name !== dirName) {
-      console.warn(`[skillDiscovery] ${dirName}: folder name does not match frontmatter name "${fm.name}"`);
-      continue;
-    }
+    const entry = toSkillEntry(dirName, raw, await listSkillFiles(skillDir));
+    if (entry) skills.push(entry);
+  }
 
-    const files = await listSkillFiles(skillDir);
-    skills.push({
-      name: fm.name,
-      description: fm.description,
-      ...(fm.license ? { license: fm.license } : {}),
-      ...(fm.compatibility ? { compatibility: fm.compatibility } : {}),
-      ...(fm.metadata ? { metadata: fm.metadata } : {}),
-      files,
-    });
+  return { version: "1.0", plugin: pluginName, skills };
+}
+
+/** Validates one skill (frontmatter + naming rules) into a catalog entry; warns and returns null when invalid.
+ * @param dirName Skill directory name.
+ * @param raw SKILL.md contents.
+ * @param files The skill's files (paths relative to the skill directory).
+ */
+function toSkillEntry(dirName: string, raw: string, files: SkillFileEntry[]): SkillEntry | null {
+  let fm: SkillFrontmatter | null;
+  try {
+    fm = parseSkillFrontmatter(raw);
+  } catch (e) {
+    // A YAML error carries the offending line and column — pass it through verbatim.
+    console.warn(`[skillDiscovery] ${dirName}: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
+  if (!fm) {
+    console.warn(`[skillDiscovery] ${dirName}: missing or invalid SKILL.md frontmatter`);
+    return null;
+  }
+  if (!isValidSkillName(fm.name)) {
+    console.warn(`[skillDiscovery] ${dirName}: invalid skill name "${fm.name}"`);
+    return null;
+  }
+  if (fm.name !== dirName) {
+    console.warn(`[skillDiscovery] ${dirName}: folder name does not match frontmatter name "${fm.name}"`);
+    return null;
+  }
+
+  return {
+    name: fm.name,
+    description: fm.description,
+    ...(fm.license ? { license: fm.license } : {}),
+    ...(fm.compatibility ? { compatibility: fm.compatibility } : {}),
+    ...(fm.metadata ? { metadata: fm.metadata } : {}),
+    files,
+  };
+}
+
+/**
+ * {@link discoverSkills} against the build-time file map instead of disk: skills are the
+ * `skills/<name>/…` groups that contain a `SKILL.md`, validated by the same rules. Files directly
+ * under `skills/` (documentation) are ignored, matching the directory-based discovery.
+ * @param files The build-time file map (plugin-root-relative paths).
+ * @param pluginName Plugin name (for the skills catalog manifest).
+ */
+export function skillsFromFileMap(files: readonly PluginFileMapEntry[], pluginName: string): SkillsCatalog {
+  const byDir = new Map<string, { rel: string; entry: PluginFileMapEntry }[]>();
+  for (const entry of fileMapUnder(files, "skills")) {
+    const rest = entry.path.slice("skills/".length);
+    const slash = rest.indexOf("/");
+    if (slash === -1) continue;
+    const dirName = rest.slice(0, slash);
+    const rel = rest.slice(slash + 1);
+    const group = byDir.get(dirName) ?? [];
+    group.push({ rel, entry });
+    byDir.set(dirName, group);
+  }
+
+  const skills: SkillEntry[] = [];
+  for (const dirName of [...byDir.keys()].sort((a, b) => a.localeCompare(b))) {
+    const group = byDir.get(dirName)!;
+    const skillMd = group.find((f) => f.rel === "SKILL.md");
+    if (!skillMd) continue;
+
+    const fileEntries: SkillFileEntry[] = group
+      .map((f) => ({ path: f.rel, size: fileMapSize(f.entry), mimeType: guessMimeType(f.rel) }))
+      .sort((a, b) => a.path.localeCompare(b.path));
+    const entry = toSkillEntry(dirName, fileMapText(skillMd.entry), fileEntries);
+    if (entry) skills.push(entry);
   }
 
   return { version: "1.0", plugin: pluginName, skills };

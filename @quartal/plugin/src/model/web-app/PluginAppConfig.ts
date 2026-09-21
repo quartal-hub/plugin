@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import type { McpServerOptions } from "./McpServerOptions.ts";
 import type { AuthContext } from "../AuthContext.ts";
 import type { FetchWidgetHtml } from "./FetchWidgetHtml.ts";
+import type { PluginRuntimeArtifacts } from "./PluginRuntimeArtifacts.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
 
 /**
@@ -31,6 +32,21 @@ export interface PluginAppConfig {
    * integration uses `"src/qrtl-plugin"`.
    */
   qrtlPluginDir?: string;
+
+  /**
+   * URL of the docs shell page served at `/` (default: the page published on the Quartal Plugins
+   * website). The `QRTL_DOCS_WEB_URL` env var wins over this. Mainly for tests (`file:` URLs) and
+   * self-hosted copies.
+   */
+  docsWebUrl?: string;
+
+  /**
+   * Build-time snapshot of the runtime metadata (from the generated `artifacts.ts`). When present,
+   * it is the authoritative source: the app builders skip the disk reads for the generated JSON
+   * artifacts, manifest, README, `qrtl.config` options and widget entries. Absent fields fall back
+   * to their disk reads.
+   */
+  artifacts?: PluginRuntimeArtifacts;
 
   /**
    * Static tool-module registry (from the generated `tools.registry.ts`). Required to execute

@@ -32,7 +32,6 @@
   },
   "files": [
     "dist",
-    "static",
     "README.md"
   ],
   "sideEffects": false,

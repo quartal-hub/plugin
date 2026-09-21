@@ -10,6 +10,8 @@ export type {
   McpServerDefinition,
   McpServerOptions,
   PluginAppConfig,
+  PluginFileMapEntry,
+  PluginRuntimeArtifacts,
   ToolModuleRegistry,
   WidgetEntry,
 } from "./web-app/index.ts";

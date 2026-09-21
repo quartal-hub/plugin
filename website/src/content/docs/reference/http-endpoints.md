@@ -85,7 +85,27 @@ assets stay public.
 
 | Endpoint | Returns |
 |---|---|
-| `GET /` | The built-in docs site (single-page app) with pages for tools, skills, agents, widgets, prompts and the API (Swagger and Redoc views). |
-| `GET /assets/*` | Docs site assets. |
+| `GET /` | The built-in docs site (single-page app) with pages for tools, skills, agents, widgets, prompts and the API (Swagger and Redoc views). Served from your plugin's origin; its scripts and styles load from the published shell on plugin.quartal.com (override with the `QRTL_DOCS_WEB_URL` env var). |
 | `GET /mcp.html`, `/swagger.html`, `/docs.html`, `/skills.html`, `/agents.html` | Convenience redirects into the docs site. |
 | `GET /*` | Anything else falls through to the plugin's `public/` folder. |
+
+## Your own landing page
+
+Create `src/pages/index.astro` (or `index.md`, `.mdx`, `.html`) and it replaces the built-in docs
+site at `/` — Astro renders your page, and the `.html` redirects above are released with it. All
+machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep working
+unchanged, so the plugin stays fully functional. The page is detected when the server starts;
+restart `astro dev` after adding or removing it.
+
+Want your own branding *and* the docs UI? Mount it on your page from
+[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) — the
+package README has a complete `index.astro` example:
+
+```astro
+<div id="docs"></div>
+<script>
+  import "@quartal/plugin-docs-web/style.css";
+  import { mountPluginDocs } from "@quartal/plugin-docs-web";
+  mountPluginDocs(document.getElementById("docs")!);
+</script>
+```

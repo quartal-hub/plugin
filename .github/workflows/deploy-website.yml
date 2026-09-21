@@ -9,6 +9,11 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      # The docs shell (/plugin-index) bundles the docs SPA and its source deps — a change to any
+      # of them must republish the site, or deployed plugins keep serving the old docs UI.
+      - "@quartal/plugin-docs-web/**"
+      - "@quartal/ui-plugin/**"
+      - "@quartal/plugin-core/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/deploy-website.yml"
@@ -35,7 +40,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @quartal/website build
+      # "..." builds workspace dependencies first (@quartal/plugin-docs-web -> the docs shell assets).
+      - run: pnpm --filter @quartal/website... build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

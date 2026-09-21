@@ -24,27 +24,39 @@ import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runt
  */
 export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   config = config ?? {};
+  // The baked build-time root may not exist on the running host (serverless bundlers relocate the
+  // app); resolve it once here so every route below reads from a directory that actually exists.
+  config.pluginRootFolder = Helpers.resolvePluginRoot(config.pluginRootFolder);
   // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
-  // callers (tests, non-Astro hosts) may pass them explicitly instead.
+  // callers (tests, non-Astro hosts) may pass them explicitly instead. An injected artifacts
+  // snapshot is authoritative — with one present, `qrtl.config` is never loaded from disk.
   if (config.mcp === undefined) {
-    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder ?? process.cwd()))?.mcp;
+    config.mcp = config.artifacts
+      ? config.artifacts.mcp
+      : (await Helpers.loadQrtlConfig(config.pluginRootFolder))?.mcp;
   }
   const helper = new PluginApiHelper("/api", config);
   await helper.init();
   const app: OpenAPIHono = helper.getApiApp();
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
 
-  registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin });
-  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
+  const fileMap = config.artifacts?.files;
+  registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin, docsWebUrl: config.docsWebUrl });
+  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),
+    fileMap,
   });
-  const widgets = config.widgetResources?.length ? config.widgetResources : await resolveWidgetEntries(config);
+  const widgets = config.widgetResources?.length
+    ? config.widgetResources
+    : config.artifacts?.widgetResources ?? await resolveWidgetEntries(config);
   helper.setWidgetCatalog(widgets.map((w) => ({ toolId: w.toolId, name: w.name })));
   registerPluginInfoRoutes(app as Hono, helper, {
     mcpOptions,
     pluginRootFolder: config.pluginRootFolder,
+    fileMap,
+    readme: config.artifacts?.readme,
     getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
   });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);

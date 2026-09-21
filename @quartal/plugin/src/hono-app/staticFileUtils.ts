@@ -39,16 +39,6 @@ export function resolveUnderRoot(root: string, relativePath: string): string | n
   return null;
 }
 
-/** Resolves `relativePath` under a root URL, or returns null if it escapes the root. */
-export function resolveUnderRootUrl(root: URL, relativePath: string): URL | null {
-  const rel = relativePath.replaceAll("\\", "/").replace(/^\/+/, "");
-  if (!rel || rel.split("/").includes("..")) return null;
-  const rootHref = root.href.endsWith("/") ? root.href : `${root.href}/`;
-  const target = new URL(rel, rootHref);
-  if (target.href.startsWith(rootHref)) return target;
-  return null;
-}
-
 /** Reads static file bytes from a local `file:` URL or remote `http(s):` URL. */
 export async function readStaticBytes(url: URL): Promise<Uint8Array | undefined> {
   try {

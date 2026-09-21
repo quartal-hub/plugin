@@ -31,7 +31,7 @@ export {
   codePropToJsonSchema,
   codeTypeToJsonSchema,
 } from "./code/jsonSchemaFromCode.ts";
-export { generateTools } from "./code/generateTools.ts";
+export { buildArtifactsModuleSource, generateTools } from "./code/generateTools.ts";
 export type { GenerateToolsOptions } from "./code/generateTools.ts";
 export { buildToolsRegistrySource } from "./code/buildToolsRegistry.ts";
 export type { ToolsRegistryOptions } from "./code/buildToolsRegistry.ts";
@@ -42,10 +42,12 @@ export {
   toAgentSummary,
 } from "./hono-app/buildPluginInfo.ts";
 export type { BuildPluginInfoInput } from "./hono-app/buildPluginInfo.ts";
-export { discoverSkills, isValidSkillName, parseSkillFrontmatter } from "./hono-app/skillDiscovery.ts";
+export { discoverSkills, isValidSkillName, parseSkillFrontmatter, skillsFromFileMap } from "./hono-app/skillDiscovery.ts";
+export { collectPluginFileMap } from "./code/collectFileMap.ts";
+export { fileMapBytes, fileMapGet, fileMapSize, fileMapText, fileMapUnder } from "./helpers/fileMap.ts";
 
 // Agents: discovery from `agents/`, normalization of the Claude agent format, and serving.
-export { AGENTS_DIR, discoverAgents } from "./agents/discoverAgents.ts";
+export { AGENTS_DIR, agentsFromFileMap, discoverAgents } from "./agents/discoverAgents.ts";
 export type { DiscoverAgentsOptions } from "./agents/discoverAgents.ts";
 export { parseAgentFile } from "./agents/parseAgentFile.ts";
 export type { ParsedAgentFile } from "./agents/parseAgentFile.ts";
@@ -74,7 +76,7 @@ export { getPluginCache, MemoryCache, setPluginCache } from "./cache/PluginCache
 export type { CacheKey, PluginCache } from "./cache/PluginCache.ts";
 
 // Astro integration (also available as the `@quartal/plugin/astro` subpath)
-export { createPluginMiddleware, isServerPath } from "./astro/pluginMiddleware.ts";
+export { createPluginMiddleware, isServerPath, isServerPathWithOwnIndexPage } from "./astro/pluginMiddleware.ts";
 export type { MiddlewareOnRequest } from "./astro/pluginMiddleware.ts";
 export { buildPluginMiddlewareSource, PLUGIN_MIDDLEWARE_VIRTUAL_ID, qrtlPlugin } from "./astro/integration.ts";
 export type { QrtlPluginOptions } from "./astro/integration.ts";
@@ -145,6 +147,8 @@ export type {
   McpServersConfig,
   McpStdioServerConfig,
   PluginAppConfig,
+  PluginFileMapEntry,
+  PluginRuntimeArtifacts,
   QuartalPluginExtension,
   ToolModuleRegistry,
   WidgetEntry,
@@ -154,6 +158,12 @@ export type {
 export { getAnonApp } from "./hono-app/getAnonApp.ts";
 export { getAuthApp } from "./hono-app/getAuthApp.ts";
 export { registerDocsSpaRoutes } from "./hono-app/docsSpaRoutes.ts";
+export {
+  createDocsShellFetcher,
+  DEFAULT_DOCS_WEB_URL,
+  resolveDocsWebUrl,
+  rewriteDocsShellHtml,
+} from "./hono-app/docsShell.ts";
 export { registerSkillRoutes } from "./hono-app/skillRoutes.ts";
 export { registerPluginInfoRoutes } from "./hono-app/pluginInfoRoutes.ts";
 export { registerPublicFolderRoutes } from "./hono-app/publicFolderRoutes.ts";

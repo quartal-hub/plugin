@@ -127,8 +127,6 @@ Some committed files are build outputs. Editing them directly is lost work:
 
 - Any file whose header says **GENERATED FILE** is produced by the export script in the Quartal
   docs repository. Change the source there, not the copy here.
-- `@quartal/plugin/static/plugin-docs-web/` is the built `@quartal/plugin-docs-web` SPA, vendored in
-  by that package's `build`. Change the SPA source and rebuild.
 
 ## Opening a pull request
 

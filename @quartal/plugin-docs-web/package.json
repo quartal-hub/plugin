@@ -1,26 +1,60 @@
 {
   "name": "@quartal/plugin-docs-web",
-  "private": true,
-  "type": "module",
   "version": "0.5.0",
+  "description": "The docs UI for Quartal Plugins as an embeddable library: mount the tools/MCP/skills/agents documentation app on any page a plugin serves.",
+  "homepage": "https://plugin.quartal.com",
+  "type": "module",
+  "license": "MIT",
+  "author": "Quartal Accounting Software Oy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "@quartal/plugin-docs-web"
+  },
+  "keywords": [
+    "quartal",
+    "plugin",
+    "docs",
+    "mcp",
+    "astro"
+  ],
+  "types": "./types.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types.d.ts",
+      "import": "./dist/plugin-docs-web.js",
+      "default": "./dist/plugin-docs-web.js"
+    },
+    "./style.css": "./dist/plugin-docs-web.css"
+  },
+  "files": [
+    "dist",
+    "types.d.ts",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./dist/plugin-docs-web.js",
+    "./dist/plugin-docs-web.css"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/vendor-to-plugin.mjs",
-    "vendor": "node scripts/vendor-to-plugin.mjs",
+    "build": "vite build",
     "typecheck": "vue-tsc --noEmit",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@quartal/ui-core": "1.4.2",
-    "redoc": "^2.5.2",
-    "swagger-ui-dist": "^5.32.6",
-    "vue": "^3.5.13",
-    "vue-router": "^4.6.4"
+    "preview": "vite preview",
+    "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
+    "@quartal/ui-core": "1.4.2",
     "@vitejs/plugin-vue": "^5.2.1",
+    "redoc": "^2.5.2",
+    "swagger-ui-dist": "^5.32.6",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
+    "vue": "^3.5.13",
+    "vue-router": "^4.6.4",
     "vue-tsc": "^2.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

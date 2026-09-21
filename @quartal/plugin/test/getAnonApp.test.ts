@@ -8,6 +8,7 @@ import { getAnonApp } from "../src/index.ts";
 // using @samples/test1's committed qrtl-plugin/skills and an inline tool registry.
 
 const test1Dir = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
+const docsShellUrl = new URL("./fixtures/docs-shell.html", import.meta.url).href;
 
 class Calculator {
   static add(input: { first: number; second: number }): number {
@@ -20,22 +21,21 @@ let app: Hono;
 beforeAll(async () => {
   app = await getAnonApp({
     pluginRootFolder: test1Dir,
+    docsWebUrl: docsShellUrl,
     toolModules: { Calculator: { Calculator } as unknown as Record<string, unknown> },
   });
 });
 
 describe("getAnonApp — full route assembly", () => {
-  it("serves the vendored docs SPA at /", async () => {
+  it("serves the docs shell at /, with asset URLs rewritten to the shell origin", async () => {
     const res = await app.request("/");
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html.length).toBeGreaterThan(0);
-    expect(html.toLowerCase()).toContain("html");
-  });
-
-  it("serves a docs SPA asset", async () => {
-    const res = await app.request("/assets/does-not-exist.js");
-    expect(res.status).toBe(404); // route exists, file doesn't → 404 (not an unmounted-route 404 shape)
+    // Root-relative shell assets become absolute on the shell's own origin (file: in this fixture).
+    expect(html).toContain(`src="${new URL("/_astro/shell.js", docsShellUrl).href}"`);
+    expect(html).toContain(`href="${new URL("/_astro/shell.css", docsShellUrl).href}"`);
+    // The skin link marker survives (re-)injection.
+    expect(html).toContain('id="plugin-docs-web-skin"');
   });
 
   it("executes a REST tool call", async () => {
