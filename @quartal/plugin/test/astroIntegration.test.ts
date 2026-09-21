@@ -198,4 +198,17 @@ describe("buildPluginMiddlewareSource", () => {
     const withoutPrompts = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
     expect(withoutPrompts).not.toContain("promptModules");
   });
+
+  it("imports and passes artifacts when an artifacts module is given", () => {
+    const src = buildPluginMiddlewareSource({
+      auth: "anon",
+      registryImport: "/src/qrtl-plugin/tools.registry.ts",
+      artifactsImport: "/src/qrtl-plugin/artifacts.ts",
+    });
+    expect(src).toContain('import { artifacts } from "/src/qrtl-plugin/artifacts.ts";');
+    expect(src).toContain(", artifacts");
+
+    const without = buildPluginMiddlewareSource({ auth: "anon", registryImport: "/src/qrtl-plugin/tools.registry.ts" });
+    expect(without).not.toContain("artifacts");
+  });
 });

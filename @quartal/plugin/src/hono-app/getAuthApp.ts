@@ -50,12 +50,15 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   config.pluginRootFolder = Helpers.resolvePluginRoot(config.pluginRootFolder);
   // `qrtl.config` authors both the `mcp` options (server name, multi-server map) and the auth
   // mode; direct callers (tests, non-Astro hosts) may pass `mcp` / `oauth` explicitly instead.
-  const qrtlConfig = await Helpers.loadQrtlConfig(config.pluginRootFolder);
+  // An injected artifacts snapshot is authoritative — with one present, `qrtl.config` is never
+  // loaded from disk.
+  const artifacts = config.artifacts;
+  const qrtlConfig = artifacts ? undefined : await Helpers.loadQrtlConfig(config.pluginRootFolder);
   if (config.mcp === undefined) {
-    config.mcp = qrtlConfig?.mcp;
+    config.mcp = artifacts ? artifacts.mcp : qrtlConfig?.mcp;
   }
-  const mode = toAuthMode(qrtlConfig?.auth);
-  const manifest = await Helpers.getPluginManifest(config.pluginRootFolder);
+  const mode = toAuthMode(artifacts ? artifacts.auth : qrtlConfig?.auth);
+  const manifest = artifacts?.manifest ?? await Helpers.getPluginManifest(config.pluginRootFolder);
   let resolved: ResolvedOAuthOptions | undefined;
 
   if (!config.auth) {
@@ -113,7 +116,9 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   });
   // Widget pages + assets stay unauthenticated: the sandboxed widget iframe carries no credentials
   // (auth middleware is scoped to /api/* and /mcp, not to /widget-assets).
-  const widgets = config.widgetResources?.length ? config.widgetResources : await resolveWidgetEntries(config);
+  const widgets = config.widgetResources?.length
+    ? config.widgetResources
+    : config.artifacts?.widgetResources ?? await resolveWidgetEntries(config);
   helper.setWidgetCatalog(widgets.map((w) => ({ toolId: w.toolId, name: w.name })));
   registerPluginInfoRoutes(app as Hono, helper, {
     mcpOptions,

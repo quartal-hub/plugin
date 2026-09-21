@@ -31,7 +31,7 @@ export {
   codePropToJsonSchema,
   codeTypeToJsonSchema,
 } from "./code/jsonSchemaFromCode.ts";
-export { generateTools } from "./code/generateTools.ts";
+export { buildArtifactsModuleSource, generateTools } from "./code/generateTools.ts";
 export type { GenerateToolsOptions } from "./code/generateTools.ts";
 export { buildToolsRegistrySource } from "./code/buildToolsRegistry.ts";
 export type { ToolsRegistryOptions } from "./code/buildToolsRegistry.ts";
@@ -145,6 +145,7 @@ export type {
   McpServersConfig,
   McpStdioServerConfig,
   PluginAppConfig,
+  PluginRuntimeArtifacts,
   QuartalPluginExtension,
   ToolModuleRegistry,
   WidgetEntry,

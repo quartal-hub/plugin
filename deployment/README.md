@@ -83,13 +83,16 @@ A tarball installs as a real copy everywhere.
 
 Astro SSR on Vercel Functions (Node.js runtime, Fluid compute). Vercel builds the uploaded sources
 (`npm install` → `astro build`), but the function it assembles contains only *traced modules* and
-runs in `/var/task` — not next to the plugin's files. Two things bridge that gap:
+runs in `/var/task` — not next to the plugin's files. Three things bridge that gap:
 
-1. The generated `astro.config.mjs` walks the stage at build time and passes everything the plugin
-   runtime reads per request to the adapter's `includeFiles`: `package.json`, `README.md`,
-   `qrtl.config.*`, the generated `src/qrtl-plugin/*.json`, `skills/`, `agents/`, `public/`, and
-   the docs SPA vendored inside `@quartal/plugin`.
-2. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
+1. The codegen's `artifacts.ts` module carries the generated metadata, manifest, README,
+   `qrtl.config` runtime options and widget entries *inside the server bundle*, so none of those
+   need to exist on disk in the function.
+2. The generated `astro.config.mjs` walks the stage at build time and passes what the runtime
+   still genuinely reads from disk to the adapter's `includeFiles`: `skills/`, `agents/`,
+   `public/`, `README.md` (packaged into `/plugin.zip`) and the docs SPA vendored inside
+   `@quartal/plugin`.
+3. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
    time does not exist in `/var/task`, so `Helpers.resolvePluginRoot` falls back to the function's
    `process.cwd()` (or the `QRTL_PLUGIN_ROOT` env var). **Until that version is on npm, deploy with
    `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel function.

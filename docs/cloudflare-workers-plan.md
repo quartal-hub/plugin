@@ -1,6 +1,6 @@
 # Cloudflare Workers support — work plan
 
-Status: **planned, not started.** The `cloudflare` deployment target
+Status: **items 1–2 done, 3–6 remaining.** The `cloudflare` deployment target
 ([deployment/README.md](../deployment/README.md)) stages and builds a valid Worker bundle today,
 but the runtime cannot serve a plugin from inside a Worker. This document is the plan for closing
 that gap in `@quartal/plugin`. Strategically, Workers is the target we want for Quartal Hub:
@@ -46,23 +46,19 @@ hot path.
 
 ## Work items
 
-### 1. Generated artifacts as an importable module *(turns "500 everywhere" into "working plugin")*
+### 1. Generated artifacts as an importable module — **done**
 
-- Codegen (`qrtlCodegenPlugin`) additionally emits `src/qrtl-plugin/artifacts.ts` that re-exports
-  the JSON artifacts (`tools`, `open-api`, `types`, `contents`, `mcp-tools`, `mcp-prompts`) as
-  typed values.
-- The generated Astro middleware (`buildPluginMiddlewareSource` in `astro/integration.ts`) imports
-  it and passes `artifacts` into `getAnonApp` / `getAuthApp`.
-- `PluginApiHelper.prepareTools` prefers `config.artifacts` over the `readIfExists` disk reads.
+Codegen emits `src/qrtl-plugin/artifacts.ts` importing the JSON artifacts; the generated middleware
+passes it to `getAnonApp` / `getAuthApp` as `config.artifacts` (`PluginRuntimeArtifacts`), and
+`PluginApiHelper` prefers the injected values over the `readIfExists` disk reads.
 
-### 2. Manifest resolved at build time
+### 2. Manifest resolved at build time — **done**
 
-- The integration already loads `qrtl.config` at config time; also resolve `package.json` +
-  `README.md` there and pass the built `PluginManifest` (or its inputs) through the middleware as
-  `config.manifest` / `config.readme`.
-- `Helpers.getPluginManifest` and the `loadQrtlConfig` call sites prefer the injected values.
-  This also removes the runtime `import()` of a `.ts` config file, which no bundled platform
-  supports well.
+The artifacts module also carries the resolved `PluginManifest`, the README text, the `qrtl.config`
+auth mode + `mcp` options, and the resolved widget entries (so runtime widget discovery and the
+runtime `import()` of `qrtl.config.ts` are skipped whenever a snapshot is injected). Verified by
+deleting `src/qrtl-plugin/`, `qrtl.config.ts` and `README.md` from a built stage: every metadata
+route still serves from the bundle.
 
 ### 3. Docs SPA from bundled assets
 
@@ -114,8 +110,8 @@ cloudflare target.
 
 ## Suggested order
 
-1 and 2 first (small, unblock everything, benefit all platforms) → 3 (docs SPA, fail-soft first,
-asset serving second) → 4 (largest item; skills zip last) → 5/6 (config + verification) → publish
+3 next (docs SPA, fail-soft first, asset serving second) → 4 (largest item; skills zip last) →
+5/6 (config + verification) → publish
 `@quartal/plugin`, flip the target's status in `deployment/README.md`, and update the website's
 Cloudflare deployment guide (drop its "not supported yet" warning).
 

@@ -28,9 +28,12 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   // app); resolve it once here so every route below reads from a directory that actually exists.
   config.pluginRootFolder = Helpers.resolvePluginRoot(config.pluginRootFolder);
   // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
-  // callers (tests, non-Astro hosts) may pass them explicitly instead.
+  // callers (tests, non-Astro hosts) may pass them explicitly instead. An injected artifacts
+  // snapshot is authoritative — with one present, `qrtl.config` is never loaded from disk.
   if (config.mcp === undefined) {
-    config.mcp = (await Helpers.loadQrtlConfig(config.pluginRootFolder))?.mcp;
+    config.mcp = config.artifacts
+      ? config.artifacts.mcp
+      : (await Helpers.loadQrtlConfig(config.pluginRootFolder))?.mcp;
   }
   const helper = new PluginApiHelper("/api", config);
   await helper.init();
@@ -43,7 +46,9 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),
   });
-  const widgets = config.widgetResources?.length ? config.widgetResources : await resolveWidgetEntries(config);
+  const widgets = config.widgetResources?.length
+    ? config.widgetResources
+    : config.artifacts?.widgetResources ?? await resolveWidgetEntries(config);
   helper.setWidgetCatalog(widgets.map((w) => ({ toolId: w.toolId, name: w.name })));
   registerPluginInfoRoutes(app as Hono, helper, {
     mcpOptions,
