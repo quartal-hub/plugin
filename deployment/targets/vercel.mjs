@@ -10,16 +10,16 @@ const VERCEL_ADAPTER = "^11.0.0";
  * Vercel builds the uploaded sources itself, but unlike Railway the built server does not run next
  * to the plugin's files: the function is assembled from traced modules and runs in `/var/task`.
  * The generated metadata, manifest, qrtl.config and widget entries ride inside the bundle (the
- * codegen's `artifacts.ts` module, injected via the generated middleware), so only what the
- * runtime genuinely reads from disk per request — `skills/`, `agents/`, `public/`, `README.md`
- * (packaged into `/plugin.zip`) and the docs SPA vendored in `@quartal/plugin` — is forced into
- * the function via the adapter's `includeFiles`. The generated Astro config computes that list at
- * build time (see `astroImports` below), and `@quartal/plugin` resolves its root back to the
- * function's cwd at runtime (`Helpers.resolvePluginRoot`), since the absolute path baked in at
- * build time does not exist in `/var/task`.
+ * codegen's `artifacts.ts` module), and the docs UI shell is fetched from the Quartal Plugins
+ * website at runtime — so only what the runtime genuinely reads from disk per request — `skills/`,
+ * `agents/`, `public/` and `README.md` (packaged into `/plugin.zip`) — is forced into the function
+ * via the adapter's `includeFiles`. The generated Astro config computes that list at build time
+ * (see `astroImports` below), and `@quartal/plugin` resolves its root back to the function's cwd
+ * at runtime (`Helpers.resolvePluginRoot`), since the absolute path baked in at build time does
+ * not exist in `/var/task`.
  *
- * Requires `@quartal/plugin` > 0.8.0 (resolvePluginRoot + the artifacts module). Until that is
- * published, deploy with `--link local` so the stage vendors the fixed workspace build.
+ * Requires `@quartal/plugin` > 0.8.0 (resolvePluginRoot + artifacts module + docs shell). Until
+ * that is published, deploy with `--link local` so the stage vendors the fixed workspace build.
  */
 export default {
   id: "vercel",
@@ -48,9 +48,6 @@ export default {
     `  ...walk("skills"),`,
     `  ...walk("agents"),`,
     `  ...walk("public"),`,
-    `  // The docs SPA that @quartal/plugin serves at "/" — vendored files, never require()d, so the`,
-    `  // module tracer cannot see them.`,
-    `  ...walk(join("node_modules", "@quartal", "plugin", "static", "plugin-docs-web")),`,
     `];`,
   ],
   astroOverrides: [`adapter: vercel({ includeFiles }),`],

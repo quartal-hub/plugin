@@ -40,7 +40,7 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   const app: OpenAPIHono = helper.getApiApp();
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
 
-  registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin });
+  registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin, docsWebUrl: config.docsWebUrl });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!);
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),

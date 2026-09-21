@@ -292,6 +292,9 @@ importers:
       '@astrojs/vue':
         specifier: ^7.0.0
         version: 7.0.1(@types/node@22.20.1)(astro@7.0.9(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@types/node@22.20.1)(rollup@4.62.2)(yaml@2.9.0))(esbuild@0.28.1)(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)
+      '@quartal/plugin-docs-web':
+        specifier: workspace:*
+        version: link:../@quartal/plugin-docs-web
       '@quartal/ui-core':
         specifier: 1.4.2
         version: 1.4.2(vue-router@5.3.1(@vue/compiler-sfc@3.5.39)(esbuild@0.28.1)(rolldown@1.1.5)(rollup@4.62.2)(vite@8.1.4(@types/node@22.20.1)(esbuild@0.28.1)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))

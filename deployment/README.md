@@ -83,16 +83,17 @@ A tarball installs as a real copy everywhere.
 
 Astro SSR on Vercel Functions (Node.js runtime, Fluid compute). Vercel builds the uploaded sources
 (`npm install` → `astro build`), but the function it assembles contains only *traced modules* and
-runs in `/var/task` — not next to the plugin's files. Three things bridge that gap:
+runs in `/var/task` — not next to the plugin's files. Four things bridge that gap:
 
 1. The codegen's `artifacts.ts` module carries the generated metadata, manifest, README,
    `qrtl.config` runtime options and widget entries *inside the server bundle*, so none of those
    need to exist on disk in the function.
-2. The generated `astro.config.mjs` walks the stage at build time and passes what the runtime
+2. The docs UI shell is fetched from the Quartal Plugins website at runtime (`docsShell.ts`), so
+   no docs assets ship with the function either.
+3. The generated `astro.config.mjs` walks the stage at build time and passes what the runtime
    still genuinely reads from disk to the adapter's `includeFiles`: `skills/`, `agents/`,
-   `public/`, `README.md` (packaged into `/plugin.zip`) and the docs SPA vendored inside
-   `@quartal/plugin`.
-3. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
+   `public/` and `README.md` (packaged into `/plugin.zip`).
+4. `@quartal/plugin` (> 0.8.0) resolves its root at runtime: the absolute path baked in at build
    time does not exist in `/var/task`, so `Helpers.resolvePluginRoot` falls back to the function's
    `process.cwd()` (or the `QRTL_PLUGIN_ROOT` env var). **Until that version is on npm, deploy with
    `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel function.
@@ -142,27 +143,23 @@ this target but refuses to deploy without `--force`.
 
 A Worker has no filesystem. `node:fs` exists (with `nodejs_compat` and a compatibility date of
 2025-09-01 or later) but over a virtual FS whose `process.cwd()` is `/bundle` and which contains
-only the modules that ended up in the Worker bundle. The plugin runtime, by contrast, reads from the
-plugin root on every request:
+only the modules that ended up in the Worker bundle. The generated metadata, manifest and config
+already ride inside the bundle (the artifacts module), and the docs shell is fetched over HTTP —
+but the content routes still read the plugin root per request:
 
 | What                                        | Where it happens                            |
 | ------------------------------------------- | ------------------------------------------- |
-| `package.json`, `qrtl.config.*`, `README.md` | `Helpers.getPluginManifest` / `loadQrtlConfig` (the latter `import()`s the config file) |
-| `src/qrtl-plugin/*.json` (tools, OpenAPI, MCP) | `PluginApiHelper.prepareTools`           |
 | `skills/`                                    | `skillDiscovery` / `skillRoutes` / `skillZip` |
 | `agents/`                                    | `discoverAgents` / `agentRoutes`            |
 | `public/`                                    | `publicFolderRoutes`                        |
-| docs SPA assets                              | `getPkgDocsWebStaticRoot` — `createRequire().resolve("@quartal/plugin")` |
+| `README.md` (into `/plugin.zip`)             | `buildAgentPluginZip`                       |
 
-What actually happens, reproduced with `npx wrangler dev` in the stage: `getPkgDocsWebStaticRoot()`
-cannot resolve `@quartal/plugin`, its `import.meta.url` fallback is not a usable base URL, and
-`getAnonApp()` throws — **every** route answers `500 TypeError: Invalid URL string`. Were that one
-call fixed, the plugin would still come up with no tools, skills, agents or docs, because none of the
-artifacts above are readable.
+On a Worker those directories do not exist, so a deployed plugin would serve its metadata, docs,
+API and MCP tools but no skills, agents, public files or `/plugin.zip`.
 
 Making Cloudflare a real target is a change in `@quartal/plugin`, not in these scripts. The full
-work plan lives in [docs/cloudflare-workers-plan.md](../docs/cloudflare-workers-plan.md). Until it
-lands, the useful commands are:
+work plan lives in [docs/cloudflare-workers-plan.md](../docs/cloudflare-workers-plan.md) (item 4:
+build-time file maps). Until it lands, the useful commands are:
 
 ```bash
 node deployment/deploy.mjs cloudflare test1 --stage-only   # build the Worker bundle

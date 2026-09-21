@@ -44,8 +44,6 @@ const includeFiles = [
   ...walk("skills"),
   ...walk("agents"),
   ...walk("public"),
-  // The built-in docs site served at "/".
-  ...walk(join("node_modules", "@quartal", "plugin", "static", "plugin-docs-web")),
 ];
 
 export default defineConfig({

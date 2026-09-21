@@ -1,42 +1,37 @@
 import type { Hono } from "hono";
-import { getPkgDocsWebStaticRoot } from "./docsUiPath.ts";
+import { createDocsShellFetcher, resolveDocsWebUrl, rewriteDocsShellHtml } from "./docsShell.ts";
 import { DEFAULT_DOCS_SKIN_URL, injectDocsSpaSkin } from "./docsSpaHtml.ts";
-import { guessStaticMime, readStaticBytes, readStaticText, resolveUnderRootUrl } from "./staticFileUtils.ts";
 
 export interface DocsSpaRouteOptions {
-  /** Bootstrap skin from the manifest `style.skin`; injected into index.html at serve time. */
+  /** Bootstrap skin from the manifest `style.skin`; injected into the shell at serve time. */
   skinUrl?: string;
+  /** Docs shell URL override (`PluginAppConfig.docsWebUrl`); `QRTL_DOCS_WEB_URL` wins over it. */
+  docsWebUrl?: string;
 }
 
 /**
- * Serves the vendored docs SPA at `/` and `/assets/*`. Static files live in
- * `@quartal/plugin/static/plugin-docs-web` (vendored from `@quartal/plugin-docs-web`).
+ * Serves the docs UI at `/`: the shell page published on the Quartal Plugins website is fetched
+ * (cached in memory, see `docsShell.ts`), its asset references rewritten to the shell's origin,
+ * the plugin's skin injected, and the result served from the plugin's own origin — so the SPA's
+ * data fetches and the OAuth login flow stay same-origin while no docs assets ship with the plugin.
  * @param app Hono app to register routes on.
- * @param options Serve options (skin URL).
+ * @param options Serve options (skin URL, shell URL override).
  */
 export function registerDocsSpaRoutes(app: Hono, options?: DocsSpaRouteOptions): void {
-  const root = getPkgDocsWebStaticRoot();
-  const indexUrl = new URL("index.html", root);
-
-  app.get("/assets/:file{.+}", async (c) => {
-    const sub = c.req.param("file") ?? "";
-    const fileUrl = resolveUnderRootUrl(new URL("assets/", root), sub);
-    if (!fileUrl) return c.text("Not found", 404);
-    const bytes = await readStaticBytes(fileUrl);
-    if (!bytes) return c.text("Not found", 404);
-    return c.body(new Uint8Array(bytes), 200, { "Content-Type": guessStaticMime(sub) });
-  });
+  const shellUrl = resolveDocsWebUrl(options?.docsWebUrl);
+  const getShell = createDocsShellFetcher(shellUrl);
 
   app.get("/", async (c) => {
-    const html = await readStaticText(indexUrl);
+    const html = await getShell();
     if (!html) {
       return c.text(
-        `Plugin docs UI not installed (missing ${indexUrl.href}). Upgrade @quartal/plugin or re-vendor the docs SPA.`,
+        `Plugin docs UI unavailable (could not load ${shellUrl}). The plugin's API and MCP `
+          + `endpoints are unaffected. Set QRTL_DOCS_WEB_URL to a reachable docs shell to fix this.`,
         503,
       );
     }
     const skinUrl = options?.skinUrl ?? DEFAULT_DOCS_SKIN_URL;
-    return c.html(injectDocsSpaSkin(html, skinUrl));
+    return c.html(injectDocsSpaSkin(rewriteDocsShellHtml(html, shellUrl), skinUrl));
   });
 
   app.get("/mcp.html", (c) => c.redirect("/#/mcp", 302));

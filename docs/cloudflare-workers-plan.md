@@ -1,13 +1,15 @@
 # Cloudflare Workers support — work plan
 
-Status: **items 1–2 done, 3–6 remaining.** The `cloudflare` deployment target
+Status: **items 1–3 done, 4–6 remaining.** The `cloudflare` deployment target
 ([deployment/README.md](../deployment/README.md)) stages and builds a valid Worker bundle today,
-but the runtime cannot serve a plugin from inside a Worker. This document is the plan for closing
-that gap in `@quartal/plugin`. Strategically, Workers is the target we want for Quartal Hub:
+and with the artifacts module + remote docs shell the historical "500 on every route" failure is
+gone — what remains is the disk-backed content serving (skills/agents/public and `/plugin.zip`,
+item 4) and the platform config + verification passes. This document is the plan for closing that
+gap in `@quartal/plugin`. Strategically, Workers is the target we want for Quartal Hub:
 near-zero cold starts, ~$5/mo for hundreds of sites, and first-class APIs (DNS, custom hostnames,
 Workers for Platforms) for provisioning tenant environments programmatically.
 
-## Why it fails today
+## The constraint
 
 A Worker has no real filesystem. With `nodejs_compat` (default for compatibility dates ≥
 2026-08-04), `node:fs` exists but reads a **virtual, memory-backed FS**: `/bundle` (read-only,
@@ -15,25 +17,20 @@ only the modules bundled into the Worker), `/tmp` (per-request, counts against t
 limit). `process.cwd()` is `/bundle`. Nothing outside the bundle is readable, and directories that
 were never bundled cannot be enumerated.
 
-The plugin runtime, by contrast, reads from the plugin root **on every request**:
+With items 1–3 done, the runtime's remaining per-request disk reads are the content routes:
 
-| What it reads                                   | Where                                                                  |
-| ----------------------------------------------- | ---------------------------------------------------------------------- |
-| `package.json`, `qrtl.config.*`, `README.md`    | `Helpers.getPluginManifest` / `loadQrtlConfig` (runtime `import()` of the config file) |
-| `src/qrtl-plugin/*.json` (tools, OpenAPI, MCP)  | `PluginApiHelper.prepareTools`                                          |
-| `skills/` (discovery, files, zip assembly)      | `skillDiscovery` / `skillRoutes` / `skillZip`                           |
-| `agents/`                                       | `discoverAgents` / `agentRoutes`                                        |
-| `public/`                                       | `publicFolderRoutes`                                                    |
-| docs SPA (`static/plugin-docs-web/`)            | `getPkgDocsWebStaticRoot` — `createRequire().resolve("@quartal/plugin")` |
-| widget pages (live Astro fetch)                 | `runtimeWidgets` (fetch-based — already Worker-compatible)              |
+| What it reads                                   | Where                                          |
+| ----------------------------------------------- | ---------------------------------------------- |
+| `skills/` (discovery, files, zip assembly)      | `skillDiscovery` / `skillRoutes` / `skillZip`  |
+| `agents/`                                       | `discoverAgents` / `agentRoutes`               |
+| `public/`                                       | `publicFolderRoutes`                           |
+| `README.md` (into `/plugin.zip`)                | `buildAgentPluginZip`                          |
 
-Observed with `npx wrangler dev` in a stage: `getPkgDocsWebStaticRoot()` cannot resolve
-`@quartal/plugin`, its `import.meta.url` fallback is not a usable base URL, and `getAnonApp()`
-throws — every route answers `500 TypeError: Invalid URL string`. Fixing only that would still
-leave a plugin with no tools, skills, agents or docs.
-
-What already works on Workers: Hono (first-class target), `jose` (WebCrypto), the MCP SDK's
-streamable-HTTP transport, and the sessions story (`@astrojs/cloudflare` uses a KV binding).
+Everything else is already Worker-compatible: the generated metadata, manifest, config and widget
+entries ride inside the bundle (items 1–2), the docs shell is fetched over HTTP (item 3), widget
+resources are served from the live Astro pages (fetch-based), and Hono, `jose`, the MCP SDK's
+streamable-HTTP transport and the sessions story (`@astrojs/cloudflare` uses a KV binding) all run
+on Workers.
 
 ## Design principle
 
@@ -60,15 +57,17 @@ runtime `import()` of `qrtl.config.ts` are skipped whenever a snapshot is inject
 deleting `src/qrtl-plugin/`, `qrtl.config.ts` and `README.md` from a built stage: every metadata
 route still serves from the bundle.
 
-### 3. Docs SPA from bundled assets
+### 3. Docs UI from the published shell — **done**
 
-- `getPkgDocsWebStaticRoot()` must fail soft (docs route answers 503, app still builds).
-- Serve the SPA from one of:
-  - a build-time copy into the Astro `public/` output, served by Workers Static Assets via the
-    `ASSETS` binding (preferred — assets are free and cached), or
-  - a CDN URL (the `readStaticBytes` helper already supports `http(s):` roots), or
-  - bundle-relative imports under `/bundle`.
-- The integration can do the copy in `astro:build:done`, keeping `@quartal/plugin` runtime-agnostic.
+Went further than planned: instead of bundling assets, the docs UI shell is a chrome-less page on
+the Quartal Plugins website (`/plugin-index`, built from the `@quartal/plugin-docs-web` library).
+The runtime (`docsShell.ts`) fetches it over HTTP (Worker-compatible), rewrites its asset URLs to
+the shell's origin, injects the skin, and serves it at `/` — cached in memory (1 h TTL, stale
+fallback), failing soft (503 on the docs page only) when unreachable. `QRTL_DOCS_WEB_URL`
+overrides the URL. The vendored `static/` copy and the `createRequire().resolve()` lookup that
+crashed workerd are deleted, and a plugin's own `src/pages/index.*` now overrides the shell
+entirely. Verified end to end against a local website preview, including the lazy Swagger/ReDoc
+chunks loading cross-origin.
 
 ### 4. Skills, agents and `public/` from a build-time file map
 
@@ -110,8 +109,7 @@ cloudflare target.
 
 ## Suggested order
 
-3 next (docs SPA, fail-soft first, asset serving second) → 4 (largest item; skills zip last) →
-5/6 (config + verification) → publish
+4 next (largest item; skills zip last) → 5/6 (config + verification) → publish
 `@quartal/plugin`, flip the target's status in `deployment/README.md`, and update the website's
 Cloudflare deployment guide (drop its "not supported yet" warning).
 

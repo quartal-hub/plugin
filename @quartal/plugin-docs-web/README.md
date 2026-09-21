@@ -1,8 +1,10 @@
 # @quartal/plugin-docs-web
 
-The Vue SPA for Quartal plugin documentation (API / MCP / Skills / Widgets overview). 
-Its `build` **builds and vendors** the SPA into `@quartal/plugin/static/plugin-docs-web`, which the
-hub serves from the plugin's `/` route (from the generated `contents.json`).
+The Vue SPA library for Quartal plugin documentation (API / MCP / Skills / Widgets overview).
+Its `build` produces a self-contained ES library (`dist/plugin-docs-web.js` + `.css`, with lazy
+Swagger/ReDoc chunks) whose `mountPluginDocs(el)` the website's `/plugin-index` page calls. Every
+deployed plugin fetches that page's HTML at runtime and serves it at `/` (see `docsShell.ts` in
+`@quartal/plugin`), so the SPA runs on the plugin's origin while its assets load from the website.
 
 ## Propagation chain
 
@@ -10,22 +12,30 @@ hub serves from the plugin's `/` route (from the generated `contents.json`).
 @quartal/ui-plugin/src   (PluginLeftNavi, PluginAbout, PluginToolDetail, … — aliased to SOURCE by vite.config.ts)
         │
         ▼
-@quartal/plugin-docs-web   (this SPA; `pnpm build` → dist/ → vendored)
-        │  scripts/vendor-to-plugin.mjs (runs at the tail of build)
+@quartal/plugin-docs-web   (this library; `pnpm build` → dist/)
+        │  imported by website/src/pages/plugin-index.astro
         ▼
-@quartal/plugin/static/plugin-docs-web   (served by the hub docs-SPA route)
+https://plugin.quartal.com/plugin-index/   (published by deploy-website.yml on merge to main)
+        │  fetched + rewritten by @quartal/plugin's docsShell.ts
+        ▼
+every deployed plugin's `/`
 ```
 
 Because `vite.config.ts` aliases `@quartal/ui-plugin` to `../ui-plugin/src`, **editing a `ui-plugin` component
-needs no separate `ui-plugin` build** — just rebuild this SPA.
+needs no separate `ui-plugin` build** — just rebuild this library.
 
-## Update the served docs SPA after a ui-plugin (or SPA) change
+## Ship a docs UI change
+
+Merge to `main`: the website workflow rebuilds and republishes `/plugin-index`, and every deployed
+plugin picks it up as its shell cache expires (1 hour) or on restart — no plugin redeploys needed.
+
+To preview against a local plugin before merging:
 
 ```bash
-pnpm --filter @quartal/plugin-docs-web build   # = vite build + vendor → @quartal/plugin/static/plugin-docs-web
+pnpm --filter @quartal/plugin-docs-web build
+pnpm --filter @quartal/website dev            # serves /plugin-index on :4321
+QRTL_DOCS_WEB_URL=http://localhost:4321/plugin-index/  # set for the plugin's server
 ```
-
-Then rebuild the hub / restart the consuming plugin's dev server to pick up the new SPA.
 
 ## Develop the SPA standalone
 

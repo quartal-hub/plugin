@@ -1,0 +1,29 @@
+---
+// The docs UI shell. Every deployed Quartal Plugin fetches this page's HTML, rewrites the asset
+// URLs to this site's origin, injects its own skin, and serves the result at its own `/` (see
+// `@quartal/plugin`'s docsShell.ts) — so the assets below load from this site while the document
+// runs on the plugin's origin and fetches /plugin.json etc. same-origin.
+//
+// Deliberately chrome-less: no BaseLayout, no site nav, no site stylesheet. The skin link's id is
+// the runtime's injection marker — keep it. Browsed directly on this site, the page has no plugin
+// data to show; its real audience is the plugins that serve it.
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quartal Plugin</title>
+    <link rel="stylesheet" id="plugin-docs-web-skin" href="https://cdn.quartal.com/skins/default.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      import "@quartal/plugin-docs-web/style.css";
+      import { mountPluginDocs } from "@quartal/plugin-docs-web";
+      mountPluginDocs(document.getElementById("app")!);
+    </script>
+    <script type="module" src="https://code.quartal.com/qrtl-editor.js" is:inline></script>
+  </body>
+</html>

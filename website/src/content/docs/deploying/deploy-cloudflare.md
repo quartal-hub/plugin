@@ -5,19 +5,19 @@ section: deploying
 order: 4
 ---
 
-> **⚠️ Quartal Plugins do not run on Cloudflare Workers yet.** The build succeeds and the Worker
-> deploys, but every route answers 500. Support is planned — this page explains where it stands so
-> you don't lose an afternoon finding out the hard way.
+> **⚠️ Quartal Plugins do not fully run on Cloudflare Workers yet.** The build succeeds and the
+> Worker deploys, but skills, agents, public files and the plugin download are missing. Support is
+> planned — this page explains where it stands so you don't lose an afternoon finding out the hard
+> way.
 
 ## Why it doesn't work yet
 
 A Worker has no filesystem. `node:fs` exists (with Node compatibility enabled) but reads a virtual
-filesystem containing only the modules bundled into the Worker. A Quartal Plugin currently reads
-its metadata, `skills/`, `agents/`, `public/` files and the built-in docs site from disk at request
-time — none of which exist inside a Worker. The framework has to move those reads to build time
-before Workers can be a target, and that work is planned in `@quartal/plugin` (bundle-time
-artifacts and asset-based file serving). This page will change to a real step-by-step guide when it
-ships.
+filesystem containing only the modules bundled into the Worker. A plugin's generated metadata,
+configuration and the docs site already work without disk access, but the plugin still serves your
+`skills/`, `agents/` and `public/` folders (and assembles `/plugin.zip`) from disk at request time
+— and those directories do not exist inside a Worker. Moving them to build time is planned in
+`@quartal/plugin`; this page will change to a real step-by-step guide when it ships.
 
 ## What to use today
 
