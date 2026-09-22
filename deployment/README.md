@@ -18,6 +18,17 @@ node deployment/deploy.mjs <target> <project> [options]
 pnpm deploy-plugin <target> <project> [options]   # same thing, via the root script
 ```
 
+Everything after a bare `--` goes to the platform CLI (for example `-- --prod` for a Vercel
+production deploy). **PowerShell swallows the first `--`** before pnpm or node sees it, so there
+the separator has to be doubled or quoted:
+
+```powershell
+pnpm deploy-plugin vercel test1 -- -- --prod
+pnpm deploy-plugin vercel test1 '--' --prod
+```
+
+Git Bash and `cmd` pass a single `--` through as written.
+
 | Target       | Platform           | Adapter               | 
 | ------------ | ------------------ | --------------------- | 
 | `vercel`     | Vercel             | `@astrojs/vercel`     | 
@@ -43,10 +54,9 @@ node deployment/deploy.mjs --help
 
 ## Why staging exists
 
-A sample plugin cannot be handed to Vercel or Railway as it stands: it is a pnpm-workspace member
-that resolves `@quartal/*` through `workspace:*` and shares the repo's root `node_modules`, and
-both platforms run a plain `npm install` on the uploaded sources. So every target goes through the
-same two phases.
+This project is a PNPM workspace and internal dependencies resolve `@quartal/*` through `workspace:*`.
+Cloudflare deployment process handles this, but Vercel or Railway need dependencies to be resolved.
+So every target goes through the same two phases:
 
 **1. Stage** — `.deploy/<target>/<project>/` (gitignored) is built as a standalone npm package:
 
