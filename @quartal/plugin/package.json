@@ -1,6 +1,6 @@
 {
   "name": "@quartal/plugin",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "The core plugin NPM package for creating Quartal plugins",
   "homepage": "https://plugin.quartal.com",
   "type": "module",
