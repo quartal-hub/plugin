@@ -119,6 +119,10 @@ export function registerOAuthLoginRoutes(app: Hono, resolved: ResolvedOAuthOptio
     url.searchParams.set("code_challenge_method", "S256");
     // RFC 8707 resource indicator — ignored by authorization servers without support.
     url.searchParams.set("resource", origin);
+    // OIDC `prompt=login` forces the login screen despite an active SSO session, so a user who
+    // logged out of the docs site can switch accounts. Only `login` is forwarded — the route must
+    // not become a vehicle for arbitrary authorization-request parameters.
+    if (c.req.query("prompt") === "login") url.searchParams.set("prompt", "login");
     return c.redirect(url.toString(), 302);
   });
 

@@ -9,6 +9,8 @@ import { pluginClient } from "./pluginClient.ts";
  */
 
 const STORAGE_KEY = "qrtl_docs_token";
+/** Set on logout so the next login sends `prompt=login`, letting the user switch IAM accounts. */
+const FORCE_LOGIN_KEY = "qrtl_docs_force_login";
 
 interface StoredToken {
   accessToken: string;
@@ -103,16 +105,31 @@ export function useDocsAuth() {
     authAvailable,
     /** Display name from the token claims. */
     userName,
-    /** Starts the server-driven OAuth login flow (full-page redirect). */
+    /**
+     * Starts the server-driven OAuth login flow (full-page redirect). After an explicit logout,
+     * `prompt=login` forces the IAM login screen despite a live SSO session, so the user can
+     * switch accounts; a first login still gets silent SSO.
+     */
     login(): void {
-      window.location.href = pluginClient.url("/oauth/login");
+      let forceLogin = false;
+      try {
+        forceLogin = sessionStorage.getItem(FORCE_LOGIN_KEY) === "1";
+        sessionStorage.removeItem(FORCE_LOGIN_KEY);
+      } catch {
+        // ignore
+      }
+      window.location.href = pluginClient.url(`/oauth/login${forceLogin ? "?prompt=login" : ""}`);
     },
-    /** Forgets the token. (The IAM session may still exist; this only logs the docs site out.) */
+    /**
+     * Forgets the token. The IAM SSO session itself survives, but the force-login flag makes the
+     * next login show the IAM login screen instead of silently reusing it.
+     */
     logout(): void {
       token.value = null;
       authError.value = null;
       try {
         sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.setItem(FORCE_LOGIN_KEY, "1");
       } catch {
         // ignore
       }
