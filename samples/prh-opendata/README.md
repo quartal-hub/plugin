@@ -9,6 +9,8 @@ Anonymous integration to the Finnish **Patent and Registration Office (PRH)** Op
 This plugin is optimized for **MCP tool use by agents**: each method has a single, clearly-typed input/output, and the main
 `searchCompanies` + `getCompanyOverview` tools cover the two most common agent workflows (find a company, get everything about it).
 
+The tool is also an example of plugin deployment to **Cloudflare**.
+
 ## Tools
 
 | Tool                                 | Purpose                                                              |

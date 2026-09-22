@@ -24,6 +24,11 @@
       "import": "./dist/astro/index.js",
       "default": "./dist/astro/index.js"
     },
+    "./astro/route": {
+      "types": "./dist/astro/catchAllRoute.d.ts",
+      "import": "./dist/astro/catchAllRoute.js",
+      "default": "./dist/astro/catchAllRoute.js"
+    },
     "./widget": {
       "types": "./dist/widget/index.d.ts",
       "import": "./dist/widget/index.js",

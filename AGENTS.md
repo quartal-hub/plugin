@@ -78,7 +78,7 @@ plugin), `src/prompts/` (optional MCP prompt classes — same convention: each f
 parameter whose properties become the prompt arguments, returns a string or `{ messages }`),
 `src/pages/widgets/` (one page per tool, any framework), `skills/`, `agents/` (one `.md`/`.json`
 per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
-`src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts`) is gitignored.
+`src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts` + `catchAllRoute.ts`) is gitignored.
 
 ## Run a plugin locally
 
@@ -97,15 +97,16 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 
 ## Deploy a plugin
 
-`deployment/` holds one script for every hosting target; nothing deploy-related lives in the
-plugins themselves. `pnpm deploy-plugin <target> <project>` (i.e. `node deployment/deploy.mjs`)
-stages the plugin as a standalone npm package under `.deploy/<target>/<project>/` (rewriting
-`workspace:*`, swapping in the target's Astro adapter) and hands it to the platform CLI. Targets:
-`vercel` (previews by default, `-- --prod` for production), `railway` (works), `cloudflare`
-(works in `wrangler dev`; first real deploy unverified — see
-[docs/cloudflare-workers-plan.md](./docs/cloudflare-workers-plan.md)). Serverless targets need
-`--link local` until `@quartal/plugin` > 0.8.0 is published. `--dry-run` prints every command
-without running it. Full docs: [deployment/README.md](./deployment/README.md).
+`deployment/` holds one script for every hosting target. `pnpm deploy-plugin <target> <project>`
+(i.e. `node deployment/deploy.mjs`) stages the plugin as a standalone npm package under
+`.deploy/<target>/<project>/` (rewriting `workspace:*`, swapping in the target's Astro adapter) and
+hands it to the platform CLI. Targets: `vercel` (previews by default, `-- --prod` for production),
+`railway` and `cloudflare` — all verified end to end. `--link local` deploys the workspace build
+instead of the published `@quartal/*` packages; `--dry-run` prints every command without running
+it. `samples/prh-opendata` is also the Cloudflare example that deploys in place from its own
+directory (`pnpm deploy`), the way a plugin author would — see
+[docs/cloudflare-workers.md](./docs/cloudflare-workers.md). Full docs:
+[deployment/README.md](./deployment/README.md).
 
 ## UI styling (Bootstrap skins)
 

@@ -45,15 +45,14 @@ Options
   --build            Build inside the stage even when the platform builds remotely
   --no-build         Skip the local build (Cloudflare builds locally by default)
   --stage-only       Stage (and build, if applicable) but do not deploy
-  --force            Deploy even when the target reports a known blocker
   --dry-run          Print every command instead of running it
   -h, --help         Show this help
 
 Anything after a bare -- is passed straight through to the platform CLI.
 
 Examples
-  node deployment/deploy.mjs vercel test1 --link local
-  node deployment/deploy.mjs vercel test1 --link local -- --prod
+  node deployment/deploy.mjs vercel test1
+  node deployment/deploy.mjs vercel test1 -- --prod
   node deployment/deploy.mjs railway test1
   node deployment/deploy.mjs cloudflare test1 --stage-only
   node deployment/deploy.mjs railway test1 --link local --dry-run
@@ -67,7 +66,6 @@ function parseArgs(argv) {
     linkMode: "registry",
     build: undefined,
     stageOnly: false,
-    force: false,
     dryRun: false,
     extraArgs: [],
   };
@@ -90,7 +88,6 @@ function parseArgs(argv) {
       case "--build": options.build = true; break;
       case "--no-build": options.build = false; break;
       case "--stage-only": options.stageOnly = true; break;
-      case "--force": options.force = true; break;
       case "--dry-run": options.dryRun = true; break;
       default:
         if (arg.startsWith("-")) fail(`Unknown option "${arg}". Try --help.`);
@@ -163,7 +160,6 @@ async function main() {
     app,
     org,
     dryRun: options.dryRun,
-    force: options.force,
     extraArgs: options.extraArgs,
   });
 

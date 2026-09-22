@@ -3,20 +3,29 @@
 Scripts for deploying the sample plugins in [`samples/`](../samples) to **Vercel**, **Railway**
 and **Cloudflare Workers**.
 
+This is an example of deployment scripts for a situation where the project contains Workspace dependencies
+or if you wish to keep Node adapter in the original project and swap it only for deployment to adapter of
+deployment target (Vercel, Cloudflare).
+
+Note that Cloudflare's Wrangler uploads a bundle that pnpm already resolved, so you can use direct deployment
+(like `samples/prh-opendata` does). For Vercel and Railway, you must the deployment script or similar method
+to resolve the pnpm workspace dependencies.
+
+How to use:
+
 ```bash
 node deployment/deploy.mjs <target> <project> [options]
 pnpm deploy-plugin <target> <project> [options]   # same thing, via the root script
 ```
 
-| Target       | Platform           | Adapter                 | Status                                          |
-| ------------ | ------------------ | ----------------------- | ----------------------------------------------- |
-| `vercel`     | Vercel             | `@astrojs/vercel`       | Ready — needs `--link local` until `@quartal/plugin` > 0.8.0 is published |
-| `railway`    | Railway            | `@astrojs/node`         | Works — verified end to end                     |
-| `cloudflare` | Cloudflare Workers | `@astrojs/cloudflare`   | Works in `wrangler dev` (needs `--link local`); first real deploy unverified |
+| Target       | Platform           | Adapter               | 
+| ------------ | ------------------ | --------------------- | 
+| `vercel`     | Vercel             | `@astrojs/vercel`     | 
+| `railway`    | Railway            | `@astrojs/node`       | 
+| `cloudflare` | Cloudflare Workers | `@astrojs/cloudflare` | 
 
-Everything lives in this one folder; nothing is added to the plugins themselves. A plugin is
-identified by its directory name under `samples/`, and its remote name comes from the `deploy`
-block already present in its `qrtl.config.ts`:
+Everything lives in this one folder. A plugin is identified by its directory name under
+`samples/`, and its remote name comes from the `deploy` block in its `qrtl.config.ts`:
 
 ```ts
 deploy: { org: "quartal", app: "test1" },
@@ -24,29 +33,30 @@ deploy: { org: "quartal", app: "test1" },
 
 ```bash
 node deployment/deploy.mjs list                        # targets + deployable plugins
-node deployment/deploy.mjs vercel test1 --link local   # preview deploy to Vercel
-node deployment/deploy.mjs vercel test1 --link local -- --prod
+node deployment/deploy.mjs vercel test1                # preview deploy to Vercel
+node deployment/deploy.mjs vercel test1 -- --prod      # production deploy to Vercel
 node deployment/deploy.mjs railway test1               # deploy test1 to Railway
 node deployment/deploy.mjs cloudflare test1 --stage-only
 node deployment/deploy.mjs railway test1 --dry-run     # print every command, run nothing
 node deployment/deploy.mjs --help
 ```
 
-## How it works
+## Why staging exists
 
-A sample plugin cannot be handed to a hosting platform as it stands: it is a pnpm-workspace member
-that resolves `@quartal/*` through `workspace:*` and shares the repo's root `node_modules`. So every
-target goes through the same two phases.
+A sample plugin cannot be handed to Vercel or Railway as it stands: it is a pnpm-workspace member
+that resolves `@quartal/*` through `workspace:*` and shares the repo's root `node_modules`, and
+both platforms run a plain `npm install` on the uploaded sources. So every target goes through the
+same two phases.
 
 **1. Stage** — `.deploy/<target>/<project>/` (gitignored) is built as a standalone npm package:
 
-- the plugin's sources are copied, minus `node_modules/`, `dist/`, `.astro/` and the generated
-  `src/qrtl-plugin/` (which `astro build` regenerates);
+- the plugin's sources are copied, minus `node_modules/`, `dist/`, `.astro/`, `.wrangler/` and the
+  generated `src/qrtl-plugin/` (which `astro build` regenerates);
 - `workspace:*` specifiers are rewritten (see [`--link`](#link-modes));
 - the target's Astro adapter is added to `dependencies`, and `start` is wired up;
 - `astro.config.mjs` is **replaced** by a generated file that imports the plugin's own config as
   `astro.config.base.mjs` and overrides only the adapter. Integrations, `output`, widget config and
-  everything else carry over untouched, and a plugin never needs to know how it will be hosted:
+  everything else carry over untouched, so a sample never needs to know how it will be hosted:
 
   ```js
   import { defineConfig } from "astro/config";
@@ -64,12 +74,31 @@ whether it runs locally or on the platform's builder.
 **2. Deploy** — the stage directory is handed to the platform CLI. Vercel and Railway build the
 uploaded sources themselves; Cloudflare uploads a bundle, so that target builds locally first.
 
+### In-place deploys
+
+Cloudflare never sees `package.json`: wrangler uploads the Worker that `@astrojs/cloudflare` built
+locally, where pnpm has already resolved the workspace links. A sample that carries the Cloudflare
+adapter and a `wrangler.jsonc` itself — [`prh-opendata`](../samples/prh-opendata) does, as the
+Cloudflare example — therefore also deploys straight from its own directory:
+
+```bash
+cd samples/prh-opendata && pnpm deploy     # astro build && wrangler deploy
+```
+
+That is the path a plugin author follows (see the website's deployment guides). The `cloudflare`
+target still earns its place for two things the in-place path cannot do: deploying a sample that
+is configured for another adapter without editing it, and building against the **published**
+`@quartal/*` packages (`--link registry`) rather than the workspace build, which is the only way
+to check that a release works on Workers.
+
+Vercel and Railway have no in-place path from this repo — they always install from the registry.
+
 ### Link modes
 
-| `--link`             | `@quartal/*` resolves to                        | Use when                                  |
-| -------------------- | ----------------------------------------------- | ----------------------------------------- |
-| `registry` (default) | the published packages on npm                   | normal deploys                            |
-| `local`              | tarballs packed from the built workspace packages (`vendor/*.tgz`, `file:` specifiers) | validating an unpublished change, or before the packages are published |
+| `--link`             | `@quartal/*` resolves to                                                               | Use when                                    |
+| -------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `registry` (default) | the published packages on npm                                                          | normal deploys                              |
+| `local`              | tarballs packed from the built workspace packages (`vendor/*.tgz`, `file:` specifiers) | validating an unpublished change end to end |
 
 `--link local` requires `pnpm run build:libs` first — it packs each package's `dist/`, so an
 unbuilt package is an error rather than a silently stale deploy. Tarballs, not directories: npm
@@ -82,20 +111,17 @@ A tarball installs as a real copy everywhere.
 ### Vercel
 
 Astro SSR on Vercel Functions (Node.js runtime, Fluid compute). Vercel builds the uploaded sources
-(`npm install` → `astro build`), but the function it assembles contains only *traced modules* and
-runs in `/var/task` — not next to the plugin's files. With `@quartal/plugin` > 0.8.0 that needs no
-configuration: the codegen's `artifacts.ts` module carries the generated metadata, manifest,
-`qrtl.config` options, widget entries **and the skills/agents/README file map** inside the server
-bundle; the docs UI shell is fetched from the Quartal Plugins website at runtime; and `public/`
-ships in Vercel's static output, served before the function. The adapter runs with no options, and
-`Helpers.resolvePluginRoot` keeps the relocated cwd safe as a fallback. **Until that version is on
-npm, deploy with `--link local`** — the published 0.8.0 answers 500 on every route inside a Vercel
-function.
+(`npm install` → `astro build`), but the function it assembles contains only _traced modules_ and
+runs in `/var/task` — not next to the plugin's files. That needs no configuration: the codegen's
+`artifacts.ts` module carries the generated metadata, manifest, `qrtl.config` options, widget
+entries and the skills/agents/README file map inside the server bundle; the docs UI shell is
+fetched from the Quartal Plugins website at runtime; and `public/` ships in Vercel's static
+output, served before the function. The adapter runs with no options, and
+`Helpers.resolvePluginRoot` keeps the relocated cwd safe as a fallback.
 
 ```bash
-pnpm run build:libs                                       # once, for --link local
-node deployment/deploy.mjs vercel test1 --link local     # preview deployment
-node deployment/deploy.mjs vercel test1 --link local -- --prod
+node deployment/deploy.mjs vercel test1             # preview deployment
+node deployment/deploy.mjs vercel test1 -- --prod   # production
 ```
 
 - Authenticate with `npx vercel login`, or set `VERCEL_TOKEN` (forwarded as `--token`). Set the
@@ -107,6 +133,13 @@ node deployment/deploy.mjs vercel test1 --link local -- --prod
   deploy that uses them.
 - `--build` pre-flights locally: the Vercel adapter writes `.vercel/output/`, so the function
   bundle (`.vercel/output/functions/_render.func/`) can be inspected without a remote build.
+- Preview deployments sit behind Vercel Authentication: a plain `curl` is redirected to SSO and
+  `/api/*` answers 401. Probe them with `npx vercel curl <path> --deployment <url>` from the stage
+  (it adds the project's protection-bypass header), or check the production URL.
+- The plugin's server paths are not Astro pages, so the integration injects a catch-all route
+  (`/[...qrtlPath]`) to keep them in the route table. Without it, Vercel's generated routing sends
+  every non-route path to the function with a forced `404` status — the body is right, the status
+  is not.
 
 ### Railway
 
@@ -125,55 +158,47 @@ node deployment/deploy.mjs railway test1
   generated config sets `server.host = true` so the server binds `0.0.0.0`. The health check hits
   `/plugin.json`.
 
-Verified locally against the published `@quartal/*` packages: staging + `npm install` +
-`astro build` + `npm start` serves `/plugin.json` (16 tools, 8 skills, 3 agents),
-`/skills/catalog.json`, `/agents/catalog.json`, `/open-api.json` and the docs SPA at `/`.
-
 ### Cloudflare Workers
 
-Astro SSR on the Workers runtime (workerd) — a *finished* bundle: wrangler ships the Worker that
+Astro SSR on the Workers runtime (workerd) — a _finished_ bundle: wrangler ships the Worker that
 `@astrojs/cloudflare` builds locally, so this target builds in the stage before deploying.
 
-A Worker has no real filesystem, and with `@quartal/plugin` > 0.8.0 it needs none: the codegen's
-`artifacts.ts` module carries the generated metadata, manifest, `qrtl.config` options, widget
-entries and the skills/agents/README file map inside the bundle; the docs UI shell is fetched from
-the Quartal Plugins website at runtime; and `public/` ships as Workers static assets. **Until that
-version is on npm, stage with `--link local`.**
+A Worker has no real filesystem, and the runtime needs none: everything the plugin serves rides
+inside the bundle. [docs/cloudflare-workers.md](../docs/cloudflare-workers.md) describes the design
+and the platform limits that still apply.
 
 ```bash
-node deployment/deploy.mjs cloudflare test1 --link local --stage-only   # build the Worker bundle
-cd .deploy/cloudflare/test1 && npx wrangler dev                         # run it in workerd locally
-node deployment/deploy.mjs cloudflare test1 --link local               # authenticated deploy
+node deployment/deploy.mjs cloudflare test1 --stage-only   # build the Worker bundle
+cd .deploy/cloudflare/test1 && npx wrangler dev            # run it in workerd locally
+node deployment/deploy.mjs cloudflare test1                # authenticated deploy
 ```
 
-Verified in `wrangler dev`: `/plugin.json`, `/open-api.json` (16 paths), skills (catalog, files,
-zips), agents, `/plugin.zip`, MCP `tools/list`, REST execution, widget pages and the docs shell
-all serve. **The first authenticated deploy has not been exercised yet — treat it as the real
-test.** Authenticate with `npx wrangler login` or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
-Plugins do not use Astro sessions, so no `SESSION` KV binding is configured; add a KV namespace id
-to `wrangler.jsonc` if your own pages need sessions.
+- Authenticate with `npx wrangler login` or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
+- Plugins do not use Astro sessions, so no `SESSION` KV binding is configured; add a KV namespace
+  id to `wrangler.jsonc` if your own pages need sessions.
+- Env vars (`OAUTH_*`, `QRTL_DOCS_WEB_URL`) are Worker vars/secrets (`npx wrangler secret put`);
+  `nodejs_compat` exposes them on `process.env`, which is where the runtime reads them.
 
 ## Options
 
-| Option              | Meaning                                                                 |
-| ------------------- | ----------------------------------------------------------------------- |
-| `--org <name>`      | Platform org/owner. Default: `deploy.org` from `qrtl.config.ts`          |
-| `--app <name>`      | Remote app/service name. Default: `deploy.app`, else the directory name  |
-| `--link <mode>`     | `registry` (default) or `local` — see [link modes](#link-modes)          |
-| `--build`           | Build in the stage even when the platform builds remotely (pre-flight)   |
-| `--no-build`        | Skip the local build                                                    |
-| `--stage-only`      | Stage (and build, where applicable) without deploying                   |
-| `--force`           | Deploy even when the target reports a known blocker                     |
-| `--dry-run`         | Print every command instead of running it                               |
-| `-- <args…>`        | Everything after a bare `--` is passed straight to the platform CLI      |
+| Option          | Meaning                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| `--org <name>`  | Platform org/owner. Default: `deploy.org` from `qrtl.config.ts`         |
+| `--app <name>`  | Remote app/service name. Default: `deploy.app`, else the directory name |
+| `--link <mode>` | `registry` (default) or `local` — see [link modes](#link-modes)         |
+| `--build`       | Build in the stage even when the platform builds remotely (pre-flight)  |
+| `--no-build`    | Skip the local build                                                    |
+| `--stage-only`  | Stage (and build, where applicable) without deploying                   |
+| `--dry-run`     | Print every command instead of running it                               |
+| `-- <args…>`    | Everything after a bare `--` is passed straight to the platform CLI     |
 
 ## Prerequisites
 
-| Target       | CLI                                                     | Auth                                              |
-| ------------ | ------------------------------------------------------- | ------------------------------------------------- |
-| `vercel`     | run via `npx vercel` (no install needed)                | `npx vercel login`, or `VERCEL_TOKEN`             |
-| `railway`    | `npm i -g @railway/cli`                                 | `railway login`, or `RAILWAY_TOKEN`               |
-| `cloudflare` | bundled `wrangler` (run via `npx` inside the stage)     | `npx wrangler login`, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
+| Target       | CLI                                                 | Auth                                                                     |
+| ------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `vercel`     | run via `npx vercel` (no install needed)            | `npx vercel login`, or `VERCEL_TOKEN`                                    |
+| `railway`    | `npm i -g @railway/cli`                             | `railway login`, or `RAILWAY_TOKEN`                                      |
+| `cloudflare` | bundled `wrangler` (run via `npx` inside the stage) | `npx wrangler login`, or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
 
 Node ≥ 22 for the scripts themselves. They use only Node built-ins — no extra dependencies.
 

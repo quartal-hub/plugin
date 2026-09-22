@@ -149,3 +149,6 @@ vite.config.ts.timestamp-*
 
 # Deployment staging trees (deployment/deploy.mjs)
 .deploy/
+
+# Wrangler local state (miniflare storage, caches)
+.wrangler/
