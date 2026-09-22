@@ -1,6 +1,6 @@
 ---
 title: "Vercel"
-description: "Deploy to Vercel.com, which provides probably the easiest inegrations to Astro.build"
+description: "Deploy to Vercel, which provides probably the easiest integration for Astro projects."
 section: deploying
 order: 2
 ---
@@ -69,3 +69,8 @@ curl https://<your-deployment>.vercel.app/plugin.json
 
 Then open the deployment URL in a browser: the docs site should show your tools, skills and
 agents. If routes answer 500, check the function logs in the Vercel dashboard.
+
+Preview deployments are protected by Vercel Authentication by default: `curl` is redirected to a
+login page and API calls answer 401. Check them with `npx vercel curl /plugin.json --deployment
+<preview-url>` (which adds the project's protection-bypass header), or disable Deployment
+Protection in the project settings if MCP clients need to reach previews directly.

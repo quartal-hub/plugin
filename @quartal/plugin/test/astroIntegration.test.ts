@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import {
   buildPluginMiddlewareSource,
+  CATCH_ALL_ROUTE,
   createPluginMiddleware,
   getAnonApp,
   PLUGIN_MIDDLEWARE_VIRTUAL_ID,
@@ -106,6 +107,7 @@ describe("qrtlPlugin integration", () => {
     let vitePlugins: { name: string }[] = [];
     let updatedConfig: Record<string, unknown> = {};
     let middleware: { entrypoint: string | URL; order: string } | undefined;
+    const routes: { pattern: string; entrypoint: string | URL; prerender?: boolean }[] = [];
     const warnings: string[] = [];
     const watched: (string | URL)[] = [];
     const opts: AstroConfigSetupOptions = {
@@ -117,6 +119,9 @@ describe("qrtlPlugin integration", () => {
       addMiddleware: (m) => {
         middleware = m;
       },
+      injectRoute: (r) => {
+        routes.push(r);
+      },
       addWatchFile: (p) => {
         watched.push(p);
       },
@@ -124,7 +129,7 @@ describe("qrtlPlugin integration", () => {
       command: "dev",
     };
     await integ.hooks["astro:config:setup"]!(opts);
-    return { integ, vitePlugins, updatedConfig, middleware, warnings, watched };
+    return { integ, vitePlugins, updatedConfig, middleware, routes, warnings, watched };
   }
 
   /** The generated virtual middleware source from a setup's vite plugins. */
@@ -149,6 +154,24 @@ describe("qrtlPlugin integration", () => {
     expect(names).toContain("qrtl-plugin-middleware");
     expect(middleware?.entrypoint).toBe(PLUGIN_MIDDLEWARE_VIRTUAL_ID);
     expect(middleware?.order).toBe("pre");
+  });
+
+  it("injects a server-rendered catch-all route so the Hono paths are in Astro's route table", async () => {
+    const { routes } = await runSetup("server");
+    expect(routes).toEqual([CATCH_ALL_ROUTE]);
+    expect(CATCH_ALL_ROUTE.pattern).toBe("/[...qrtlPath]");
+    // A project file (written by the codegen), not a node_modules path: Vite would externalize that.
+    expect(CATCH_ALL_ROUTE.entrypoint).toBe("./src/qrtl-plugin/catchAllRoute.ts");
+    expect(CATCH_ALL_ROUTE.prerender).toBe(false);
+  });
+
+  it("writes the catch-all route module into the project before Astro builds its route manifest", async () => {
+    const root = await tempPlugin({});
+    await runSetup("server", undefined, root);
+    const source = await readFile(join(root, "src", "qrtl-plugin", "catchAllRoute.ts"), "utf8");
+    expect(source).toContain('export { ALL } from "@quartal/plugin/astro/route";');
+    // A root that does not exist on disk gets no file (and no error).
+    await expect(runSetup("server", undefined, join(root, "missing"))).resolves.toBeDefined();
   });
 
   it("warns when output is not on-demand-capable", async () => {

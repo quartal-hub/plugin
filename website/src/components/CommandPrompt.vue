@@ -38,9 +38,13 @@ function toNpm(cmd: string): string {
 }
 
 function toPnpm(cmd: string): string {
-  return cmd
-    .replace(/\bnpx\b/g, "pnpm dlx")
-    .replace(/\bnpm\b/g, "pnpm");
+  return (
+    cmd
+      .replace(/\bnpx\b/g, "pnpm dlx")
+      // `npm install <pkg…>` (with any flags) is `pnpm add`; a bare `npm install` stays `pnpm install`.
+      .replace(/\bnpm (?:install|i)(?= +[^\s&|;])/g, "pnpm add")
+      .replace(/\bnpm\b/g, "pnpm")
+  );
 }
 
 const isPnpmSource = /\bpnpm\b/.test(props.command);

@@ -40,6 +40,7 @@ it is gitignored and regenerated on every change to `src/tools`, `src/prompts`, 
 | `tools.json` | The full source-code analysis (files, classes, types) that the metadata above is derived from. Used by the built-in docs site to show code-level detail. |
 | `types.json` | A flat index of all types referenced by the tools. |
 | `tools.registry.ts`, `prompts.registry.ts` | Static import maps that bind the metadata back to your classes at runtime, so the plugin works after bundling. |
+| `catchAllRoute.ts` | The `/[...qrtlPath]` route the integration injects so the plugin's server paths are Astro routes for the hosting platform's router; it re-exports the handler from `@quartal/plugin/astro/route`. |
 
 Everything in the table is derived from the same source: your classes and their JSDoc comments.
 The [schema generation rules](/docs/tools/creating-tools#how-a-method-becomes-a-tool) describe how

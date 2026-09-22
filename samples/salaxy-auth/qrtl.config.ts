@@ -9,5 +9,5 @@ export default defineQrtlConfig({
   },
   /** TODO: This probably does not work currently => Still needs implementation. */
   auth: "quartal-hub",
-  deploy: { org: "quartal", app: "salaxy-agent" },
+  deploy: { org: "quartal", app: "salaxy-auth" },
 });

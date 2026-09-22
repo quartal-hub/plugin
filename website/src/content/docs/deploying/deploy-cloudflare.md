@@ -1,6 +1,6 @@
 ---
 title: "Cloudflare"
-description: "Deploy to Cloudflare Workers, which offer even more light weight serverless thatn Vercel."
+description: "Deploy to Cloudflare Workers, an even lighter-weight serverless runtime than Vercel."
 section: deploying
 order: 4
 ---
@@ -13,7 +13,8 @@ In your plugin project (as created by `pnpm create @quartal/plugin`):
 npm install @astrojs/cloudflare wrangler
 ```
 
-Note that `workerd` probably requires build permissions if not allowed by default.
+With pnpm, allow `workerd` (Cloudflare's runtime, installed by `wrangler`) to run its install
+script when pnpm asks, or run `pnpm approve-builds` — otherwise `wrangler dev` cannot start.
 
 ## 2. Update `astro.config.mjs`
 
@@ -32,7 +33,8 @@ export default defineConfig({
 });
 ```
 
-Note that you may `@astrojs/vue` is only for the Vue UI framework: You may have e.g. `@astrojs/react` or no UI framework at all.
+`@astrojs/vue` is only there because this project uses Vue widgets. Keep whatever integration your
+project has (`react()`, or none at all) — only the adapter line changes.
 
 ## 3. Add `wrangler.jsonc`
 

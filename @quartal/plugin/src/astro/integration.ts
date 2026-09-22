@@ -1,8 +1,9 @@
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Helpers } from "../helpers/Helpers.ts";
+import { buildCatchAllRouteSource, CATCH_ALL_ROUTE_FILE } from "./buildCatchAllRouteSource.ts";
 import { qrtlCodegenPlugin } from "../vite/qrtlCodegenPlugin.ts";
 import { pluginDevServerPlugin } from "../vite/pluginDevServer.ts";
 import { discoverWidgetsSync, toWidgetCatalog } from "../widgets/discoverWidgets.ts";
@@ -12,7 +13,8 @@ import { discoverWidgetsSync, toWidgetCatalog } from "../widgets/discoverWidgets
  * generates `qrtl-plugin/` metadata + `tools.registry.ts` from `src/tools/` (via the codegen Vite
  * plugin), discovers widget pages under `src/pages/widgets/`, and mounts the Hono app (REST/OpenAPI,
  * MCP, skills, icons, docs SPA, plugin-info, public) as middleware for the server-route prefixes.
- * Astro renders everything else (widget pages, user pages, its own assets).
+ * Astro renders everything else (widget pages, user pages, its own assets). A catch-all route is
+ * injected so the middleware-served paths are part of Astro's route table for the host platform.
  *
  * Widgets: discovered pages feed the plugin catalog at config time. There is NO build-time widget
  * bundling — the MCP resource for a widget is its live Astro page, fetched and URL-rewritten on
@@ -26,6 +28,19 @@ const RESOLVED_PLUGIN_MIDDLEWARE_ID = "\0" + PLUGIN_MIDDLEWARE_VIRTUAL_ID;
 
 /** Default location (relative to project root) of the generated artifacts + registries. */
 const QRTL_PLUGIN_DIR = "src/qrtl-plugin";
+
+/**
+ * The server-rendered catch-all route injected so the Hono-served paths count as Astro routes for
+ * the host platform's router (see `./catchAllRoute.ts`). The entrypoint is a module this
+ * integration writes into the project (`buildCatchAllRouteSource`), resolved relative to the
+ * project root. Astro reads the file while it creates the route manifest — before any Vite build
+ * hook runs — so it is written from the `astro:config:setup` hook, not by the codegen.
+ */
+export const CATCH_ALL_ROUTE = {
+  pattern: "/[...qrtlPath]",
+  entrypoint: `./${QRTL_PLUGIN_DIR}/${CATCH_ALL_ROUTE_FILE}`,
+  prerender: false,
+};
 /** Default widget pages directory (relative to project root). */
 const WIDGETS_PAGES_DIR = "src/pages/widgets";
 /** Index pages that override the docs shell at `/` (checked at config time; restart to pick up). */
@@ -128,6 +143,7 @@ export interface AstroConfigSetupOptions {
   config: { output?: string; root?: URL | string; adapter?: unknown };
   updateConfig: (config: Record<string, unknown>) => void;
   addMiddleware: (opts: { entrypoint: string | URL; order: "pre" | "post" }) => void;
+  injectRoute: (opts: { pattern: string; entrypoint: string | URL; prerender?: boolean }) => void;
   addWatchFile?: (path: string | URL) => void;
   logger?: { warn: (msg: string) => void; info: (msg: string) => void };
   command?: string;
@@ -161,7 +177,7 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
   return {
     name: "@quartal/plugin",
     hooks: {
-      "astro:config:setup": async ({ config, updateConfig, addMiddleware, addWatchFile, logger, command }) => {
+      "astro:config:setup": async ({ config, updateConfig, addMiddleware, injectRoute, addWatchFile, logger, command }) => {
         const root = toPath(config.root);
 
         // The auth mode comes from qrtl.config (`auth`), loaded strictly: a present-but-broken
@@ -232,6 +248,16 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
         });
 
         addMiddleware({ entrypoint: PLUGIN_MIDDLEWARE_VIRTUAL_ID, order: "pre" });
+        // Without a route for them, the Hono-served paths are "not found" to adapters that mirror
+        // the route table into platform routing (Vercel forces status 404 on unrouted paths). The
+        // route file must exist before Astro builds its route manifest, so it is written here; a
+        // root that does not exist on disk is not a real project (unit tests) and gets no file.
+        if (root && existsSync(root)) {
+          const routeDir = join(root, QRTL_PLUGIN_DIR);
+          mkdirSync(routeDir, { recursive: true });
+          writeFileSync(join(routeDir, CATCH_ALL_ROUTE_FILE), buildCatchAllRouteSource());
+        }
+        injectRoute(CATCH_ALL_ROUTE);
 
         // The Hono app serves on-demand routes (REST/MCP/skills/…), so the project needs an
         // on-demand-capable output + an adapter.

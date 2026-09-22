@@ -78,7 +78,7 @@ export type { CacheKey, PluginCache } from "./cache/PluginCache.ts";
 // Astro integration (also available as the `@quartal/plugin/astro` subpath)
 export { createPluginMiddleware, isServerPath, isServerPathWithOwnIndexPage } from "./astro/pluginMiddleware.ts";
 export type { MiddlewareOnRequest } from "./astro/pluginMiddleware.ts";
-export { buildPluginMiddlewareSource, PLUGIN_MIDDLEWARE_VIRTUAL_ID, qrtlPlugin } from "./astro/integration.ts";
+export { buildPluginMiddlewareSource, CATCH_ALL_ROUTE, PLUGIN_MIDDLEWARE_VIRTUAL_ID, qrtlPlugin } from "./astro/integration.ts";
 export type { QrtlPluginOptions } from "./astro/integration.ts";
 export { clearCached, getCached } from "./hono-app/cache.ts";
 export type { CacheOptions } from "./hono-app/cache.ts";
