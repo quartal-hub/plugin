@@ -141,7 +141,10 @@ export type QuartalAuthMode = "quartal-hub" | "custom";
 // TODO(production, Oct–Nov 2026): a token for this shared audience is valid at every
 // quartal-hub plugin. Before production data, move to per-plugin audiences — natively via
 // RFC 8707 resource indicators if Keycloak 26.8 ships them, else per-plugin client scopes.
-const QUARTAL_HUB_ISSUER = "https://iam2026.test.qrtl.com/realms/salaxy-test";
+
+// IN PROGRESS: Checking to new IAM version => Will eventually be in "https://iam2026.test.qrtl.com/realms/quartal";
+// const QUARTAL_HUB_ISSUER = "https://iam2026.test.qrtl.com/realms/salaxy-test";
+const QUARTAL_HUB_ISSUER = "https://test-iam.salaxy.com/auth/realms/quartal";
 const QUARTAL_HUB_SCOPE = "quartal-hub-test";
 const QUARTAL_HUB_AUDIENCE = "https://hub.test.qrtl.com";
 
