@@ -143,6 +143,11 @@ node deployment/deploy.mjs vercel test1 -- --prod   # production
   deploy that uses them.
 - `--build` pre-flights locally: the Vercel adapter writes `.vercel/output/`, so the function
   bundle (`.vercel/output/functions/_render.func/`) can be inspected without a remote build.
+- Vercel restores the previous build's `node_modules` from its build cache (separately for
+  preview and production). A cached `@quartal/*` version that still satisfies the `^` range is
+  kept, so a deploy right after a `@quartal/plugin` release can silently build the old runtime.
+  Pass `-- --force` (the Vercel CLI's skip-cache flag) for the first deploy after a release, or
+  when a fix that is on npm does not show up.
 - Preview deployments sit behind Vercel Authentication: a plain `curl` is redirected to SSO and
   `/api/*` answers 401. Probe them with `npx vercel curl <path> --deployment <url>` from the stage
   (it adds the project's protection-bypass header), or check the production URL.
