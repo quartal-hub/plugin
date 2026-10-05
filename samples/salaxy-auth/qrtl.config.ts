@@ -13,9 +13,8 @@ export default defineQrtlConfig({
     issuer: "https://test-iam.salaxy.com/auth/realms/salaxy",
     // The `iam-api` scope adds the Quartal IAM API audience to the token, so the same token can
     // be exchanged for a Salaxy SSO token (see src/lib/salaxyContext.ts). It requires the realm
-    // to allow the scope for this client — requesting it before that breaks login with
-    // invalid_scope, so it is commented out until the realm is configured:
-    // scope: "quartal-hub-test iam-api",
+    // to allow the scope for this client.
+    scope: "quartal-hub-test iam-api",
   },
   deploy: { org: "quartal", app: "salaxy-auth" },
 });

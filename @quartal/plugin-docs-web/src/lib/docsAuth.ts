@@ -68,7 +68,10 @@ function captureFragment(): void {
     store(accessToken, expiresIn);
     token.value = accessToken;
   }
-  if (error) authError.value = error;
+  if (error) {
+    authError.value = error;
+    console.error(`Docs-site login failed: ${error}`);
+  }
   history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 

@@ -32,7 +32,6 @@ const logoUrl = computed(() => {
         <router-link v-for="link in links" :key="link.name" class="nav-link" :to="link.url">{{ link.name }}</router-link>
       </div>
       <div v-if="auth.authAvailable.value" class="q-plugin-login d-flex align-items-center ms-auto gap-2">
-        <span v-if="auth.authError.value" class="text-danger small" :title="auth.authError.value">Login failed</span>
         <template v-if="auth.token.value">
           <span class="navbar-text">{{ auth.userName.value ?? "Signed in" }}</span>
           <button class="btn btn-outline-secondary btn-sm" type="button" @click="auth.logout()">Log out</button>
@@ -41,4 +40,12 @@ const logoUrl = computed(() => {
       </div>
     </div>
   </nav>
+  <div
+    v-if="auth.authError.value"
+    class="q-plugin-login-error alert alert-danger alert-dismissible container-fluid"
+    role="alert"
+  >
+    <strong>Login failed:</strong> {{ auth.authError.value }}
+    <button type="button" class="btn-close" aria-label="Close" @click="auth.authError.value = null"></button>
+  </div>
 </template>
