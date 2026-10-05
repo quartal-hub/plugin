@@ -17,9 +17,12 @@
   },
   "dependencies": {
     "@astrojs/node": "^11.0.0",
+    "@astrojs/vue": "^7.0.0",
     "@quartal/plugin": "workspace:*",
     "@quartal/plugin-core": "workspace:*",
+    "@quartal/plugin-vue": "workspace:*",
     "@salaxy/core": "^7.0.0-beta.1",
-    "astro": "^7.3.3"
+    "astro": "^7.3.3",
+    "vue": "^3.5.0"
   }
 }

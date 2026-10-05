@@ -6,6 +6,7 @@ import type {
   PluginManifest,
 } from "@quartal/plugin-core";
 import type { McpServerOptions } from "./McpServerOptions.ts";
+import type { QrtlAuthConfig, QrtlAuthMode } from "../QrtlConfig.ts";
 import type { PluginFileMapEntry } from "./PluginFileMapEntry.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
 
@@ -39,8 +40,8 @@ export interface PluginRuntimeArtifacts {
   manifest?: PluginManifest;
   /** `README.md` text (absent when the plugin has none). */
   readme?: string;
-  /** The `qrtl.config` `auth` mode, resolved at build time (default `"anon"`). */
-  auth?: "anon" | "quartal-hub" | "custom";
+  /** The `qrtl.config` `auth` value (mode string or object form), resolved at build time (default `"anon"`). */
+  auth?: QrtlAuthMode | QrtlAuthConfig;
   /** The `qrtl.config` `mcp` options (absent when not configured). */
   mcp?: McpServerOptions | boolean;
   /** Widget entries resolved at build time (`src/pages/widgets/` + the `qrtl.config` `widgets` section). */

@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "salaxy-auth",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "samples/salaxy-auth", "run", "dev"],
+      "port": 4321
+    },
+    {
       "name": "auth-agent",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "samples/auth-agent", "run", "dev"],

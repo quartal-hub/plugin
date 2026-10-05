@@ -188,7 +188,11 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
             `qrtlPlugin({ auth: "${options.auth}" }) is deprecated — set \`auth: "${options.auth}"\` in qrtl.config.ts instead.`,
           );
         }
-        const auth = options?.auth ?? qrtlConfig?.auth ?? "anon";
+        // Only the mode is needed here (anon vs auth app); the object form's OAuth values are
+        // read by getAuthApp from the injected artifacts / qrtl.config.
+        const configAuth = qrtlConfig?.auth;
+        const configAuthMode = typeof configAuth === "object" ? configAuth.mode : configAuth;
+        const auth = options?.auth ?? configAuthMode ?? "anon";
 
         // The auth mode is baked into the generated middleware at config time, so a qrtl.config
         // edit must restart the dev server for this hook to run again.

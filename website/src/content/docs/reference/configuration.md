@@ -72,12 +72,29 @@ the REST API and the MCP server:
 
 - **`"anon"`** (default) — no authentication.
 - **`"quartal-hub"`** — OAuth2 / OIDC JWT bearer authentication via Quartal Hub, zero-config
-  (fixed test-environment scope, audience and issuer; only `OAUTH_ISSUER` is overridable).
-  Tools receive a `QuartalPluginContext` as their second parameter.
+  (test-environment scope, audience and issuer defaults). Tools receive a
+  `QuartalPluginContext` as their second parameter.
 - **`"custom"`** — the same JWT bearer authentication against your own OAuth2 / OIDC server
-  (Auth0, Microsoft Entra ID, Keycloak, …), configured entirely with environment variables:
+  (Auth0, Microsoft Entra ID, Keycloak, …), configured with environment variables:
   `OAUTH_ISSUER` (required), `OAUTH_AUDIENCE` / `OAUTH_RESOURCE` (at least one), `OAUTH_SCOPE`,
   `OAUTH_JWKS_URI`, `OAUTH_TOKEN_URL`, `OAUTH_CLIENT_ID`.
+
+Instead of the mode string alone, `auth` also takes an object that sets app-default OAuth
+values in the config file:
+
+```ts
+auth: {
+  mode: "quartal-hub",           // or "custom" / "anon"
+  issuer: "https://test-iam.salaxy.com/auth/realms/salaxy",
+  scope: "my-scope",             // string or string[]
+  audience: "https://my-api",    // string or string[]
+  resource: "https://my-api",    // canonical resource URI (RFC 8707)
+},
+```
+
+These are application defaults: the `OAUTH_*` environment variables still override them at
+runtime (per-field precedence is env var → config object → mode built-ins). Deployment-specific
+values (JWKS URI, token URL, client id) are not configurable here — use the env vars.
 
 Widget pages and their assets stay unauthenticated (the sandboxed widget iframe carries
 no credentials); auth is enforced on `/api/*` and `/mcp`. See

@@ -3,16 +3,17 @@ import { createMiddleware } from "hono/factory";
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from "jose";
 
 import { getPluginCache } from "../cache/PluginCache.ts";
-import type { AuthContext, Avatar, QuartalPluginContext } from "../model/index.ts";
+import type { AuthContext, Avatar, QrtlAuthConfig, QuartalPluginContext } from "../model/index.ts";
 
 /**
  * Options for generic OAuth / OIDC JWT bearer-token authentication.
  *
- * How an option left undefined resolves depends on the {@link QuartalAuthMode}: in `"custom"`
- * mode it falls back to the corresponding environment variable (OAUTH_ISSUER, OAUTH_AUDIENCE,
- * OAUTH_JWKS_URI, OAUTH_RESOURCE, OAUTH_SCOPE); in `"quartal-hub"` mode the Quartal Hub test
- * environment supplies fixed values and only `OAUTH_ISSUER` is honored. `jwksUri` is optional:
- * when missing, the URI is discovered from `${issuer}/.well-known/openid-configuration`.
+ * An option left undefined falls back to the corresponding environment variable (OAUTH_ISSUER,
+ * OAUTH_AUDIENCE, OAUTH_JWKS_URI, OAUTH_RESOURCE, OAUTH_SCOPE), then to the `qrtl.config` `auth`
+ * object's app defaults, then to the {@link QuartalAuthMode} built-ins: `"quartal-hub"` supplies
+ * the fixed Quartal Hub test-environment values; `"custom"` has none and requires issuer +
+ * audience. `jwksUri` is optional: when missing, the URI is discovered from
+ * `${issuer}/.well-known/openid-configuration`.
  */
 export interface OAuthOptions {
   /** Expected `iss` claim and base URL for OIDC discovery. Defaults to env `OAUTH_ISSUER`. */
@@ -127,12 +128,13 @@ function normalizeScopes(scope: string | string[] | undefined): string[] {
 /**
  * How OAuth defaults are resolved:
  *
- * - `"quartal-hub"` — the Quartal Hub test environment. Scope, audience and issuer are fixed
- *   (only the issuer is overridable, via `OAUTH_ISSUER`, to point at another IAM instance);
- *   the RFC 9728 `resource` is derived from each request's origin so the same configuration
- *   works on localhost and deployed.
+ * - `"quartal-hub"` — the Quartal Hub test environment. Scope, audience and issuer have fixed
+ *   defaults (overridable via the `OAUTH_*` env vars or the `qrtl.config` `auth` object); the
+ *   RFC 9728 `resource` is derived from each request's origin so the same configuration works
+ *   on localhost and deployed.
  * - `"custom"` — bring-your-own OAuth2/OIDC server (Auth0, Microsoft Entra ID, …): everything
- *   comes from the `OAUTH_*` environment variables or explicit `OAuthOptions`.
+ *   comes from the `OAUTH_*` environment variables, the `qrtl.config` `auth` object, or
+ *   explicit `OAuthOptions`.
  */
 export type QuartalAuthMode = "quartal-hub" | "custom";
 
@@ -142,9 +144,7 @@ export type QuartalAuthMode = "quartal-hub" | "custom";
 // quartal-hub plugin. Before production data, move to per-plugin audiences — natively via
 // RFC 8707 resource indicators if Keycloak 26.8 ships them, else per-plugin client scopes.
 
-// IN PROGRESS: Checking to new IAM version => Will eventually be in "https://iam2026.test.qrtl.com/realms/quartal";
-// const QUARTAL_HUB_ISSUER = "https://iam2026.test.qrtl.com/realms/salaxy-test";
-const QUARTAL_HUB_ISSUER = "https://test-iam.salaxy.com/auth/realms/quartal";
+const QUARTAL_HUB_ISSUER = "https://iam2026.test.qrtl.com/realms/quartal";
 const QUARTAL_HUB_SCOPE = "quartal-hub-test";
 const QUARTAL_HUB_AUDIENCE = "https://hub.test.qrtl.com";
 
@@ -162,16 +162,21 @@ const DEFAULT_ADDITIONAL_SCOPES = ["profile", "email"];
 /**
  * Resolves an `OAuthOptions` (possibly empty) into a fully-populated `ResolvedOAuthOptions`.
  *
- * `"quartal-hub"` (the default) uses the fixed Quartal Hub test-environment values; only the
- * issuer may be redirected via `OAUTH_ISSUER` (other `OAUTH_*` variables are ignored — the mode
- * is deliberately zero-config). `"custom"` layers the `OAUTH_*` env vars under the caller-supplied
- * values and throws when no issuer or audience can be determined.
+ * Per-field precedence: explicit `opts` (the typed programmatic API) > `OAUTH_*` env vars >
+ * `appDefaults` (the `qrtl.config` `auth` object) > the mode's built-in defaults.
  *
- * Explicit `opts` fields (the typed programmatic API) win over both, in either mode.
+ * `"quartal-hub"` (the default) falls back to the fixed Quartal Hub test-environment values, so
+ * it stays zero-config. `"custom"` has no built-in fallback and throws when no issuer or
+ * audience can be determined.
  * @param opts Caller-supplied OAuth overrides.
  * @param mode Default-resolution mode; see {@link QuartalAuthMode}.
+ * @param appDefaults App-default OAuth values from the `qrtl.config` `auth` object (below env vars).
  */
-export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode = "quartal-hub"): ResolvedOAuthOptions {
+export function resolveOAuthOptions(
+  opts?: OAuthOptions,
+  mode: QuartalAuthMode = "quartal-hub",
+  appDefaults?: Pick<QrtlAuthConfig, "issuer" | "scope" | "audience" | "resource">,
+): ResolvedOAuthOptions {
   let issuer: string | undefined;
   let audience: string | string[] | undefined;
   let resource: string | undefined;
@@ -180,31 +185,31 @@ export function resolveOAuthOptions(opts?: OAuthOptions, mode: QuartalAuthMode =
   let clientId: string | undefined;
 
   if (mode === "custom") {
-    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined);
+    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined) ?? appDefaults?.issuer;
     if (!issuer) {
       throw new Error(
-        'auth mode "custom" requires an issuer: set OAUTH_ISSUER or pass `issuer` in OAuthOptions.',
+        'auth mode "custom" requires an issuer: set OAUTH_ISSUER, pass `issuer` in OAuthOptions, or set it in the qrtl.config `auth` object.',
       );
     }
-    resource = opts?.resource ?? (process.env.OAUTH_RESOURCE || undefined);
+    resource = opts?.resource ?? (process.env.OAUTH_RESOURCE || undefined) ?? appDefaults?.resource;
     // Per RFC 8707 the audience matches the canonical resource URI; fall back to `resource` when audience is not set.
-    audience = opts?.audience ?? (process.env.OAUTH_AUDIENCE || undefined) ?? resource;
+    audience = opts?.audience ?? (process.env.OAUTH_AUDIENCE || undefined) ?? appDefaults?.audience ?? resource;
     if (!audience) {
       throw new Error(
         "OAuth audience is required for token validation per RFC 8707 / MCP spec. " +
-          "Set OAUTH_AUDIENCE or OAUTH_RESOURCE, or pass `audience`/`resource` in OAuthOptions.",
+          "Set OAUTH_AUDIENCE or OAUTH_RESOURCE, pass `audience`/`resource` in OAuthOptions, or set them in the qrtl.config `auth` object.",
       );
     }
-    scope = opts?.scope ?? (process.env.OAUTH_SCOPE || undefined);
+    scope = opts?.scope ?? (process.env.OAUTH_SCOPE || undefined) ?? appDefaults?.scope;
     jwksUri = opts?.jwksUri ?? (process.env.OAUTH_JWKS_URI || undefined);
     clientId = opts?.clientId ?? (process.env.OAUTH_CLIENT_ID || undefined);
   } else {
-    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined) ?? QUARTAL_HUB_ISSUER;
-    audience = opts?.audience ?? QUARTAL_HUB_AUDIENCE;
-    scope = opts?.scope ?? QUARTAL_HUB_SCOPE;
-    // `resource` stays unset: the RFC 9728 metadata derives it from each request's origin, so
-    // the same plugin passes client resource-validation on localhost and deployed alike.
-    resource = opts?.resource;
+    issuer = opts?.issuer ?? (process.env.OAUTH_ISSUER || undefined) ?? appDefaults?.issuer ?? QUARTAL_HUB_ISSUER;
+    audience = opts?.audience ?? (process.env.OAUTH_AUDIENCE || undefined) ?? appDefaults?.audience ?? QUARTAL_HUB_AUDIENCE;
+    scope = opts?.scope ?? (process.env.OAUTH_SCOPE || undefined) ?? appDefaults?.scope ?? QUARTAL_HUB_SCOPE;
+    // `resource` is normally left unset: the RFC 9728 metadata then derives it from each request's
+    // origin, so the same plugin passes client resource-validation on localhost and deployed alike.
+    resource = opts?.resource ?? (process.env.OAUTH_RESOURCE || undefined) ?? appDefaults?.resource;
     jwksUri = opts?.jwksUri;
     // quartal-hub docs-site login uses CIMD; an explicit programmatic clientId still wins.
     clientId = opts?.clientId;
@@ -442,12 +447,14 @@ function computeExpireIn(claims: JWTPayload, cacheTtlMs: number): number {
  *
  * @param opts OAuth options; unset fields resolve per the mode (see {@link resolveOAuthOptions}).
  * @param mode Default-resolution mode; see {@link QuartalAuthMode}.
+ * @param appDefaults App-default OAuth values from the `qrtl.config` `auth` object (below env vars).
  */
 export function oauthAuthMiddleware(
   opts?: OAuthOptions,
   mode?: QuartalAuthMode,
+  appDefaults?: Pick<QrtlAuthConfig, "issuer" | "scope" | "audience" | "resource">,
 ): MiddlewareHandler<{ Variables: { context: QuartalPluginContext } }> {
-  const resolved = resolveOAuthOptions(opts, mode);
+  const resolved = resolveOAuthOptions(opts, mode, appDefaults);
   return createMiddleware(async (c, next) => {
     const resourceMetadataUrl = getProtectedResourceMetadataUrl(resolved, c.req.url);
     const challenge = { resourceMetadataUrl, scopes: resolved.scopes };

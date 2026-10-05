@@ -32,11 +32,11 @@ export default defineQrtlConfig({
 ```
 
 `"quartal-hub"` connects the plugin to the shared authentication of **Quartal Hub** (powered by
-the Quartal IAM server). It is deliberately zero-config — every plugin uses the same fixed values:
+the Quartal IAM server). It is zero-config by default — every plugin uses the same values:
 
 | What | Value |
 |---|---|
-| Issuer | The Quartal Hub test IAM server (`https://iam2026.test.qrtl.com/realms/salaxy-test`) |
+| Issuer | The Quartal Hub test IAM server (currently `https://test-iam.salaxy.com/auth/realms/quartal`) |
 | Scope | `quartal-hub-test` (plus the OIDC user-info scopes `profile email`) |
 | Audience | `https://hub.test.qrtl.com` (a fixed identifier, not a served URL) |
 | Resource (RFC 9728) | Derived from each request's origin — `http://localhost:4321` in dev, the deployed URL in production, with no configuration |
@@ -54,9 +54,10 @@ What you get:
 - The Swagger UI on the plugin's docs site gets an *Authorize* dialog for testing with a real
   login.
 
-The only environment variable this mode honors is **`OAUTH_ISSUER`** — set it to point at another
-Quartal IAM instance (e.g. a dev server). All other `OAUTH_*` variables are ignored; to control
-those details, use `auth: "custom"`.
+The defaults are overridable: per field, an `OAUTH_*` environment variable wins over the
+config-file value, which wins over the built-in default. So `OAUTH_ISSUER` (or `issuer` in the
+`auth` object, see below) points the plugin at another IAM realm, and `OAUTH_SCOPE` /
+`OAUTH_AUDIENCE` / `OAUTH_RESOURCE` work the same way.
 
 The scaffolder sets this up for you: answer yes to the authentication question (or pass `--auth`
 to `pnpm create @quartal/plugin`).
@@ -175,11 +176,26 @@ Any standards-compliant OAuth2 / OIDC server works, as long as it can:
 
 ### Can these be set in `qrtl.config.ts`?
 
-No — deliberately. `qrtl.config.ts` sets only the *mode* (`auth: "anon" | "quartal-hub" | "custom"`);
-the OAuth details stay out of it because they are deployment-specific — a staging and a production
-deployment of the same plugin use different issuers, resource URIs and client ids, and those
-belong in each environment rather than in a file committed to the repository. Use environment
-variables per deployment.
+Partly. Besides the mode string, `auth` takes an object form that sets **app defaults** for the
+values that belong to the application itself:
+
+```ts
+export default defineQrtlConfig({
+  auth: {
+    mode: "quartal-hub",
+    issuer: "https://test-iam.salaxy.com/auth/realms/salaxy",
+    scope: "my-scope",          // string or string[]
+    audience: "https://my-api", // string or string[]
+    resource: "https://my-api", // canonical resource URI (RFC 8707)
+  },
+});
+```
+
+These are defaults, not overrides: per field, the `OAUTH_*` environment variable wins over the
+config value, so each deployment can still redirect them. The deployment-specific values —
+`OAUTH_JWKS_URI`, `OAUTH_TOKEN_URL`, `OAUTH_CLIENT_ID` — deliberately have no config-file
+equivalent: a staging and a production deployment of the same plugin use different ones, and
+those belong in each environment rather than in a file committed to the repository.
 
 If you host the plugin app programmatically (outside the Astro integration), you can pass a typed
 `OAuthOptions` object to `getAuthApp(config, oauth)` instead — it supports everything the

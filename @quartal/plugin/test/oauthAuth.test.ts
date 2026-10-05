@@ -42,17 +42,17 @@ describe("resolveOAuthOptions — quartal-hub mode (default)", () => {
     expect(r.resource).toBeUndefined(); // derived per request in the metadata document
   });
 
-  it("honors OAUTH_ISSUER but ignores the other OAUTH_* variables", () => {
+  it("honors the OAUTH_* environment variables over the hub defaults", () => {
     process.env.OAUTH_ISSUER = "https://id.example.com/realms/x";
     process.env.OAUTH_AUDIENCE = "https://api.example.com";
     process.env.OAUTH_SCOPE = "other-scope";
     process.env.OAUTH_RESOURCE = "https://other.example.com";
     const r = resolveOAuthOptions();
     expect(r.issuer).toBe("https://id.example.com/realms/x");
-    expect(r.audience).toBe("https://hub.test.qrtl.com");
-    expect(r.scopes).toEqual(expect.arrayContaining(["quartal-hub-test"]));
-    expect(r.scopes).not.toContain("other-scope");
-    expect(r.resource).toBeUndefined();
+    expect(r.audience).toBe("https://api.example.com");
+    expect(r.scopes).toEqual(expect.arrayContaining(["other-scope"]));
+    expect(r.scopes).not.toContain("quartal-hub-test");
+    expect(r.resource).toBe("https://other.example.com");
   });
 
   it("lets explicit options win over env and defaults", () => {
@@ -60,6 +60,21 @@ describe("resolveOAuthOptions — quartal-hub mode (default)", () => {
     const r = resolveOAuthOptions({ issuer: "https://opt-issuer", audience: "aud" });
     expect(r.issuer).toBe("https://opt-issuer");
     expect(r.audience).toBe("aud");
+  });
+
+  it("layers qrtl.config app defaults below env vars and above the hub defaults", () => {
+    const appDefaults = {
+      issuer: "https://test-iam.salaxy.com/auth/realms/salaxy",
+      scope: "my-scope",
+    };
+    const r = resolveOAuthOptions(undefined, "quartal-hub", appDefaults);
+    expect(r.issuer).toBe("https://test-iam.salaxy.com/auth/realms/salaxy");
+    expect(r.scopes).toEqual(expect.arrayContaining(["my-scope", "profile", "email"]));
+    expect(r.audience).toBe("https://hub.test.qrtl.com"); // hub default still fills the gaps
+
+    process.env.OAUTH_ISSUER = "https://env-issuer";
+    const overridden = resolveOAuthOptions(undefined, "quartal-hub", appDefaults);
+    expect(overridden.issuer).toBe("https://env-issuer");
   });
 });
 
@@ -88,6 +103,22 @@ describe("resolveOAuthOptions — custom mode", () => {
   it("throws when no audience can be determined", () => {
     process.env.OAUTH_ISSUER = "https://id.example.com";
     expect(() => resolveOAuthOptions(undefined, "custom")).toThrow(/audience is required/i);
+  });
+
+  it("reads issuer/audience/resource from qrtl.config app defaults, below env vars", () => {
+    const appDefaults = {
+      issuer: "https://id.example.com/realms/x",
+      audience: "https://api.example.com",
+      resource: "https://plugin.example.com",
+    };
+    const r = resolveOAuthOptions(undefined, "custom", appDefaults);
+    expect(r.issuer).toBe("https://id.example.com/realms/x");
+    expect(r.audience).toBe("https://api.example.com");
+    expect(r.resource).toBe("https://plugin.example.com");
+
+    process.env.OAUTH_AUDIENCE = "https://env-audience";
+    const overridden = resolveOAuthOptions(undefined, "custom", appDefaults);
+    expect(overridden.audience).toBe("https://env-audience");
   });
 });
 
