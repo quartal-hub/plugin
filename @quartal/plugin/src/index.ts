@@ -68,8 +68,8 @@ export type { FunctionWithResolvedTypes } from "./code/getFunctionsWithResolvedT
 export { Helpers } from "./helpers/Helpers.ts";
 export { parseFrontmatter } from "./helpers/parseFrontmatter.ts";
 export type { Frontmatter } from "./helpers/parseFrontmatter.ts";
-export { defineQrtlConfig } from "./model/QrtlConfig.ts";
-export type { QrtlConfig } from "./model/QrtlConfig.ts";
+export { defineQrtlConfig, toQrtlAuthConfig } from "./model/QrtlConfig.ts";
+export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig } from "./model/QrtlConfig.ts";
 
 // Cache + plugin cache helper
 export { getPluginCache, MemoryCache, setPluginCache } from "./cache/PluginCache.ts";

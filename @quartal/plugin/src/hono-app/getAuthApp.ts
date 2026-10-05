@@ -26,8 +26,9 @@ import {
   unauthorized,
 } from "../oauth/oauthAuth.ts";
 import { registerOAuthLoginRoutes } from "./oauthLoginRoutes.ts";
+import { type QrtlAuthConfig, toQrtlAuthConfig } from "../model/index.ts";
 
-/** Maps a qrtl.config `auth` value to the OAuth default-resolution mode. */
+/** Maps a qrtl.config `auth` mode to the OAuth default-resolution mode. */
 function toAuthMode(auth: string | undefined): QuartalAuthMode {
   return auth === "custom" ? "custom" : "quartal-hub";
 }
@@ -57,12 +58,15 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   if (config.mcp === undefined) {
     config.mcp = artifacts ? artifacts.mcp : qrtlConfig?.mcp;
   }
-  const mode = toAuthMode(artifacts ? artifacts.auth : qrtlConfig?.auth);
+  // The `auth` value is the mode string or the object form carrying app-default OAuth values
+  // (issuer, scope, audience, resource) that sit below the `OAUTH_*` env vars.
+  const authConfig: QrtlAuthConfig = toQrtlAuthConfig(artifacts ? artifacts.auth : qrtlConfig?.auth);
+  const mode = toAuthMode(authConfig.mode);
   const manifest = artifacts?.manifest ?? await Helpers.getPluginManifest(config.pluginRootFolder);
   let resolved: ResolvedOAuthOptions | undefined;
 
   if (!config.auth) {
-    resolved = resolveOAuthOptions(oauth, mode);
+    resolved = resolveOAuthOptions(oauth, mode, authConfig);
     // Plain HTTP bearer: the docs site obtains the token through the /oauth/login flow (the same
     // CIMD method MCP clients use) and injects it into Swagger's requests.
     config.auth = {
@@ -70,7 +74,7 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
       type: "http",
       scheme: "bearer",
       bearerFormat: "JWT",
-      middleware: oauthAuthMiddleware(oauth, mode),
+      middleware: oauthAuthMiddleware(oauth, mode, authConfig),
     };
   }
 

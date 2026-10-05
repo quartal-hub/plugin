@@ -1,8 +1,8 @@
 // The analysis layer consumes shared types from the published @quartal/plugin-core package.
 // This barrel keeps the relative import path (`../model/index.ts`) stable for the rest of src/.
 export type { AuthContext } from "./AuthContext.ts";
-export { defineQrtlConfig } from "./QrtlConfig.ts";
-export type { QrtlConfig } from "./QrtlConfig.ts";
+export { defineQrtlConfig, toQrtlAuthConfig } from "./QrtlConfig.ts";
+export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig } from "./QrtlConfig.ts";
 export type {
   ExecuteFn,
   FetchWidgetHtml,
