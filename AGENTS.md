@@ -74,7 +74,9 @@ Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private
 
 `astro.config.mjs` (`integrations:[qrtlPlugin()]`, `output:'server'`, adapter), `qrtl.config.ts`
 (title/style/auth/deploy/widgets), `package.json`, `src/tools/` (tool classes analyzed by the codegen
-plugin), `src/prompts/` (optional MCP prompt classes — same convention: each function takes one object
+plugin; the types of tool inputs and outputs live there too, usually in `src/tools/model/`, and are re-exported
+from `src/tools/mod.ts` — the generator follows every type a tool signature reaches, see
+[the tools docs](./website/src/content/docs/tools/creating-tools.md)), `src/prompts/` (optional MCP prompt classes — same convention: each function takes one object
 parameter whose properties become the prompt arguments, returns a string or `{ messages }`),
 `src/pages/widgets/` (one page per tool, any framework), `skills/`, `agents/` (one `.md`/`.json`
 per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated

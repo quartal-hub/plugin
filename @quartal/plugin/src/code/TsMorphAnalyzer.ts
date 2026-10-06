@@ -32,6 +32,8 @@ type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
 export class TsMorphAnalyzer {
   /** Types collected from the transitive closure of imported (non-`tools/`) modules, keyed by name. */
   private importedTypes = new Map<string, CodeType>();
+  /** Whether a type declaration is emitted as part of a tool file (set per analysis). */
+  private isCovered: (decl: TypeDecl) => boolean = () => true;
 
   /**
    * Analyze a plugin by entry module and return one {@link CodeFile} per `tools/` source file (plus a
@@ -75,6 +77,7 @@ export class TsMorphAnalyzer {
    */
   analyzeProject(project: Project, options?: { entry?: SourceFile }): CodeFile[] {
     this.importedTypes = new Map();
+    this.isCovered = () => true;
 
     // When an entry is given, restrict tool files to those declaring a symbol exported from it, so
     // implementation-only utilities under `tools/` (e.g. `tools/utils/*`) are not exposed as tools.
@@ -88,6 +91,14 @@ export class TsMorphAnalyzer {
         }
       }
     }
+
+    // A declaration is covered when it ends up in a tool file below: an exported declaration of a file that the
+    // entry exports. Every other type that a tool signature reaches (also one declared under `tools/` but not
+    // exported from the entry) goes through the imported-types closure, so it still gets described.
+    this.isCovered = (decl) => {
+      const path = decl.getSourceFile().getFilePath();
+      return !!toolsPath(path) && (!exportedFiles || exportedFiles.has(path)) && decl.isExported();
+    };
 
     const files: CodeFile[] = [];
     const toolDecls: TypeDecl[] = [];
@@ -310,7 +321,7 @@ export class TsMorphAnalyzer {
   private buildImportedTypes(toolDecls: TypeDecl[], definedInTools: Set<string>): CodeType[] {
     const seen = new Set<string>();
     const queue: TypeDecl[] = [];
-    for (const decl of toolDecls) for (const ref of collectExternalRefs(decl)) queue.push(ref);
+    for (const decl of toolDecls) for (const ref of collectExternalRefs(decl, this.isCovered)) queue.push(ref);
 
     while (queue.length) {
       const decl = queue.pop()!;
@@ -327,7 +338,7 @@ export class TsMorphAnalyzer {
       registerBestInfo(this.importedTypes, codeType);
       for (const t of scratch) if (t.name && !definedInTools.has(t.name)) registerBestInfo(this.importedTypes, t);
 
-      for (const ref of collectExternalRefs(decl)) queue.push(ref);
+      for (const ref of collectExternalRefs(decl, this.isCovered)) queue.push(ref);
     }
 
     return [...this.importedTypes.values()]
@@ -574,12 +585,12 @@ function resolveSymbolDecl(symbol: ReturnType<Node["getSymbol"]>): TypeDecl | un
 }
 
 /** All user-land type declarations referenced inside a type node (arrays, unions, generics, inline objects). */
-function refDeclsInTypeNode(typeNode: TypeNode): TypeDecl[] {
+function refDeclsInTypeNode(typeNode: TypeNode, isCovered: (decl: TypeDecl) => boolean): TypeDecl[] {
   const out: TypeDecl[] = [];
   const visit = (n: Node): void => {
     if (Node.isTypeReference(n)) {
       const d = resolveTypeDecl(n);
-      if (d && !toolsPath(d.getSourceFile().getFilePath())) out.push(d);
+      if (d && !isCovered(d)) out.push(d);
     }
     n.forEachChild(visit);
   };
@@ -588,10 +599,10 @@ function refDeclsInTypeNode(typeNode: TypeNode): TypeDecl[] {
 }
 
 /** API-surface type references of a declaration (signatures + type defs — never method bodies). */
-function collectExternalRefs(decl: TypeDecl): TypeDecl[] {
+function collectExternalRefs(decl: TypeDecl, isCovered: (decl: TypeDecl) => boolean): TypeDecl[] {
   const out: TypeDecl[] = [];
   const addNode = (tn: TypeNode | undefined): void => {
-    if (tn) out.push(...refDeclsInTypeNode(tn));
+    if (tn) out.push(...refDeclsInTypeNode(tn, isCovered));
   };
   if (Node.isClassDeclaration(decl)) {
     for (const m of decl.getMethods()) {
@@ -602,13 +613,13 @@ function collectExternalRefs(decl: TypeDecl): TypeDecl[] {
     for (const p of decl.getProperties()) if (!isPrivateMember(p)) addNode(p.getTypeNode());
     for (const i of decl.getImplements()) {
       const d = resolveExprDecl(i.getExpression());
-      if (d && !toolsPath(d.getSourceFile().getFilePath())) out.push(d);
+      if (d && !isCovered(d)) out.push(d);
     }
   } else if (Node.isInterfaceDeclaration(decl)) {
     for (const p of decl.getProperties()) addNode(p.getTypeNode());
     for (const e of decl.getExtends()) {
       const d = resolveExprDecl(e.getExpression());
-      if (d && !toolsPath(d.getSourceFile().getFilePath())) out.push(d);
+      if (d && !isCovered(d)) out.push(d);
     }
   } else {
     addNode(decl.getTypeNode());
