@@ -101,6 +101,30 @@ const page = await callTool<InvoiceRowsPage>("fetchInvoiceRows", { page: 2 });
 
 `callTool` resolves with the parsed tool result and rejects with the tool's error message.
 
+## Look and size
+
+A widget that carries its own brand look turns the host theme off, so a dark host does not switch its form
+controls and scrollbars to dark. The frame follows the content height by default; both are options of
+`useExtApps` (and of `connectWidget`):
+
+```ts
+const { result, displayMode, availableDisplayModes, requestDisplayMode } = useExtApps({
+  name: "InvoiceList",
+  applyTheme: false, // keep the widget's own colors in a dark host
+  autoResize: true,  // default: report the content size to the host
+});
+```
+
+The inline frame is only as tall as the widget's content, so a `position: fixed` dialog is clipped when the
+content is short. Either render the dialog in the page flow, or ask the host for more room:
+
+```ts
+if (availableDisplayModes.value.includes("fullscreen")) await requestDisplayMode("fullscreen");
+```
+
+`requestDisplayMode` resolves with the mode the host actually set. Hosts differ in which modes they allow, so
+check `availableDisplayModes` and keep the in-flow layout as the fallback.
+
 ## Testing widgets
 
 We recommend [MCPJam](https://www.mcpjam.com/) for local widget testing — point it at

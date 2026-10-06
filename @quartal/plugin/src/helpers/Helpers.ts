@@ -195,4 +195,57 @@ export class Helpers {
     }
     return [normalizeEntry({ src: DEFAULT_ICON_SRC })];
   }
+
+  /**
+   * Reads and parses an environment variable from `process.env`. In `astro dev` the plugin loads the
+   * project's `.env*` files into `process.env` first (Vite itself only exposes them via `import.meta.env`).
+   *
+   * This deliberately does not read `import.meta.env`: Vite inlines it into bundled server code at build
+   * time together with a snapshot of the build machine's environment, which would bake secrets into the
+   * output and shadow the runtime values.
+   *
+   * Required types (without `?`) throw when the variable is missing or empty. Optional types return
+   * `undefined` in that case. Invalid non-empty number or boolean values always throw.
+   * Booleans accept `true` or `false`, case-insensitively.
+   *
+   * @param name Environment variable name.
+   * @param type Value type; adding `?` makes the variable optional. Defaults to `"string?"`.
+   */
+  static getEnvVar(name: string): string | undefined;
+  static getEnvVar(name: string, type: "string?"): string | undefined;
+  static getEnvVar(name: string, type: "number?"): number | undefined;
+  static getEnvVar(name: string, type: "boolean?"): boolean | undefined;
+  static getEnvVar(name: string, type: "string"): string;
+  static getEnvVar(name: string, type: "number"): number;
+  static getEnvVar(name: string, type: "boolean"): boolean;
+  static getEnvVar(
+    name: string,
+    type: "string" | "string?" | "number" | "number?" | "boolean" | "boolean?" = "string?",
+  ): string | number | boolean | undefined {
+    const rawValue = process.env[name];
+    const value = rawValue == null ? undefined : String(rawValue);
+    if (value == null || value.trim() === "") {
+      if (type.endsWith("?")) return undefined;
+      throw new Error(`Required environment variable "${name}" is not set or is empty.`);
+    }
+
+    switch (type.replace(/\?$/, "")) {
+      case "string":
+        return value;
+      case "number": {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+          throw new Error(`Environment variable "${name}" must be a valid number.`);
+        }
+        return parsed;
+      }
+      case "boolean": {
+        const normalized = value.toLowerCase();
+        if (normalized === "true") return true;
+        if (normalized === "false") return false;
+        throw new Error(`Environment variable "${name}" must be "true" or "false".`);
+      }
+    }
+  }
+
 }

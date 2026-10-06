@@ -1,5 +1,7 @@
-import { fileURLToPath } from "node:url";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { pluginDevServerPlugin } from "../src/vite/pluginDevServer.ts";
 import type { ConnectMiddleware, ViteDevServerLike } from "../src/vite/qrtlCodegenPlugin.ts";
@@ -11,11 +13,16 @@ import type { ConnectMiddleware, ViteDevServerLike } from "../src/vite/qrtlCodeg
 const fixturePkg = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
 
 /** Captures the connect middleware and the watcher listeners the plugin registers. */
-function mountMiddleware(): { handler: ConnectMiddleware; watched: string[]; fire: (event: string, file: string) => void } {
+function mountMiddleware(config?: { envDir: string; mode: string }): {
+  handler: ConnectMiddleware;
+  watched: string[];
+  fire: (event: string, file: string) => void;
+} {
   let handler: ConnectMiddleware | undefined;
   const watched: string[] = [];
   const listeners = new Map<string, ((file: string) => void)[]>();
   const server = {
+    config,
     watcher: {
       add(paths: string | string[]) {
         for (const p of Array.isArray(paths) ? paths : [paths]) watched.push(p);
@@ -57,6 +64,26 @@ function invoke(handler: ConnectMiddleware, url: string) {
 }
 
 describe("pluginDevServerPlugin", () => {
+  it("loads Astro env files into process.env with Astro's file precedence", async () => {
+    const envDir = await mkdtemp(join(tmpdir(), "qrtl-env-"));
+    const name = "QRTL_TEST_DEV_ENV";
+    const previous = process.env[name];
+    delete process.env[name];
+    try {
+      await writeFile(join(envDir, ".env"), `${name}=base\n`);
+      await writeFile(join(envDir, ".env.test"), `${name}=mode\n`);
+      await writeFile(join(envDir, ".env.local"), `${name}=local\n`);
+      await writeFile(join(envDir, ".env.test.local"), `${name}=mode-local\n`);
+
+      mountMiddleware({ envDir, mode: "test" });
+      expect(process.env[name]).toBe("mode-local");
+    } finally {
+      if (previous === undefined) delete process.env[name];
+      else process.env[name] = previous;
+      await rm(envDir, { recursive: true, force: true });
+    }
+  });
+
   it("delegates GET /com.quartal.plugin/contents.json to the Hono app (serves generated contents.json)", async () => {
     const { handler } = mountMiddleware();
     const { nexted, status, body } = await invoke(handler, "/com.quartal.plugin/contents.json");
