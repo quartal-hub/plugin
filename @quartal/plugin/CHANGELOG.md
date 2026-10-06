@@ -1,5 +1,41 @@
 # @quartal/plugin
 
+## 0.10.0
+
+### Minor Changes
+
+- 2593469: `qrtl.config.ts` `auth` now also takes an object form: `{ mode, issuer?, scope?, audience?, resource? }`.
+  The values are app defaults for the OAuth resolution — per field, the `OAUTH_*` environment
+  variables still override them, and the mode's built-ins fill whatever is left
+  (`quartal-hub` keeps its zero-config test-environment values). As part of this,
+  `quartal-hub` mode now honors `OAUTH_AUDIENCE`, `OAUTH_SCOPE` and `OAUTH_RESOURCE`
+  in addition to `OAUTH_ISSUER`. New exports: `QrtlAuthMode`, `QrtlAuthConfig`,
+  `toQrtlAuthConfig`; `resolveOAuthOptions` and `oauthAuthMiddleware` accept the
+  app defaults as a third parameter.
+- e7949c2: Widgets can call the plugin's own tools: `WidgetBridge.callTool(name, args)` in `@quartal/plugin/widget`
+  and `callTool` on the `useExtApps` handle return the parsed tool result (and reject with the tool's error
+  message), so a widget can drive `@visibility app` tools — selecting an item, paging — without the model.
+- 1ca5f50: Widgets control their theme and display mode. `useExtApps` (and `connectWidget`) take `applyTheme` and
+  `autoResize` options, so a widget with a fixed brand look can leave the host theme off. The bridge and the
+  `useExtApps` handle report `displayMode` and `availableDisplayModes` and offer `requestDisplayMode(mode)`, for
+  example to ask the host for `fullscreen` when a dialog does not fit the inline frame. A host-context change that
+  carries no theme no longer resets the reported theme to light.
+  
+  `Helpers.getEnvVar(name, type)` reads typed environment variables (string, number, boolean; `?` makes one
+  optional), and `astro dev` loads the project's `.env*` files into `process.env` for it.
+  
+  The default `quartal-hub` issuer is `https://iam2026.test.qrtl.com/auth/realms/quartal` (the realm path
+  includes `/auth`).
+
+### Patch Changes
+
+- d6cb364: Logging out of the docs UI now lets you log in as a different user. `GET /oauth/login` accepts
+  `?prompt=login` and forwards the standard OIDC `prompt=login` parameter to the authorization
+  endpoint, forcing the IAM login screen even when an SSO session is still alive. The docs UI sets
+  a session flag on Log out and sends the parameter on the next Log in, so a first login still gets
+  silent SSO. The quartal-hub issuer also moves to `https://test-iam.salaxy.com/auth/realms/salaxy`
+  while the new IAM environment is being set up.
+
 ## 0.9.1
 
 ### Patch Changes
