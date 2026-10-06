@@ -1,5 +1,5 @@
 import { onMounted, type Ref, ref } from "vue";
-import { connectWidget, type WidgetBridge, type WidgetTheme } from "@quartal/plugin/widget";
+import { connectWidget, type WidgetBridge, type WidgetDisplayMode, type WidgetTheme } from "@quartal/plugin/widget";
 
 /** Reactive handle over the MCP Apps host: tool result, error, host theme, and sendMessage. */
 export interface ExtAppsHandle<TResult = unknown> {
@@ -9,6 +9,15 @@ export interface ExtAppsHandle<TResult = unknown> {
   error: Ref<string | null>;
   /** Current host theme. */
   theme: Ref<WidgetTheme>;
+  /** Current display mode of the widget. `inline` until the host says otherwise. */
+  displayMode: Ref<WidgetDisplayMode>;
+  /** The display modes the host allows. Empty when the host does not report them. */
+  availableDisplayModes: Ref<WidgetDisplayMode[]>;
+  /**
+   * Ask the host to change the display mode, e.g. `fullscreen` for a dialog that does not fit the inline frame.
+   * Resolves with the mode the host actually set. Waits for the host handshake.
+   */
+  requestDisplayMode: (mode: WidgetDisplayMode) => Promise<WidgetDisplayMode>;
   /**
    * Append a text message to the host's chat (e.g. a suggested follow-up tool call).
    * No-op until the host handshake completes.
@@ -29,6 +38,14 @@ export interface UseExtAppsOptions<TResult = unknown> {
   version?: string;
   /** Optional transform from the parsed JSON tool result to the page's payload type. */
   parse?: (raw: unknown) => TResult;
+  /**
+   * Apply the host theme to `<html data-theme>` and `color-scheme`. Default `true`. Turn it off for a widget
+   * whose look is fixed (a brand skin), so a dark host does not switch its form controls and scrollbars to dark.
+   * `theme` is still reported.
+   */
+  applyTheme?: boolean;
+  /** Report the widget's size to the host as it changes, so the frame fits the content. Default `true`. */
+  autoResize?: boolean;
 }
 
 /**
@@ -41,6 +58,8 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
   const result = ref<TResult | null>(null) as Ref<TResult | null>;
   const error = ref<string | null>(null);
   const theme = ref<WidgetTheme>("light");
+  const displayMode = ref<WidgetDisplayMode>("inline");
+  const availableDisplayModes = ref<WidgetDisplayMode[]>([]);
   let bridge: WidgetBridge<TResult> | null = null;
   let markConnected: () => void;
   const connected = new Promise<void>((resolve) => { markConnected = resolve; });
@@ -51,12 +70,18 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
         name: opts.name,
         version: opts.version,
         parse: opts.parse,
+        applyTheme: opts.applyTheme,
+        autoResize: opts.autoResize,
         onResult: (r) => {
           result.value = r;
           error.value = null;
         },
         onError: (m) => { error.value = m; },
         onTheme: (t) => { theme.value = t; },
+        onDisplayMode: (mode, available) => {
+          displayMode.value = mode;
+          availableDisplayModes.value = available;
+        },
       });
       markConnected();
     } catch {
@@ -77,5 +102,10 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
     return await bridge!.callTool<T>(name, args);
   };
 
-  return { result, error, theme, sendMessage, callTool };
+  const requestDisplayMode = async (mode: WidgetDisplayMode): Promise<WidgetDisplayMode> => {
+    await connected;
+    return await bridge!.requestDisplayMode(mode);
+  };
+
+  return { result, error, theme, displayMode, availableDisplayModes, requestDisplayMode, sendMessage, callTool };
 }

@@ -1,5 +1,6 @@
+import { existsSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import type { Hono } from "hono";
@@ -126,6 +127,13 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
   return {
     name: "qrtl-plugin-dev-server",
     configureServer(server) {
+      const envDir = server.config?.envDir ?? options.cwd;
+      const mode = server.config?.mode ?? "development";
+      for (const file of [`.env.${mode}.local`, ".env.local", `.env.${mode}`, ".env"]) {
+        const path = join(envDir, file);
+        if (existsSync(path)) process.loadEnvFile(path);
+      }
+
       if (!server.middlewares) return;
 
       // The Hono app snapshots the generated artifacts (contents.json, mcp-tools.json,

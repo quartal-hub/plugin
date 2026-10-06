@@ -1,1 +1,1 @@
-export * from "./HelloWorld.ts";
+export * from "./info.ts";

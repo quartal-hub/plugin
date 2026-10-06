@@ -21,6 +21,10 @@ export type ConnectMiddleware = (
 
 /** The slice of Vite's dev server these plugins touch (the file watcher + the connect middleware stack). */
 export interface ViteDevServerLike {
+  config?: {
+    envDir?: string;
+    mode?: string;
+  };
   watcher: {
     add(paths: string | string[]): void;
     on(event: "add" | "change" | "unlink", listener: (path: string) => void): void;

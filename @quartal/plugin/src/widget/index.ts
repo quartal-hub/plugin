@@ -13,6 +13,9 @@ import { App, applyDocumentTheme } from "@modelcontextprotocol/ext-apps";
 /** Host theme reported by the MCP client. */
 export type WidgetTheme = "light" | "dark";
 
+/** How the host lays out the widget: in the conversation, over the whole chat, or picture-in-picture. */
+export type WidgetDisplayMode = "inline" | "fullscreen" | "pip";
+
 /** Options for {@link connectWidget}. */
 export interface ConnectWidgetOptions<TResult = unknown> {
   /** App name reported to the host in the `ui/initialize` handshake. */
@@ -34,6 +37,11 @@ export interface ConnectWidgetOptions<TResult = unknown> {
   onError?: (message: string) => void;
   /** Called with the host theme on connect and whenever it changes. */
   onTheme?: (theme: WidgetTheme) => void;
+  /**
+   * Called with the current display mode and the modes the host allows, on connect and whenever
+   * either changes. A host that reports neither gives `inline` and an empty list.
+   */
+  onDisplayMode?: (displayMode: WidgetDisplayMode, available: WidgetDisplayMode[]) => void;
 }
 
 /** A connected widget: current state plus the underlying {@link App} for advanced host calls. */
@@ -44,6 +52,17 @@ export interface WidgetBridge<TResult = unknown> {
   error: string | null;
   /** Current host theme. */
   theme: WidgetTheme;
+  /** Current display mode. `inline` until the host says otherwise. */
+  displayMode: WidgetDisplayMode;
+  /** The display modes the host allows. Empty when the host does not report them (then only `inline` can be assumed). */
+  availableDisplayModes: WidgetDisplayMode[];
+  /**
+   * Asks the host to change the display mode, for example `fullscreen` for a dialog that does not fit
+   * the inline frame. Resolves with the mode the host actually set, which can differ from the requested one;
+   * a mode the host does not list in {@link availableDisplayModes} is not requested and the current mode is returned.
+   * @param mode The wanted display mode.
+   */
+  requestDisplayMode: (mode: WidgetDisplayMode) => Promise<WidgetDisplayMode>;
   /** The underlying `@modelcontextprotocol/ext-apps` app (e.g. for `callServerTool`, `sendMessage`). */
   app: App;
   /**
@@ -133,7 +152,34 @@ export async function connectWidget<TResult = unknown>(
     return parsed as T;
   };
 
-  const bridge: WidgetBridge<TResult> = { result: null, error: null, theme: "light", app, callTool };
+  const requestDisplayMode = async (mode: WidgetDisplayMode): Promise<WidgetDisplayMode> => {
+    if (mode === bridge.displayMode) return mode;
+    if (!bridge.availableDisplayModes.includes(mode)) return bridge.displayMode;
+    const granted = await app.requestDisplayMode({ mode });
+    setDisplayMode(granted.mode, bridge.availableDisplayModes);
+    return bridge.displayMode;
+  };
+
+  const bridge: WidgetBridge<TResult> = {
+    result: null,
+    error: null,
+    theme: "light",
+    displayMode: "inline",
+    availableDisplayModes: [],
+    requestDisplayMode,
+    app,
+    callTool,
+  };
+
+  const setDisplayMode = (displayMode: WidgetDisplayMode, available: WidgetDisplayMode[]): void => {
+    bridge.displayMode = displayMode;
+    bridge.availableDisplayModes = available;
+    options.onDisplayMode?.(displayMode, available);
+  };
+
+  const readDisplayMode = (ctx: { displayMode?: WidgetDisplayMode; availableDisplayModes?: WidgetDisplayMode[] } | undefined): void => {
+    setDisplayMode(ctx?.displayMode ?? "inline", ctx?.availableDisplayModes ?? []);
+  };
 
   const setTheme = (theme: WidgetTheme): void => {
     bridge.theme = theme;
@@ -191,12 +237,17 @@ export async function connectWidget<TResult = unknown>(
     setError(params.reason ? `Tool execution cancelled: ${params.reason}` : "Tool execution cancelled.");
   });
 
-  app.addEventListener("hostcontextchanged", (ctx: { theme?: unknown } | undefined) => {
-    setTheme(ctx?.theme === "dark" ? "dark" : "light");
+  app.addEventListener("hostcontextchanged", (ctx: { theme?: unknown; displayMode?: WidgetDisplayMode; availableDisplayModes?: WidgetDisplayMode[] } | undefined) => {
+    if (ctx?.theme !== undefined) setTheme(ctx.theme === "dark" ? "dark" : "light");
+    // A change event carries only what changed: keep the other half of the display state.
+    if (ctx?.displayMode !== undefined || ctx?.availableDisplayModes !== undefined) {
+      setDisplayMode(ctx.displayMode ?? bridge.displayMode, ctx.availableDisplayModes ?? bridge.availableDisplayModes);
+    }
   });
 
   await app.connect();
   setTheme(app.getHostContext()?.theme === "dark" ? "dark" : "light");
+  readDisplayMode(app.getHostContext());
   return bridge;
 }
 
