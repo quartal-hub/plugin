@@ -106,6 +106,29 @@ Input schemas are **strict**: `additionalProperties: false` and every non-option
 listed in `required`. This is intentional — the agent constructs the input, and a strict schema
 steers it to the exact shape your method expects.
 
+## Where the types live
+
+Keep the types of your tools in `src/tools/` — by convention in a `model/` folder with an `index.ts` barrel
+— and re-export them from `src/tools/mod.ts` next to the tool classes:
+
+```ts
+// file: src/tools/mod.ts
+export * from "./model/index.ts";   // the input, output and shared types
+export * from "./Invoices.ts";      // the tool classes
+```
+
+The generator starts from the **first parameter and the return type of each tool method** and follows
+every type they refer to — property types, array items, `extends` chains, unions — however deep, and
+describes each one with its JSDoc. A type is found wherever it is declared: in `src/tools/`, elsewhere in your
+project, or in a package. Types exported from `mod.ts` are listed as the plugin's own types in the docs site;
+the others are listed with the imported types. In both cases the schema in `open-api.json` and in the MCP
+tool definitions describes them in full.
+
+What the generator reads is the **signature**: a type that is only used inside a method body is not followed, and a
+type it cannot resolve (`any`, `unknown`, a type from a package without declarations) becomes `{}`. To check
+the result, open the tool in the docs site at `/` or read `/open-api.json`: a property with an empty schema (no
+type and no description) means that the type was not resolved.
+
 ## Output types
 
 The return type produces the tool's `outputSchema`. A tool result is always a JSON **object**; if
@@ -185,6 +208,9 @@ model should never call directly — keeping the model's tool list small and foc
   the agent reads when deciding how to call your tool.
 - Use string literal unions (`"fi" | "sv" | "en"`) for closed value sets — they become `enum`s
   the agent cannot get wrong.
+- Export the types of tool inputs and outputs from `src/tools/mod.ts` (see
+  [Where the types live](#where-the-types-live)) and look at the generated schema once: an empty `{}` means that a
+  type was not resolved.
 - Mark truly optional properties with `?` — everything else becomes `required` in the input
   schema.
 - Use `@example` on non-obvious properties; agents follow examples closely.
