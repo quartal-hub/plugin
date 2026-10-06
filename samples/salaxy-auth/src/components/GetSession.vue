@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { Dates } from "@salaxy/core";
 import type { UserSession } from "@salaxy/core";
 import { useExtApps } from "@quartal/plugin-vue";
+import CurrentUser from "./CurrentUser.vue";
 
 const { result: session, error } = useExtApps<UserSession>({
   name: "SalaxySessionApp",
@@ -21,6 +22,7 @@ const formatDate = (value?: string): string => (value ? Dates.format(value) : "â
 <template>
   <div class="card">
     <div class="card-body">
+      <CurrentUser />
       <div v-if="session">
         <div class="d-flex align-items-center mb-3">
           <img

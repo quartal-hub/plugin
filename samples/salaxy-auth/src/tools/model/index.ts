@@ -5,3 +5,7 @@ export * from "./SimpleCalcRow.ts";
 export * from "./SimpleCalculation.ts";
 export * from "./SimpleEmploymentRelation.ts";
 export * from "./SimpleSalaryCalculationInput.ts";
+export * from "./CompanySelection.ts";
+export * from "./CurrentUser.ts";
+export * from "./SalaxyCompany.ts";
+export * from "./SelectCompanyInput.ts";

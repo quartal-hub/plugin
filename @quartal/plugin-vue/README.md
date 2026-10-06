@@ -30,3 +30,4 @@ const { result, error, theme, sendMessage } = useExtApps<MyPayload>({
 - `error` — tool execution errors (`isError: true`), cancellations, and parse failures.
 - `theme` — the host theme (`"light"` / `"dark"`), also applied to `<html data-theme>`.
 - `sendMessage(text)` — append a text message to the host's chat.
+- `callTool(name, args)` — call one of the plugin's own tools (including `@visibility app` tools) and get its parsed result; rejects with the tool's error message. Waits for the host handshake.

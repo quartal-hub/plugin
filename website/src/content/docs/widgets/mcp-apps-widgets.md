@@ -88,6 +88,19 @@ async fetchInvoiceRows(input: FetchInvoiceRowsInput): Promise<InvoiceRowsPage> {
 
 See [`@visibility`](/docs/tools/creating-tools#visibility) in the tool-authoring guide.
 
+## Calling tools from a widget
+
+A widget can call any of the plugin's tools — including `@visibility app` ones — and act on the result,
+for example to select an item or load another page. In Vue, `useExtApps` returns a `callTool` function;
+framework-agnostic code uses `callTool` on the bridge returned by `connectWidget`:
+
+```ts
+const { callTool } = useExtApps({ name: "InvoiceList" });
+const page = await callTool<InvoiceRowsPage>("fetchInvoiceRows", { page: 2 });
+```
+
+`callTool` resolves with the parsed tool result and rejects with the tool's error message.
+
 ## Testing widgets
 
 We recommend [MCPJam](https://www.mcpjam.com/) for local widget testing — point it at
