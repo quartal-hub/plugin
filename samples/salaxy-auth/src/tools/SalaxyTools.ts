@@ -130,7 +130,7 @@ export class SalaxyTools {
   }
 
   /**
-   * Fetches the Salaxy session. Contains the user account (company) and credentials (user) data, but also the most important settings.
+   * Fetches the Salaxy session of the selected company (see getCompanies / selectCompany). Contains the user account (company) and credentials (user) data, but also the most important settings.
    * You can find insurance and pension in the settings.
    * @param _input No parameters are needed.
    * @param ctx The context containing the Salaxy session.

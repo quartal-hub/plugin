@@ -14,6 +14,11 @@ export interface ExtAppsHandle<TResult = unknown> {
    * No-op until the host handshake completes.
    */
   sendMessage: (text: string) => Promise<void>;
+  /**
+   * Call one of the plugin's own tools (including `@visibility app` tools) and get its parsed result.
+   * Waits for the host handshake; rejects when the tool fails or there is no host.
+   */
+  callTool: <T = unknown>(name: string, args?: Record<string, unknown>) => Promise<T>;
 }
 
 /** Options for {@link useExtApps}. */
@@ -37,6 +42,8 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
   const error = ref<string | null>(null);
   const theme = ref<WidgetTheme>("light");
   let bridge: WidgetBridge<TResult> | null = null;
+  let markConnected: () => void;
+  const connected = new Promise<void>((resolve) => { markConnected = resolve; });
 
   onMounted(async () => {
     try {
@@ -51,6 +58,7 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
         onError: (m) => { error.value = m; },
         onTheme: (t) => { theme.value = t; },
       });
+      markConnected();
     } catch {
       // No MCP host in a plain browser preview — refs keep their initial values.
     }
@@ -64,5 +72,10 @@ export function useExtApps<TResult = unknown>(opts: UseExtAppsOptions<TResult>):
     await bridge.app.sendMessage({ role: "user", content: [{ type: "text", text }] });
   };
 
-  return { result, error, theme, sendMessage };
+  const callTool = async <T = unknown>(name: string, args?: Record<string, unknown>): Promise<T> => {
+    await connected;
+    return await bridge!.callTool<T>(name, args);
+  };
+
+  return { result, error, theme, sendMessage, callTool };
 }

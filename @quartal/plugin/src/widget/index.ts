@@ -46,6 +46,14 @@ export interface WidgetBridge<TResult = unknown> {
   theme: WidgetTheme;
   /** The underlying `@modelcontextprotocol/ext-apps` app (e.g. for `callServerTool`, `sendMessage`). */
   app: App;
+  /**
+   * Calls one of the plugin's own tools (including `@visibility app` tools) through the host and returns
+   * its parsed result (`structuredContent`-first, JSON text fallback). Rejects with the tool's error message
+   * when the tool reports an execution error.
+   * @param name The tool id.
+   * @param args The tool's input object.
+   */
+  callTool: <T = unknown>(name: string, args?: Record<string, unknown>) => Promise<T>;
 }
 
 /** The slice of the MCP `CallToolResult` the bridge reads from a tool-result notification. */
@@ -113,7 +121,19 @@ export async function connectWidget<TResult = unknown>(
     { autoResize: options.autoResize ?? true },
   );
 
-  const bridge: WidgetBridge<TResult> = { result: null, error: null, theme: "light", app };
+  const callTool = async <T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> => {
+    const res = await app.callServerTool({ name, arguments: args });
+    if (res.isError) throw new Error(executionErrorMessage(res.content));
+    if (res.structuredContent !== undefined) return res.structuredContent as T;
+    const text = firstTextContent(res.content);
+    if (text === undefined) throw new Error(`Tool "${name}" returned no content.`);
+    const parsed: unknown = JSON.parse(text);
+    const toolError = errorShapedMessage(parsed);
+    if (toolError !== undefined) throw new Error(toolError);
+    return parsed as T;
+  };
+
+  const bridge: WidgetBridge<TResult> = { result: null, error: null, theme: "light", app, callTool };
 
   const setTheme = (theme: WidgetTheme): void => {
     bridge.theme = theme;

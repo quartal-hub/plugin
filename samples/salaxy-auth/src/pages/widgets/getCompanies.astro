@@ -1,0 +1,7 @@
+---
+import WidgetLayout from "../../layouts/WidgetLayout.astro";
+import Widget from "../../components/Companies.vue";
+---
+<WidgetLayout title="Select company">
+  <Widget client:only="vue" />
+</WidgetLayout>
