@@ -37,6 +37,9 @@
         },
         "additionalProperties": true,
         "description": "The sum of the two numbers."
+      },
+      "annotations": {
+        "readOnlyHint": true
       }
     },
     {

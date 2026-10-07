@@ -247,6 +247,8 @@ function renderAgentsMd(options: CreatePluginOptions): string {
     "  from `src/tools/mod.ts`. The generator follows every type that a tool method's first parameter and",
     "  return type reach and describes it with its JSDoc; a type it cannot resolve becomes `{}`, so check",
     "  the schema at `/open-api.json` after adding a type.",
+    "- **Tools that only read** are marked `@readOnly` in their JSDoc (`@destructive`, `@idempotent` and",
+    "  `@openWorld` also exist), so MCP hosts can run them without asking the user to approve each call.",
     "- **Schemas are generated** from the TypeScript types and JSDoc — including tags like",
     "  `@format`, `@example` and `@visibility`. Never hand-write JSON Schema and never add a schema",
     "  library (zod etc.); improve the types and JSDoc instead.",

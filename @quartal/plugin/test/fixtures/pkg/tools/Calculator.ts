@@ -8,6 +8,7 @@ export class Calculator {
    * Add two numbers. This example uses inline / anonymous types.
    * @param input - The parameters.
    * @returns The sum of the two numbers.
+   * @readOnly
    */
   static add(input: {
     /** The first number to add */
