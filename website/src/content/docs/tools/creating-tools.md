@@ -166,6 +166,8 @@ agent — they are how the agent decides *whether* and *how* to call your tool.
 | `@param` | Description of the input object itself (first parameter). | `@param input The invoice fields.` |
 | `@returns` | Description of the output schema. | `@returns The created invoice.` |
 | `@visibility` | Who may call the tool — see below. | `@visibility app` |
+| `@readOnly` | The tool changes nothing — see [Read-only and other hints](#read-only-and-other-hints). | `@readOnly` |
+| `@destructive`, `@idempotent`, `@openWorld` | Further behavior hints for the host — same section. | `@destructive false` |
 
 ### Tags on input/output properties
 
@@ -202,6 +204,40 @@ clients as `_meta.ui.visibility` on the tool.
 Typical use: a **widget helper tool** (`@visibility app`) that returns fine-grained UI data the
 model should never call directly — keeping the model's tool list small and focused.
 
+### Read-only and other hints
+
+MCP hosts decide whether to ask the user before a tool runs from the tool's **annotations**. A tool that says nothing
+is treated as one that may change or delete data, so a host such as Claude asks for approval on every call — slow
+when an agent reads many records. Declare what a tool does with JSDoc tags on the method:
+
+| Tag | MCP annotation | Meaning |
+|---|---|---|
+| `@readOnly` | `readOnlyHint` | The tool does not change anything. Hosts can run it without asking. |
+| `@destructive` | `destructiveHint` | The tool may delete or overwrite data (the default assumption when it is not read-only). `@destructive false` says it only adds. |
+| `@idempotent` | `idempotentHint` | Calling it again with the same input has no further effect. |
+| `@openWorld` | `openWorldHint` | The tool reaches outside the plugin's own data, e.g. the open internet. `@openWorld false` says it does not. |
+
+A tag without a value means true; `false` sets the hint to false; anything else is ignored. The hints are advertised
+in `tools/list` as `annotations`. They are hints: how a host reacts (for example by asking only for the tools that
+are not read-only) is up to the host, and a host never has to trust them.
+
+```ts
+/**
+ * Lists the invoices of a customer.
+ * @readOnly
+ */
+async listInvoices(input: ListInvoicesInput): Promise<InvoiceList> { … }
+
+/**
+ * Replaces the due date of an invoice.
+ * @idempotent
+ */
+async setDueDate(input: SetDueDateInput): Promise<Invoice> { … }
+```
+
+Mark every tool that only reads as `@readOnly`; leave the tools that write without a tag or give them the hints
+that fit.
+
 ## Practical tips
 
 - Write a JSDoc description for **every** method and property — descriptions are the main thing
@@ -214,4 +250,5 @@ model should never call directly — keeping the model's tool list small and foc
 - Mark truly optional properties with `?` — everything else becomes `required` in the input
   schema.
 - Use `@example` on non-obvious properties; agents follow examples closely.
+- Mark tools that only read with `@readOnly`, so hosts do not ask the user to approve every call.
 - Keep the model's tool list small: mark widget-only helpers with `@visibility app`.

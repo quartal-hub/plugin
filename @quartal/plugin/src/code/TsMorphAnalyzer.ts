@@ -16,7 +16,7 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolVisibility } from "../model/index.ts";
+import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpToolVisibility } from "../model/index.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -225,6 +225,8 @@ export class TsMorphAnalyzer {
     if (summary) fn.summary = summary;
     const visibility = visibilityTag(method);
     if (visibility) fn.visibility = visibility;
+    const annotations = annotationTags(method);
+    if (annotations) fn.annotations = annotations;
     return fn;
   }
 
@@ -491,6 +493,29 @@ function visibilityTag(node: JSDocableNode): McpToolVisibility[] | undefined {
   const words = tagText(t).split(/[\s,]+/).map((w) => w.trim().toLowerCase()).filter(Boolean);
   const values = VISIBILITY_VALUES.filter((v) => words.includes(v));
   return values.length ? values : undefined;
+}
+/** JSDoc tag name to the MCP annotation it sets. */
+const ANNOTATION_TAGS: Record<string, keyof McpToolAnnotations> = {
+  readOnly: "readOnlyHint",
+  destructive: "destructiveHint",
+  idempotent: "idempotentHint",
+  openWorld: "openWorldHint",
+};
+/**
+ * Reads the `@readOnly`, `@destructive`, `@idempotent` and `@openWorld` JSDoc tags into MCP tool annotations. A tag
+ * without a value (or with `true`) sets its hint to true; `false` sets it to false. Any other value is ignored.
+ * Yields `undefined` when no such tag is present.
+ */
+function annotationTags(node: JSDocableNode): McpToolAnnotations | undefined {
+  const out: McpToolAnnotations = {};
+  for (const t of tags(node)) {
+    const key = ANNOTATION_TAGS[t.getTagName()];
+    if (!key) continue;
+    const value = tagText(t).trim().toLowerCase();
+    if (value === "" || value === "true") out[key] = true;
+    else if (value === "false") out[key] = false;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 function exampleTag(node: JSDocableNode): unknown | undefined {
   const t = tags(node).find((x) => x.getTagName() === "example");

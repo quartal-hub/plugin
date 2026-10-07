@@ -81,6 +81,9 @@ describe("PluginMcpHelper — MCP over Streamable HTTP (SDK client)", () => {
       const multiplyTool = list.tools.find((t) => t.name === multiplyToolId);
       expect((multiplyTool?._meta as { ui?: { visibility?: string[] } } | undefined)?.ui?.visibility).toEqual(["app"]);
       expect(addTool!._meta).toBeUndefined();
+      // `@readOnly` on Calculator.add is advertised as the standard tool annotation; an untagged tool has none.
+      expect(addTool!.annotations).toEqual({ readOnlyHint: true });
+      expect(multiplyTool?.annotations).toBeUndefined();
 
       // The SDK client validates structuredContent against the advertised outputSchema, so a
       // successful call also proves the schema and the wrapped `{ value }` result agree.

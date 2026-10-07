@@ -59,6 +59,7 @@ export type {
   McpCatalogTool,
   McpPromptDescriptor,
   McpPromptsDocument,
+  McpToolAnnotations,
   McpToolDescriptor,
   McpToolVisibility,
   PluginAgentSummary,

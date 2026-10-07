@@ -5,6 +5,22 @@
  */
 export type McpToolVisibility = "model" | "app";
 
+/**
+ * Hints about how a tool behaves (MCP `tools/list` `annotations`), set with the `@readOnly`, `@destructive`,
+ * `@idempotent` and `@openWorld` JSDoc tags. Hosts use them to decide whether to ask the user before a call:
+ * a tool marked read-only can run without an approval prompt.
+ */
+export interface McpToolAnnotations {
+  /** The tool does not change anything (`@readOnly`). */
+  readOnlyHint?: boolean;
+  /** The tool may delete or overwrite data, as opposed to only adding (`@destructive`). Meaningful when not read-only. */
+  destructiveHint?: boolean;
+  /** Calling the tool again with the same input has no further effect (`@idempotent`). Meaningful when not read-only. */
+  idempotentHint?: boolean;
+  /** The tool reaches outside the plugin's own closed world, e.g. the open internet (`@openWorld`). */
+  openWorldHint?: boolean;
+}
+
 /** Execution-side descriptor for a single MCP tool (one entry per class method). */
 export interface McpToolDescriptor {
   /** MCP tool name advertised in `tools/list` (sanitized, unique within the plugin). */
@@ -25,6 +41,8 @@ export interface McpToolDescriptor {
   outputSchema?: Record<string, unknown>;
   /** Visibility scopes from the `@visibility` JSDoc tag, advertised as `_meta.ui.visibility`. */
   visibility?: McpToolVisibility[];
+  /** Behavior hints from the `@readOnly`, `@destructive`, `@idempotent` and `@openWorld` JSDoc tags, advertised as `annotations`. */
+  annotations?: McpToolAnnotations;
 }
 
 /** Root object for `mcp-tools.json`. */

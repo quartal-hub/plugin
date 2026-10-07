@@ -43,6 +43,7 @@ export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
           inputSchema: buildToolInputSchema(fn.parameters, typeIndex),
           ...(outputSchema ? { outputSchema } : {}),
           ...(fn.visibility ? { visibility: fn.visibility } : {}),
+          ...(fn.annotations ? { annotations: fn.annotations } : {}),
         });
         if (!functionNameUsed) usedNames.add(fn.name);
       }
