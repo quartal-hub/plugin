@@ -43,7 +43,6 @@ export function buildPluginArtifacts(
   manifest: PluginManifest,
   options?: {
     basePath?: string;
-    defaultMethod?: "get" | "post";
     widgets?: WidgetCatalogEntry[];
     /** Analyzed code files from the plugin's `prompts/` entry (kept out of tools/REST artifacts). */
     promptFiles?: CodeFile[];

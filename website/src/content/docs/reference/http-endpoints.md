@@ -44,7 +44,7 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 
 | Endpoint | Returns |
 |---|---|
-| `POST /api/<Class>/<method>` | Executes one tool. The request body is validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `500` on execution errors. Every operation is described in `open-api.json`. |
+| `GET`, `POST`, `PUT` or `DELETE /api/<class>/…` | Executes one tool. The route follows from the class and method names (`Invoices.get({ id })` → `GET /api/invoices/{id}`, `HelloWorld.sayHello` → `POST /api/hello-world/say-hello`) or from a `@rest` tag — see [REST routes](/docs/tools/creating-tools#rest-routes). Path parameters, query string and JSON body are validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `500` on execution errors. Every operation is described in `open-api.json`. |
 
 ## Skills
 

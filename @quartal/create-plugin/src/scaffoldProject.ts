@@ -198,7 +198,7 @@ The plugin runs on <http://localhost:4321>:
 |---|---|
 | \`/\` | Documentation site for your plugin |
 | \`/mcp\` | The MCP server — connect any MCP client here |
-| \`/api/<Class>/<method>\` | The generated OpenAPI / REST actions |
+| \`/api/<class>/...\` | The generated OpenAPI / REST operations (\`GET /api/invoices/{id}\`, \`POST /api/hello-world/say-hello\`, ...) |
 | \`/plugin.json\` | The Agent Plugins manifest (\`/plugin.zip\` is the installable package) |
 | \`/widgets/<toolId>\` | Widget pages |
 | \`/skills/catalog.json\` | The Agent Skills catalog |
@@ -236,7 +236,7 @@ function renderAgentsMd(options: CreatePluginOptions): string {
     "- `pnpm build && node ./dist/server/entry.mjs` — production build and run",
     "",
     "The server serves the plugin's docs site (with tool and widget testers) at `/`, the MCP server",
-    "at `/mcp`, REST actions at `/api/<Class>/<method>`, widget pages at `/widgets/<toolId>` and the",
+    "at `/mcp`, REST operations at `/api/<class>/...` (see the Tools guide for the naming convention), widget pages at `/widgets/<toolId>` and the",
     "Agent Plugins manifest at `/plugin.json`.",
     "",
     "## Conventions",
@@ -249,6 +249,9 @@ function renderAgentsMd(options: CreatePluginOptions): string {
     "  the schema at `/open-api.json` after adding a type.",
     "- **Tools that only read** are marked `@readOnly` in their JSDoc (`@destructive`, `@idempotent` and",
     "  `@openWorld` also exist), so MCP hosts can run them without asking the user to approve each call.",
+    "- **REST routes follow the method name**: `get`/`list`/`find` → GET, `create` → POST, `update` → PUT,",
+    "  `delete`/`remove` → DELETE, anything else → POST; a required `id` input becomes `/{id}`. GET and",
+    "  DELETE inputs must be string/number/boolean properties. `@rest [METHOD] [path]` overrides the route.",
     "- **Schemas are generated** from the TypeScript types and JSDoc — including tags like",
     "  `@format`, `@example` and `@visibility`. Never hand-write JSON Schema and never add a schema",
     "  library (zod etc.); improve the types and JSDoc instead.",

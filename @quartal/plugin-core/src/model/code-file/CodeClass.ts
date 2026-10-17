@@ -1,5 +1,6 @@
 import type { CodeFunction } from "./CodeFunction.ts";
 import type { CodePropOrParam } from "./CodePropOrParam.ts";
+import type { RestClassDeclaration } from "./RestRoute.ts";
 
 /** A class parsed from a CodeFile (has methods). Interfaces and classes without methods are CodeType. */
 export interface CodeClass {
@@ -17,4 +18,7 @@ export interface CodeClass {
 
   /** Names of interfaces that the class implements. */
   implements: string[];
+
+  /** Class path on the REST API from the `@rest` JSDoc tag (replaces the kebab-cased class name). */
+  rest?: RestClassDeclaration;
 }

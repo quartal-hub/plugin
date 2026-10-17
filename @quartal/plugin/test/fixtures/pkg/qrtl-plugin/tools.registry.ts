@@ -2,11 +2,13 @@
 
 import * as m0 from "../tools/Calculator.ts";
 import * as m1 from "../tools/HelloWorld.ts";
-import * as m2 from "../tools/TypesTester.ts";
+import * as m2 from "../tools/Invoices.ts";
+import * as m3 from "../tools/TypesTester.ts";
 
 /** Static tool-module registry keyed by file name (basename without extension). */
 export const toolModules: Record<string, Record<string, unknown>> = {
   "Calculator": m0 as unknown as Record<string, unknown>,
   "HelloWorld": m1 as unknown as Record<string, unknown>,
-  "TypesTester": m2 as unknown as Record<string, unknown>,
+  "Invoices": m2 as unknown as Record<string, unknown>,
+  "TypesTester": m3 as unknown as Record<string, unknown>,
 };

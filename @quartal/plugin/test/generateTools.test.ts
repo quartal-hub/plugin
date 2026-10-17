@@ -35,8 +35,8 @@ describe("generateTools (end-to-end, ts-morph analyzer)", () => {
 
       // open-api.json: a REST path per tool method.
       const openApi = await readJson("open-api.json") as { paths: Record<string, unknown> };
-      expect(Object.keys(openApi.paths)).toContain("/api/Calculator/add");
-      expect(Object.keys(openApi.paths)).toContain("/api/HelloWorld/sayHello");
+      expect(Object.keys(openApi.paths)).toContain("/api/calculator/add");
+      expect(Object.keys(openApi.paths)).toContain("/api/hello-world/say-hello");
 
       // types.json: named tool types resolved.
       const types = await readJson("types.json") as { name: string }[];

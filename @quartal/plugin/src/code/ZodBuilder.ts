@@ -6,6 +6,11 @@ import { buildTypeIndex } from "./buildTypeIndex.ts";
 export interface FunctionZodDefinition {
   /** Schema for the single object parameter (validates request body). */
   input: z.ZodType<Record<string, unknown>>;
+  /**
+   * The same input with `number` and `boolean` properties also accepting their text form, for
+   * values that arrive as strings: query-string and path parameters.
+   */
+  inputFromText: z.ZodType<Record<string, unknown>>;
   /** Schema for the return value. */
   returns: z.ZodType<unknown>;
   /** Function metadata. */
@@ -14,6 +19,25 @@ export interface FunctionZodDefinition {
   filePath: string;
   /** Class name if method, else undefined for standalone. */
   className?: string;
+}
+
+/** `"42"` → `42`; a non-numeric string passes through for `z.number()` to reject. An empty string reads as "not given". */
+function numberFromText(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const trimmed = v.trim();
+  if (trimmed === "") return undefined;
+  const n = Number(trimmed);
+  return Number.isNaN(n) ? v : n;
+}
+
+/** `"true"` / `"1"` → `true`, `"false"` / `"0"` → `false`; anything else passes through for `z.boolean()` to reject. */
+function booleanFromText(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const trimmed = v.trim().toLowerCase();
+  if (trimmed === "") return undefined;
+  if (trimmed === "true" || trimmed === "1") return true;
+  if (trimmed === "false" || trimmed === "0") return false;
+  return v;
 }
 
 /** All type schemas keyed by type name. */
@@ -133,6 +157,7 @@ export class ZodBuilder {
 
           result.push({
             input: inputSchema as z.ZodType<Record<string, unknown>>,
+            inputFromText: this.paramsToZod(fn.parameters, true),
             returns: returnsSchema,
             fn,
             filePath,
@@ -195,7 +220,7 @@ export class ZodBuilder {
     return this.getZodForType("UnknownValue");
   }
 
-  private codeTypeToZod(ct: CodeType): z.ZodType<unknown> {
+  private codeTypeToZod(ct: CodeType, fromText = false): z.ZodType<unknown> {
     if (ct.enum && ct.enum.length > 0) {
       return z.enum(ct.enum as [string, ...string[]]);
     }
@@ -206,14 +231,19 @@ export class ZodBuilder {
         if (base) collect(base);
       }
       for (const prop of c.properties) {
-        shape[prop.name] = this.propToZod(prop);
+        shape[prop.name] = this.propToZod(prop, fromText);
       }
     };
     collect(ct);
     return z.object(shape);
   }
 
-  private paramsToZod(parameters: CodeFunction["parameters"]): z.ZodType<Record<string, unknown>> {
+  /**
+   * Zod for the function input. With `fromText`, number and boolean properties also accept their
+   * text form (query string, path parameters); the schema is then built fresh, outside the type
+   * cache, so the body schema keeps its plain types.
+   */
+  private paramsToZod(parameters: CodeFunction["parameters"], fromText = false): z.ZodType<Record<string, unknown>> {
     // Convention in this repo: methods take a single object parameter (name doesn't matter: params/input/etc).
     // If there's exactly one parameter and it resolves to an object schema, validate the body directly (unwrapped).
     if (parameters.length === 1) {
@@ -222,24 +252,24 @@ export class ZodBuilder {
       if (typeName && this.typeMap.has(typeName)) {
         const codeType = this.typeMap.get(typeName)!;
         if ("properties" in codeType && Array.isArray(codeType.properties)) {
-          const schema = this.propToZod(only);
+          const schema = fromText ? this.codeTypeToZod(codeType, true) : this.propToZod(only);
           return schema as unknown as z.ZodType<Record<string, unknown>>;
         }
       }
-      const schema = this.propToZod({ ...only, name: "input" });
+      const schema = this.propToZod({ ...only, name: "input" }, fromText);
       if (schema instanceof z.ZodObject) {
         return schema as unknown as z.ZodType<Record<string, unknown>>;
       }
     }
     const shape: Record<string, z.ZodType<unknown>> = {};
     for (const p of parameters) {
-      shape[p.name] = this.propToZod(p);
+      shape[p.name] = this.propToZod(p, fromText);
     }
     return z.object(shape);
   }
 
-  private propToZod(p: CodePropOrParam): z.ZodType<unknown> {
-    let schema = this.codeOrSystemTypeToZod(p.type);
+  private propToZod(p: CodePropOrParam, fromText = false): z.ZodType<unknown> {
+    let schema = this.codeOrSystemTypeToZod(p.type, fromText);
     if (p.format) {
       schema = this.applyFormat(schema, p.format);
     }
@@ -291,13 +321,13 @@ export class ZodBuilder {
     return schema;
   }
 
-  private codeOrSystemTypeToZod(t: CodeOrSystemType): z.ZodType<unknown> {
+  private codeOrSystemTypeToZod(t: CodeOrSystemType, fromText = false): z.ZodType<unknown> {
     if (typeof t === "string") {
-      return this.stringTypeToZod(t);
+      return this.stringTypeToZod(t, fromText);
     }
     if (typeof t === "object" && t !== null) {
       if ("name" in t && "properties" in t) {
-        return this.codeTypeToZod(t as CodeType);
+        return this.codeTypeToZod(t as CodeType, fromText);
       }
       if ("items" in t) {
         const items = this.codeOrSystemTypeToZod((t as CodeArrayType).items);
@@ -307,11 +337,11 @@ export class ZodBuilder {
     return z.unknown();
   }
 
-  private stringTypeToZod(s: string): z.ZodType<unknown> {
+  private stringTypeToZod(s: string, fromText = false): z.ZodType<unknown> {
     const trimmed = s.trim();
     if (trimmed === "string") return z.string();
-    if (trimmed === "number") return z.number();
-    if (trimmed === "boolean") return z.boolean();
+    if (trimmed === "number") return fromText ? z.preprocess(numberFromText, z.number()) : z.number();
+    if (trimmed === "boolean") return fromText ? z.preprocess(booleanFromText, z.boolean()) : z.boolean();
     if (trimmed === "null") return z.null();
     if (trimmed === "undefined") return z.undefined();
     if (trimmed === "void") return z.void();

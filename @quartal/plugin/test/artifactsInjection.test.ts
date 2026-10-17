@@ -85,7 +85,7 @@ describe("getAnonApp with injected artifacts (no disk reads)", () => {
   });
 
   it("executes a REST tool call against the injected tool metadata", async () => {
-    const res = await app.request("/api/Calculator/add", {
+    const res = await app.request("/api/calculator/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ first: 2, second: 3 }),

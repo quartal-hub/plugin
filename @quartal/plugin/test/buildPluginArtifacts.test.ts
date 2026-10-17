@@ -64,12 +64,12 @@ describe("buildPluginArtifacts", () => {
     });
 
     const paths = artifacts.openApi.paths as Record<string, unknown>;
-    expect(paths["/api/Hello/world"]).toBeDefined();
+    expect(paths["/api/hello/world"]).toBeDefined();
     expect(artifacts.files.some((f) => f.path === "__system__.ts")).toBe(true);
 
     const tags = artifacts.openApi.tags as { name: string }[];
     expect(tags.some((t) => t.name === "Hello")).toBe(true);
-    const op = (paths["/api/Hello/world"] as { post?: { tags?: string[] } })?.post;
+    const op = (paths["/api/hello/world"] as { post?: { tags?: string[] } })?.post;
     expect(op?.tags).toEqual(["Hello"]);
   });
 });

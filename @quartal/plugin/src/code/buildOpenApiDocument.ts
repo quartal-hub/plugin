@@ -5,6 +5,7 @@ import type { PluginManifest } from "../model/index.ts";
 import { registerOpenApiRoutes } from "../hono-app/registerOpenApiRoutes.ts";
 import { buildOpenApiInfo } from "../hono-app/pluginMetadata.ts";
 import { buildOpenApiTags } from "./buildOpenApiTags.ts";
+import { resolveRestRoutes } from "./resolveRestRoutes.ts";
 import { ZodBuilder } from "./ZodBuilder.ts";
 
 /**
@@ -12,21 +13,20 @@ import { ZodBuilder } from "./ZodBuilder.ts";
  * Auth security schemes are omitted; the runtime may merge them when serving.
  * @param codeFiles Analyzed code files containing API tool classes.
  * @param manifest Plugin manifest metadata.
- * @param options OpenAPI route generation options.
+ * @param options `basePath`: the API base path every route lives under (default `/api`).
  */
 export function buildOpenApiDocument(
   codeFiles: CodeFile[],
   manifest: PluginManifest,
-  options?: { basePath?: string; defaultMethod?: "get" | "post" },
+  options?: { basePath?: string },
 ): Record<string, unknown> {
   const basePath = options?.basePath ?? "/api";
-  const defaultMethod = options?.defaultMethod ?? "post";
 
   const zodBuilder = new ZodBuilder(codeFiles);
   const defs = zodBuilder.getZodsForAllFunctions();
 
   const app = new OpenAPIHono();
-  registerOpenApiRoutes(app, defs, { basePath, defaultMethod });
+  registerOpenApiRoutes(app, defs, { routes: resolveRestRoutes(codeFiles, basePath) });
 
   return app.getOpenAPIDocument({
     openapi: "3.0.0",

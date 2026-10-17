@@ -13,11 +13,12 @@ const namedTypes = [
   "GreetingType", "MultiplyThese", "TypeTesterArraysInput", "TypeTesterArraysResult",
   "TypeTesterJsonSchemaFormats", "TypeTesterMixed", "TypeTesterNestedObjectInput",
   "TypeTesterNestedObjectResult", "TypeTesterOptionalAndNull", "TypeTesterPrimitives",
-  "TypeTesterTree", "TypeTesterUnionParam",
+  "TypeTesterTree", "TypeTesterUnionParam", "InvoiceFields", "Invoice",
 ];
 const anonymousTypes = [
   "Calculator_add_Input", "HelloWorld_sayHello_Input", "TypesTester_unionParam_Output",
-  "HelloWorld_sayHelloWithThis_Input",
+  "HelloWorld_sayHelloWithThis_Input", "Invoices_list_Input", "Invoices_get_Input",
+  "Invoices_delete_Input", "Invoices_approve_Input", "Invoices_listArchive_Input",
 ];
 
 describe("golden tools.json content (produced by TsMorphAnalyzer)", () => {

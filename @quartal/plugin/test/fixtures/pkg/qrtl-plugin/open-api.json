@@ -19,6 +19,10 @@
       "description": "A class that says hello to the world."
     },
     {
+      "name": "Invoices",
+      "description": "A CRUD resource that relies on the REST naming convention: no `@rest` tags except where noted."
+    },
+    {
       "name": "TypesTester",
       "description": "Tester class for validating different parameter types via the Hub API.\nEach method takes a single object parameter for easy Open API / MCP / RPC schema generation and validation."
     }
@@ -142,6 +146,79 @@
           "name"
         ],
         "description": "The parameters."
+      },
+      "ArrayValue": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "nullable": true
+            }
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "string",
+            "description": "Customer name."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "required": [
+          "customer",
+          "total",
+          "id"
+        ]
+      },
+      "InvoiceFields": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "string",
+            "description": "Customer name."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid."
+          }
+        },
+        "required": [
+          "customer",
+          "total"
+        ]
+      },
+      "Invoices_approve_Input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "required": [
+          "id"
+        ]
       },
       "TypeTesterTree": {
         "type": "object",
@@ -424,12 +501,23 @@
           "tags"
         ],
         "description": "Mixed fields for broader validation tests."
+      },
+      "BooleanValue": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "value"
+        ]
       }
     },
     "parameters": {}
   },
   "paths": {
-    "/api/Calculator/add": {
+    "/api/calculator/add": {
       "post": {
         "tags": [
           "Calculator"
@@ -458,7 +546,7 @@
         }
       }
     },
-    "/api/Calculator/multiply": {
+    "/api/calculator/multiply": {
       "post": {
         "tags": [
           "Calculator"
@@ -487,7 +575,7 @@
         }
       }
     },
-    "/api/HelloWorld/sayHello": {
+    "/api/hello-world/say-hello": {
       "post": {
         "tags": [
           "HelloWorld"
@@ -516,7 +604,7 @@
         }
       }
     },
-    "/api/HelloWorld/sayHelloAdvanced": {
+    "/api/hello-world/say-hello-advanced": {
       "post": {
         "tags": [
           "HelloWorld"
@@ -545,7 +633,7 @@
         }
       }
     },
-    "/api/HelloWorld/sayHelloWithThis": {
+    "/api/hello-world/say-hello-with-this": {
       "post": {
         "tags": [
           "HelloWorld"
@@ -574,7 +662,109 @@
         }
       }
     },
-    "/api/TypesTester/treeSum": {
+    "/api/invoices": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Lists invoices, newest first.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "description": "Page number, starting from 1."
+            },
+            "required": false,
+            "description": "Page number, starting from 1.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "paid"
+              ],
+              "description": "Only invoices in this state."
+            },
+            "required": false,
+            "description": "Only invoices in this state.",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrayValue"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Creates an invoice.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceFields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices/approve": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Approves an invoice: a custom method, so it is POST at its own name.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invoices_approve_Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/types-tester/tree-sum": {
       "post": {
         "tags": [
           "TypesTester"
@@ -603,7 +793,7 @@
         }
       }
     },
-    "/api/TypesTester/primitives": {
+    "/api/types-tester/primitives": {
       "post": {
         "tags": [
           "TypesTester"
@@ -639,7 +829,7 @@
         }
       }
     },
-    "/api/TypesTester/jsonSchemaFormats": {
+    "/api/types-tester/json-schema-formats": {
       "post": {
         "tags": [
           "TypesTester"
@@ -675,7 +865,7 @@
         }
       }
     },
-    "/api/TypesTester/optionalAndNull": {
+    "/api/types-tester/optional-and-null": {
       "post": {
         "tags": [
           "TypesTester"
@@ -704,7 +894,7 @@
         }
       }
     },
-    "/api/TypesTester/arrays": {
+    "/api/types-tester/arrays": {
       "post": {
         "tags": [
           "TypesTester"
@@ -733,7 +923,7 @@
         }
       }
     },
-    "/api/TypesTester/nestedObject": {
+    "/api/types-tester/nested-object": {
       "post": {
         "tags": [
           "TypesTester"
@@ -762,7 +952,7 @@
         }
       }
     },
-    "/api/TypesTester/unionParam": {
+    "/api/types-tester/union-param": {
       "post": {
         "tags": [
           "TypesTester"
@@ -791,7 +981,7 @@
         }
       }
     },
-    "/api/TypesTester/mixed": {
+    "/api/types-tester/mixed": {
       "post": {
         "tags": [
           "TypesTester"
@@ -813,6 +1003,167 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices/{id}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Reads one invoice.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Invoice id."
+            },
+            "required": true,
+            "description": "Invoice id.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Replaces the fields of an invoice.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Invoice id."
+            },
+            "required": true,
+            "description": "Invoice id.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customer": {
+                    "type": "string",
+                    "description": "Customer name."
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "Total amount in euros."
+                  },
+                  "paid": {
+                    "type": "boolean",
+                    "description": "Whether the invoice has been paid."
+                  }
+                },
+                "required": [
+                  "customer",
+                  "total"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Deletes an invoice.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Invoice id."
+            },
+            "required": true,
+            "description": "Invoice id.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanValue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invoices/archive/{year}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "description": "Lists the invoices archived in a year.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "description": "Archive year."
+            },
+            "required": true,
+            "description": "Archive year.",
+            "name": "year",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Only invoices of this customer."
+            },
+            "required": false,
+            "description": "Only invoices of this customer.",
+            "name": "customer",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrayValue"
                 }
               }
             }

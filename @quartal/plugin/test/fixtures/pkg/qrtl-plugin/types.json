@@ -49,6 +49,134 @@
     "extends": []
   },
   {
+    "name": "Invoices_list_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "page",
+        "type": "number",
+        "description": "Page number, starting from 1.",
+        "optional": true,
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "open | paid",
+        "description": "Only invoices in this state.",
+        "optional": true,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "Invoices_get_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Invoice id.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "Invoices_delete_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Invoice id.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "Invoices_approve_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Invoice id.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "Invoices_listArchive_Input",
+    "description": "",
+    "properties": [
+      {
+        "name": "year",
+        "type": "number",
+        "description": "Archive year.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "customer",
+        "type": "string",
+        "description": "Only invoices of this customer.",
+        "optional": true,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "InvoiceFields",
+    "description": "Invoice fields that a client may set.",
+    "properties": [
+      {
+        "name": "customer",
+        "type": "string",
+        "description": "Customer name.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "total",
+        "type": "number",
+        "description": "Total amount in euros.",
+        "optional": false,
+        "nullable": false
+      },
+      {
+        "name": "paid",
+        "type": "boolean",
+        "description": "Whether the invoice has been paid.",
+        "optional": true,
+        "nullable": false
+      }
+    ],
+    "extends": []
+  },
+  {
+    "name": "Invoice",
+    "description": "A stored invoice.",
+    "properties": [
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Invoice id.",
+        "optional": false,
+        "nullable": false
+      }
+    ],
+    "extends": [
+      "InvoiceFields"
+    ]
+  },
+  {
     "name": "GreetingType",
     "description": "A type that represents a very complex greeting.",
     "properties": [

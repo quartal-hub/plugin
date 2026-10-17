@@ -24,8 +24,6 @@ export interface GenerateToolsOptions {
   out?: string;
   /** API base path used in open-api.json (default: /api). */
   basePath?: string;
-  /** Default HTTP method for routes in open-api.json (default: post). */
-  defaultMethod?: "get" | "post";
   /**
    * Widget catalog entries (tool ids that have a UI). Supplied by the caller — widget discovery is
    * framework-specific and provided by the Astro integration (scanning `src/pages/widgets/`).
@@ -83,7 +81,6 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   try {
     artifacts = buildPluginArtifacts(files, manifest, {
       basePath: options?.basePath,
-      defaultMethod: options?.defaultMethod,
       widgets,
       promptFiles,
     });
@@ -108,7 +105,6 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   }
 
   const basePath = options?.basePath ?? "/api";
-  const defaultMethod = options?.defaultMethod ?? "post";
   const qrtlConfig = await Helpers.loadQrtlConfig(cwd);
   const mcpOptions = typeof qrtlConfig?.mcp === "object" ? qrtlConfig.mcp : undefined;
   const skills = await buildSkillSummaries(cwd, manifest.name);
@@ -128,7 +124,6 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     skills,
     agents,
     basePath,
-    defaultMethod,
     hasReadme: readme !== undefined,
     mcpOptions,
   });

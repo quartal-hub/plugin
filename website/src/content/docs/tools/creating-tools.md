@@ -40,7 +40,7 @@ export * from "./HelloWorld.ts";
 That's it. Run `pnpm dev` and your plugin now serves:
 
 - an MCP tool named `sayHello` on the `/mcp` endpoint
-- a REST action at `POST /api/HelloWorld/sayHello`
+- a REST action at `POST /api/hello-world/say-hello` (see [REST routes](#rest-routes))
 - documentation for both at `/` (the built-in docs site)
 
 Both instance methods and `static` methods work. `private` methods (and private properties) are
@@ -147,6 +147,113 @@ routinely contain nulls and undeclared fields — a strict output schema would m
 results fail. In short: the input schema is a contract the agent must fulfill; the output schema
 is documentation of what the agent can expect.
 
+## REST routes
+
+Every tool is also one operation of the plugin's REST API, documented in `open-api.json` and
+served under `/api`. The route follows from the class and method names; a `@rest` tag overrides
+it. The MCP tool name and schema are never affected by any of this.
+
+### The naming convention
+
+The route is `/api/<class>[/<segment>][/{id}]`:
+
+- **`<class>`** is the class name in kebab-case (`HelloWorld` → `hello-world`), or the class's
+  `@rest` path.
+- The **leading verb** of the method name picks the HTTP method, the rest of the name becomes
+  the segment. A segment that just repeats the class name (singular or plural) is dropped.
+- **`{id}`** is appended for GET, PUT and DELETE when the input object has a required `id`
+  property of type `string`, `number` or `boolean`, or when the method name ends in `ById`.
+
+| Method name starts with | HTTP method | Example (`class Invoices`) |
+|---|---|---|
+| `get` | `GET` | `getInvoice({ id })` → `GET /api/invoices/{id}`, `getStats()` → `GET /api/invoices/stats` |
+| `list`, `find` | `GET` | `listInvoices({ page? })` → `GET /api/invoices?page=` |
+| `create`, `post` | `POST` | `createInvoice(fields)` → `POST /api/invoices` |
+| `update`, `replace`, `put` | `PUT` | `updateInvoice({ id, …fields })` → `PUT /api/invoices/{id}` |
+| `delete`, `remove` | `DELETE` | `deleteInvoice({ id })` → `DELETE /api/invoices/{id}` |
+| anything else | `POST` | `approve({ id })` → `POST /api/invoices/approve`, `sayHello(…)` → `POST /api/hello-world/say-hello` |
+
+The verb must be a whole word (`listen` is not `list`). Methods with any other verb are *custom
+methods*: always POST, at their full kebab-cased name. `search` is deliberately one of them, since
+searches tend to carry structured filters that a query string cannot express.
+
+A plain CRUD class therefore needs no tags at all:
+
+```ts
+export class Invoices {
+  list(input: { page?: number }) {}                 // GET    /api/invoices?page=
+  get(input: { id: string }) {}                     // GET    /api/invoices/{id}
+  create(input: InvoiceFields) {}                   // POST   /api/invoices
+  update(input: { id: string } & InvoiceFields) {}  // PUT    /api/invoices/{id}   body: InvoiceFields
+  delete(input: { id: string }) {}                  // DELETE /api/invoices/{id}
+  approve(input: { id: string }) {}                 // POST   /api/invoices/approve
+}
+```
+
+The same rules are used by ASP.NET Web API (action-name prefixes), the Google API design guide
+(the `Get`, `List`, `Create`, `Update`, `Delete` standard methods) and the Feathers / LoopBack
+service verbs, so a REST client built against another such API finds familiar routes.
+
+### `@rest` on a class
+
+```ts
+/** Invoicing tools.
+ * @rest /invoicing
+ */
+export class InvoiceTools { … }
+```
+
+A path only (a leading `/` is optional). It replaces the kebab-cased class name in every route of
+the class. The path may contain parameters (`@rest /companies/{businessId}`); every method's
+input must then have that property.
+
+### `@rest` on a method
+
+```
+@rest [METHOD] [path]
+```
+
+Method and path are separated by whitespace, the way an endpoint is written anywhere else
+(`DELETE /invoices/{id}`). `METHOD` is one of `GET`, `POST`, `PUT`, `DELETE` (any case). Examples
+on a method `purgeOld` of `class Invoices`:
+
+| Tag | Operation |
+|---|---|
+| `@rest DELETE` | `DELETE /api/invoices/purge-old` — method from the tag, path by convention (the `{id}` rule still applies) |
+| `@rest DELETE old` | `DELETE /api/invoices/old` — a relative path is appended to the class path |
+| `@rest DELETE /maintenance/old` | `DELETE /api/maintenance/old` — a path starting with `/` ignores the class path |
+| `@rest old/{year}` | `POST /api/invoices/old/{year}` — path only, method by convention |
+
+An explicit path is used as written: no segment from the name and no automatic `{id}`. Path
+parameters are written as `{name}` and must be properties of the input object. Unlike Spring or
+JAX-RS, a leading `/` makes the path independent of the class path (the ASP.NET rule).
+
+### Where the input goes
+
+The tool method always receives its one input object; the REST layer takes it apart and puts it
+back together:
+
+| HTTP method | Path parameters | Rest of the input |
+|---|---|---|
+| `GET`, `DELETE` | `{name}` segments | query string, one parameter per property |
+| `POST`, `PUT` | `{name}` segments | JSON body (omitted when the path binds everything) |
+
+Property names stay exactly as declared in TypeScript (`?businessId=…`, not `business-id`).
+Query and path values arrive as text, so `number` and `boolean` properties accept `42`, `true`,
+`false`, `1` and `0`.
+
+### What a route may carry
+
+The build fails with a message naming the method when:
+
+- a path parameter is optional, nullable, or not a `string`, `number` or `boolean`
+  (string-literal unions and enum aliases count as strings);
+- a `GET` or `DELETE` input has a property that is an array, an object, a `Date` or nullable —
+  add `@rest POST` to such a method, or move it off the `get` / `list` / `find` / `delete` verbs;
+- two methods resolve to the same method and path.
+
+Nothing else from OpenAPI is modelled: no `PATCH`, headers, cookies or non-JSON bodies.
+
 ## Descriptions
 
 Descriptions and types are the most important information passed via MCP all the way to the AI
@@ -168,6 +275,13 @@ agent — they are how the agent decides *whether* and *how* to call your tool.
 | `@visibility` | Who may call the tool — see below. | `@visibility app` |
 | `@readOnly` | The tool changes nothing — see [Read-only and other hints](#read-only-and-other-hints). | `@readOnly` |
 | `@destructive`, `@idempotent`, `@openWorld` | Further behavior hints for the host — same section. | `@destructive false` |
+| `@rest` | HTTP method and/or path of the REST operation — see [REST routes](#rest-routes). | `@rest DELETE archive/{id}` |
+
+### Tags on the tool class
+
+| Tag | Purpose | Example |
+|---|---|---|
+| `@rest` | Path of the class on the REST API, replacing the kebab-cased class name — see [REST routes](#rest-routes). | `@rest /invoicing` |
 
 ### Tags on input/output properties
 

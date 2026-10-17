@@ -22,6 +22,7 @@ import type {
   WidgetCatalogEntry,
 } from "../model/index.ts";
 import { discoverAgents, type DiscoverAgentsOptions } from "../agents/discoverAgents.ts";
+import { resolveRestRoutes, restRouteKey } from "../code/resolveRestRoutes.ts";
 import { discoverSkills } from "./skillDiscovery.ts";
 import { resolveHomepage } from "./pluginMetadata.ts";
 import { buildMcpServerEntries } from "../agent-plugin/buildMcpServersConfig.ts";
@@ -50,8 +51,6 @@ export interface BuildPluginInfoInput {
   agents: PluginAgentSummary[];
   /** REST base path (e.g. `/api`). */
   basePath: string;
-  /** Default HTTP method for REST routes. */
-  defaultMethod: "get" | "post";
   /** Whether a README.md is available. */
   hasReadme: boolean;
   /** Server origin for homepage resolution (omit at build time). */
@@ -88,6 +87,7 @@ function toToolParameter(p: CodePropOrParam): PluginToolParameter {
 function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
   const mcpByMethod = new Map(input.mcpTools.map((t) => [`${t.className}.${t.methodName}`, t]));
   const widgetToolIds = new Set(input.widgetCatalog.map((w) => w.toolId));
+  const restRoutes = resolveRestRoutes(input.codeFiles, input.basePath);
   const tools: PluginToolEntry[] = [];
 
   for (const file of input.codeFiles) {
@@ -97,6 +97,7 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
       for (const fn of cls.functions) {
         const mcp = mcpByMethod.get(`${cls.name}.${fn.name}`);
         const mcpName = mcp?.id;
+        const route = restRoutes.get(restRouteKey(cls.name, fn.name));
         tools.push({
           name: fn.name,
           className: cls.name,
@@ -107,8 +108,7 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
           returns: toToolParameter(fn.returns),
           exposure: {
             ...(mcpName ? { mcpName } : {}),
-            restUrl: `${input.basePath}/${cls.name}/${fn.name}`,
-            restMethod: input.defaultMethod,
+            ...(route ? { restUrl: route.path, restMethod: route.method } : {}),
           },
           hasWidget: mcpName ? widgetToolIds.has(mcpName) : false,
         });

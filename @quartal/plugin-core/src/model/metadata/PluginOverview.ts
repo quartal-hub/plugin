@@ -1,4 +1,5 @@
 import type { AgentColor } from "../agents/AgentColor.ts";
+import type { RestMethod } from "../code-file/RestRoute.ts";
 import type { PromptArgument } from "../mcp/McpPrompt.ts";
 
 /** A tool parameter or return slot with a type reference resolvable via `links.types`. */
@@ -22,7 +23,7 @@ export interface PluginToolExposure {
   /** REST path relative to the server origin when exposed via OpenAPI; omitted when not available. */
   restUrl?: string;
   /** HTTP method for the REST route (when {@link PluginToolExposure.restUrl} is set). */
-  restMethod?: "get" | "post" | "put" | "delete" | "patch";
+  restMethod?: RestMethod;
 }
 
 /** Tools grouped by source class (OpenAPI tag / MCP grouping). */

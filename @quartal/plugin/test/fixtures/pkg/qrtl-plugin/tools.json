@@ -287,6 +287,296 @@
       ]
     },
     {
+      "name": "Invoices.ts",
+      "lang": "ts",
+      "path": "tools/Invoices.ts",
+      "content": "",
+      "classes": [
+        {
+          "name": "Invoices",
+          "description": "A CRUD resource that relies on the REST naming convention: no `@rest` tags except where noted.",
+          "functions": [
+            {
+              "name": "list",
+              "description": "Lists invoices, newest first.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoices_list_Input",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "ArrayValue",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "get",
+              "description": "Reads one invoice.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoices_get_Input",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "Invoice",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "create",
+              "description": "Creates an invoice.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "InvoiceFields",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "Invoice",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "update",
+              "description": "Replaces the fields of an invoice.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoice",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "Invoice",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "delete",
+              "description": "Deletes an invoice.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoices_delete_Input",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "BooleanValue",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "approve",
+              "description": "Approves an invoice: a custom method, so it is POST at its own name.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoices_approve_Input",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "Invoice",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false
+            },
+            {
+              "name": "listArchive",
+              "description": "Lists the invoices archived in a year.",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "Invoices_listArchive_Input",
+                  "description": "",
+                  "optional": false,
+                  "nullable": false
+                }
+              ],
+              "returns": {
+                "name": "",
+                "type": "ArrayValue",
+                "description": ""
+              },
+              "isAsync": false,
+              "isStatic": false,
+              "rest": {
+                "method": "GET",
+                "path": "archive/{year}"
+              }
+            }
+          ],
+          "properties": [],
+          "implements": []
+        }
+      ],
+      "types": [
+        {
+          "name": "Invoices_list_Input",
+          "description": "",
+          "properties": [
+            {
+              "name": "page",
+              "type": "number",
+              "description": "Page number, starting from 1.",
+              "optional": true,
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "open | paid",
+              "description": "Only invoices in this state.",
+              "optional": true,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "Invoices_get_Input",
+          "description": "",
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "Invoice id.",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "Invoices_delete_Input",
+          "description": "",
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "Invoice id.",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "Invoices_approve_Input",
+          "description": "",
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "Invoice id.",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "Invoices_listArchive_Input",
+          "description": "",
+          "properties": [
+            {
+              "name": "year",
+              "type": "number",
+              "description": "Archive year.",
+              "optional": false,
+              "nullable": false
+            },
+            {
+              "name": "customer",
+              "type": "string",
+              "description": "Only invoices of this customer.",
+              "optional": true,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "InvoiceFields",
+          "description": "Invoice fields that a client may set.",
+          "properties": [
+            {
+              "name": "customer",
+              "type": "string",
+              "description": "Customer name.",
+              "optional": false,
+              "nullable": false
+            },
+            {
+              "name": "total",
+              "type": "number",
+              "description": "Total amount in euros.",
+              "optional": false,
+              "nullable": false
+            },
+            {
+              "name": "paid",
+              "type": "boolean",
+              "description": "Whether the invoice has been paid.",
+              "optional": true,
+              "nullable": false
+            }
+          ],
+          "extends": []
+        },
+        {
+          "name": "Invoice",
+          "description": "A stored invoice.",
+          "properties": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "Invoice id.",
+              "optional": false,
+              "nullable": false
+            }
+          ],
+          "extends": [
+            "InvoiceFields"
+          ]
+        }
+      ]
+    },
+    {
       "name": "GreetingType.ts",
       "lang": "ts",
       "path": "tools/model/GreetingType.ts",

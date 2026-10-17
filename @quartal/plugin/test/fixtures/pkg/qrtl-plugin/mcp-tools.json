@@ -207,6 +207,352 @@
       }
     },
     {
+      "id": "list",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "list",
+      "description": "Lists invoices, newest first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "description": "Page number, starting from 1."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "paid"
+            ],
+            "description": "Only invoices in this state."
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "get",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "get",
+      "description": "Reads one invoice.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Customer name."
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "create",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "create",
+      "description": "Creates an invoice.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "string",
+            "description": "Customer name."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "customer",
+          "total"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Customer name."
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "update",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "update",
+      "description": "Replaces the fields of an invoice.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "string",
+            "description": "Customer name."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "customer",
+          "total",
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Customer name."
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "delete",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "delete",
+      "description": "Deletes an invoice.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "approve",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "approve",
+      "description": "Approves an invoice: a custom method, so it is POST at its own name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Customer name."
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Total amount in euros."
+          },
+          "paid": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the invoice has been paid."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Invoice id."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "id": "listArchive",
+      "fileName": "Invoices",
+      "className": "Invoices",
+      "methodName": "listArchive",
+      "description": "Lists the invoices archived in a year.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number",
+            "description": "Archive year."
+          },
+          "customer": {
+            "type": "string",
+            "description": "Only invoices of this customer."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "year"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    {
       "id": "treeSum",
       "fileName": "TypesTester",
       "className": "TypesTester",

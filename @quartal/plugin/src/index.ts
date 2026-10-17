@@ -22,6 +22,14 @@ export { buildMcpTools, makeMcpToolName } from "./code/buildMcpTools.ts";
 export { buildOpenApiDocument } from "./code/buildOpenApiDocument.ts";
 export { buildOpenApiTags } from "./code/buildOpenApiTags.ts";
 export type { OpenApiTag } from "./code/buildOpenApiTags.ts";
+export { parseRestClassTag, parseRestTag, REST_METHODS } from "./code/parseRestTag.ts";
+export {
+  resolveInputProperties,
+  resolveRestRoutes,
+  restRouteKey,
+  splitLeadingVerb,
+  toKebabCase,
+} from "./code/resolveRestRoutes.ts";
 export { getFunctionsWithResolvedTypes } from "./code/getFunctionsWithResolvedTypes.ts";
 export { getSystemCodeFile } from "./code/getSystemCodeFile.ts";
 export { loadCodeFiles } from "./code/loadCodeFiles.ts";

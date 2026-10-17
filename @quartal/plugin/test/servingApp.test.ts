@@ -30,7 +30,7 @@ beforeAll(async () => {
 
 describe("PluginApiHelper — request serving (app.fetch)", () => {
   it("executes a REST tool call and wraps the primitive result", async () => {
-    const res = await app.request("/api/Calculator/add", {
+    const res = await app.request("/api/calculator/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ first: 2, second: 3 }),
@@ -40,7 +40,7 @@ describe("PluginApiHelper — request serving (app.fetch)", () => {
   });
 
   it("rejects invalid input with 422 (Zod validation from the generated schema)", async () => {
-    const res = await app.request("/api/Calculator/add", {
+    const res = await app.request("/api/calculator/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ first: "not-a-number" }),
@@ -53,7 +53,7 @@ describe("PluginApiHelper — request serving (app.fetch)", () => {
     const res = await app.request("/open-api.json");
     expect(res.status).toBe(200);
     const doc = await res.json() as { paths: Record<string, unknown> };
-    expect(doc.paths["/api/Calculator/add"]).toBeDefined();
+    expect(doc.paths["/api/calculator/add"]).toBeDefined();
   });
 
   it("serves /types.json and /readme.md", async () => {
@@ -63,7 +63,7 @@ describe("PluginApiHelper — request serving (app.fetch)", () => {
 
   it("returns a helpful error when a tool's module is absent from the registry", async () => {
     // HelloWorld has a route (from tools.json) but is not in the injected registry.
-    const res = await app.request("/api/HelloWorld/sayHello", {
+    const res = await app.request("/api/hello-world/say-hello", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "x" }),
