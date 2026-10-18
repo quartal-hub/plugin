@@ -8,9 +8,9 @@ const HTTP_METHOD_WORDS = new Set(["GET", "HEAD", "POST", "PUT", "DELETE", "CONN
 
 /**
  * Parses the text of a `@rest` JSDoc tag on a tool method: `[METHOD] [path]`, separated by
- * whitespace. The first token is the method when it is an HTTP method name (case-insensitive);
- * anything else is the path. Throws on an unsupported method, on more than two tokens and on a
- * malformed path.
+ * whitespace, or `hidden`. The first token is the method when it is an HTTP method name
+ * (case-insensitive); anything else is the path. Throws on an unsupported method, on more than two
+ * tokens and on a malformed path.
  * @param text Tag text after `@rest`.
  * @param where `Class.method`, used as the error prefix.
  */
@@ -24,6 +24,7 @@ export function parseRestTag(text: string, where: string): RestRouteDeclaration 
   }
   const out: RestRouteDeclaration = {};
   const [first, second] = tokens;
+  if (tokens.length === 1 && first.toLowerCase() === "hidden") return { hidden: true };
   if (second !== undefined || HTTP_METHOD_WORDS.has(first.toUpperCase())) {
     out.method = parseMethod(first, where);
   }
@@ -33,14 +34,15 @@ export function parseRestTag(text: string, where: string): RestRouteDeclaration 
 }
 
 /**
- * Parses the text of a `@rest` JSDoc tag on a tool class: a single path, kept as written (a leading
- * `/` means the full path including the API base path, otherwise the path is relative to the
- * base path). A method word is an error, since a method cannot be set class-wide.
+ * Parses the text of a `@rest` JSDoc tag on a tool class: `hidden`, or a single path kept as written
+ * (a leading `/` means the full path including the API base path, otherwise the path is relative
+ * to the base path). A method word is an error, since a method cannot be set class-wide.
  * @param text Tag text after `@rest`.
  * @param where The class name, used as the error prefix.
  */
 export function parseRestClassTag(text: string, where: string): RestClassDeclaration {
   const tokens = text.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 1 && tokens[0].toLowerCase() === "hidden") return { hidden: true };
   if (tokens.length !== 1 || HTTP_METHOD_WORDS.has(tokens[0].toUpperCase())) {
     throw new Error(
       `${where}: a class-level @rest takes only a path (the HTTP method is set per method), got "${text.trim()}"`,

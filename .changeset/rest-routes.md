@@ -19,3 +19,6 @@ inputs and path parameters must be `string`, `number` or `boolean`, otherwise th
 message pointing at `@rest POST`. The `defaultMethod` option of `generateTools` / `buildPluginArtifacts`
 is gone, `PluginToolExposure.restMethod` is upper-case (`"GET" | "POST" | "PUT" | "DELETE"`), and
 `CodeFunction.rest` / `CodeClass.rest` carry the declared tags. MCP tool names and schemas are unchanged.
+
+A tool can be kept to one surface: `@rest hidden` (method or class) gives it no REST operation,
+`@mcp hidden` (method or class) leaves it out of the MCP server (`CodeFunction.mcp` / `CodeClass.mcp`).

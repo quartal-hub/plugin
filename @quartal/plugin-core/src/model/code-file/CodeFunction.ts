@@ -1,5 +1,6 @@
 import type { McpToolAnnotations, McpToolVisibility } from "../mcp/McpTool.ts";
 import type { CodePropOrParam } from "./CodePropOrParam.ts";
+import type { McpDeclaration } from "./McpDeclaration.ts";
 import type { RestRouteDeclaration } from "./RestRoute.ts";
 
 /** A function parsed from a CodeFile */
@@ -21,6 +22,9 @@ export interface CodeFunction {
 
   /** REST method and/or path from the `@rest` JSDoc tag (OpenAPI only; MCP is unaffected). */
   rest?: RestRouteDeclaration;
+
+  /** MCP-side settings from the `@mcp` JSDoc tag (`@mcp hidden` keeps the method off the MCP server). */
+  mcp?: McpDeclaration;
 
   /** Parameters of the function. */
   parameters: CodePropOrParam[];

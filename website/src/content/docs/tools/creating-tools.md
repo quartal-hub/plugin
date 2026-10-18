@@ -258,6 +258,33 @@ The build fails with a message naming the method when:
 
 Nothing else from OpenAPI is modelled: no `PATCH`, headers, cookies or non-JSON bodies.
 
+### One surface only
+
+A tool is normally both an MCP tool and a REST operation. Two tags take one of them away:
+
+```ts
+export class Invoices {
+  /** Rows for the invoice-list widget: REST only.
+   * @mcp hidden
+   */
+  listRows(input: { page: number }): InvoiceRow[] { … }   // GET /api/invoices/rows, no MCP tool
+
+  /** Agent-only helper: no REST operation.
+   * @rest hidden
+   */
+  draft(input: { customer: string }): Invoice { … }         // MCP tool `draft`, no route
+}
+```
+
+- `@mcp hidden` leaves the method out of `tools/list` (it cannot be called over MCP); the REST
+  operation stays. Compare `@visibility app`, which keeps the tool on the MCP server but shows it
+  to the plugin's own widgets only.
+- `@rest hidden` gives the method no REST operation; the MCP tool stays.
+- Either tag on the **class** applies to all of its methods.
+
+A hidden tool still appears in the plugin's docs site and `contents.json`, without the exposure
+it lacks.
+
 ## Descriptions
 
 Descriptions and types are the most important information passed via MCP all the way to the AI
@@ -279,13 +306,15 @@ agent — they are how the agent decides *whether* and *how* to call your tool.
 | `@visibility` | Who may call the tool — see below. | `@visibility app` |
 | `@readOnly` | The tool changes nothing — see [Read-only and other hints](#read-only-and-other-hints). | `@readOnly` |
 | `@destructive`, `@idempotent`, `@openWorld` | Further behavior hints for the host — same section. | `@destructive false` |
-| `@rest` | HTTP method and/or path of the REST operation — see [REST routes](#rest-routes). | `@rest DELETE archive/{id}` |
+| `@rest` | HTTP method and/or path of the REST operation, or `hidden` for no REST operation — see [REST routes](#rest-routes). | `@rest DELETE archive/{id}` |
+| `@mcp` | `hidden`: the method is not an MCP tool (REST only) — see [One surface only](#one-surface-only). | `@mcp hidden` |
 
 ### Tags on the tool class
 
 | Tag | Purpose | Example |
 |---|---|---|
-| `@rest` | Path of the class on the REST API, replacing the kebab-cased class name — see [REST routes](#rest-routes). | `@rest invoicing` |
+| `@rest` | Path of the class on the REST API, replacing the kebab-cased class name, or `hidden` — see [REST routes](#rest-routes). | `@rest invoicing` |
+| `@mcp` | `hidden`: none of the class's methods is an MCP tool. | `@mcp hidden` |
 
 ### Tags on input/output properties
 

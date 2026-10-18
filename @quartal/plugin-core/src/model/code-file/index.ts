@@ -7,3 +7,4 @@ export type { CodePropOrParam } from "./CodePropOrParam.ts";
 export type { CodeType } from "./CodeType.ts";
 export type { SystemType } from "./SystemType.ts";
 export type { RestClassDeclaration, RestMethod, RestRoute, RestRouteDeclaration } from "./RestRoute.ts";
+export type { McpDeclaration } from "./McpDeclaration.ts";

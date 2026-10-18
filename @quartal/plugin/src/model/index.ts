@@ -57,6 +57,7 @@ export type {
   McpCatalog,
   McpCatalogEntry,
   McpCatalogTool,
+  McpDeclaration,
   McpPromptDescriptor,
   McpPromptsDocument,
   McpToolAnnotations,

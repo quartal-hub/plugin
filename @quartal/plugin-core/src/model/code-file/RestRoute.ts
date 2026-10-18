@@ -6,6 +6,8 @@ export type RestMethod = "GET" | "POST" | "PUT" | "DELETE";
  * defaults are applied. The analyzer writes it, {@link RestRoute} is the resolved result.
  */
 export interface RestRouteDeclaration {
+  /** `@rest hidden`: the method has no REST operation (it stays an MCP tool). */
+  hidden?: boolean;
   /** HTTP method named in the tag (upper-case). */
   method?: RestMethod;
   /**
@@ -15,13 +17,15 @@ export interface RestRouteDeclaration {
   path?: string;
 }
 
-/** What a `@rest` JSDoc tag on a tool class declares: the class path under the API base path. */
+/** What a `@rest` JSDoc tag on a tool class declares: the class path, or that the class has no REST operations. */
 export interface RestClassDeclaration {
+  /** `@rest hidden`: none of the class's methods has a REST operation. */
+  hidden?: boolean;
   /**
    * Path named in the tag. With a leading `/` it is the full class path and must start with the API
    * base path (`/api/invoicing`); otherwise it is appended to the base path (`invoicing`).
    */
-  path: string;
+  path?: string;
 }
 
 /** The resolved REST route of one tool method (convention + tags applied). */

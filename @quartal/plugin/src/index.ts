@@ -22,6 +22,7 @@ export { buildMcpTools, makeMcpToolName } from "./code/buildMcpTools.ts";
 export { buildOpenApiDocument } from "./code/buildOpenApiDocument.ts";
 export { buildOpenApiTags } from "./code/buildOpenApiTags.ts";
 export type { OpenApiTag } from "./code/buildOpenApiTags.ts";
+export { parseMcpTag } from "./code/parseMcpTag.ts";
 export { parseRestClassTag, parseRestTag, REST_METHODS } from "./code/parseRestTag.ts";
 export {
   resolveInputProperties,

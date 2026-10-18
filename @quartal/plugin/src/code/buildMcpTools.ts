@@ -17,7 +17,8 @@ export function makeMcpToolName(
   return cleaned.length > 128 ? cleaned.slice(0, 128) : cleaned;
 }
 
-/** Builds the MCP tool list from code files (same shape as `mcp-tools.json`).
+/** Builds the MCP tool list from code files (same shape as `mcp-tools.json`); methods and classes
+ * marked `@mcp hidden` are left out.
  * @param codeFiles Analyzed code files containing MCP tool classes.
  */
 export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
@@ -29,7 +30,9 @@ export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
     if (file.path === "__system__.ts") continue;
     const fileName = file.path.replace(/\.ts$/, "").replace(/^.*[/\\]/, "");
     for (const cls of file.classes) {
+      if (cls.mcp?.hidden) continue;
       for (const fn of cls.functions) {
+        if (fn.mcp?.hidden) continue;
         const functionNameUsed = usedNames.has(fn.name);
         const id = makeMcpToolName(cls.name, fn.name, functionNameUsed);
         const outputSchema = buildToolOutputSchema(fn.returns, typeIndex);

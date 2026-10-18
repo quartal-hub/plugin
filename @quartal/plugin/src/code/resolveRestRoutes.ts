@@ -74,7 +74,7 @@ export function splitLeadingVerb(name: string): { verb: string; rest: string } |
  * Resolves the REST route of every tool method: the naming convention, then the class `@rest`
  * path, then the method `@rest` tag. Validates path parameters and the GET/DELETE input rules and
  * throws a descriptive `Error` on the first violation or duplicate route, so a build fails instead
- * of serving an impossible operation.
+ * of serving an impossible operation. Methods (or classes) marked `@rest hidden` get no route.
  * @param codeFiles Analyzed code files (the system types file is skipped).
  * @param basePath API base path every route lives under (default `/api`).
  * @returns Routes keyed by {@link restRouteKey}, in source order.
@@ -88,8 +88,12 @@ export function resolveRestRoutes(codeFiles: CodeFile[], basePath = "/api"): Map
   for (const file of codeFiles) {
     if (file.path === "__system__.ts") continue;
     for (const cls of file.classes) {
-      const classPath = cls.rest ? joinRestPath(base, base, cls.rest.path, cls.name) : `${base}/${toKebabCase(cls.name)}`;
+      if (cls.rest?.hidden) continue;
+      const classPath = cls.rest?.path !== undefined
+        ? joinRestPath(base, base, cls.rest.path, cls.name)
+        : `${base}/${toKebabCase(cls.name)}`;
       for (const fn of cls.functions) {
+        if (fn.rest?.hidden) continue;
         const where = restRouteKey(cls.name, fn.name);
         const route = resolveRestRoute(cls, fn, classPath, base, typeIndex, where);
         const routeId = `${route.method} ${route.path}`;

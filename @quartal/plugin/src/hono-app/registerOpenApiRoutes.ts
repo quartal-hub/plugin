@@ -73,9 +73,9 @@ export function registerOpenApiRoutes(
     const className = def.className ?? "";
     const methodName = def.fn?.name ?? "";
     const route = options.routes.get(restRouteKey(className, methodName));
-    if (!route) throw new Error(`No REST route resolved for ${className}.${methodName}`);
-    return { def, className, methodName, route };
-  });
+    // No route means the method (or its class) is `@rest hidden`.
+    return route ? { def, className, methodName, route } : undefined;
+  }).filter((r) => r !== undefined);
   resolved.sort((a, b) => a.route.pathParams.length - b.route.pathParams.length);
 
   for (const { def, className, methodName, route } of resolved) {

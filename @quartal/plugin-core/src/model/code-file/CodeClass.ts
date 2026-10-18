@@ -1,5 +1,6 @@
 import type { CodeFunction } from "./CodeFunction.ts";
 import type { CodePropOrParam } from "./CodePropOrParam.ts";
+import type { McpDeclaration } from "./McpDeclaration.ts";
 import type { RestClassDeclaration } from "./RestRoute.ts";
 
 /** A class parsed from a CodeFile (has methods). Interfaces and classes without methods are CodeType. */
@@ -21,4 +22,7 @@ export interface CodeClass {
 
   /** Class path on the REST API from the `@rest` JSDoc tag (replaces the kebab-cased class name). */
   rest?: RestClassDeclaration;
+
+  /** MCP-side settings from the `@mcp` JSDoc tag (`@mcp hidden` keeps every method off the MCP server). */
+  mcp?: McpDeclaration;
 }
