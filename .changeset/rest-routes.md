@@ -11,9 +11,9 @@ leading verb of the method name (`get`/`list`/`find` → GET, `create` → POST,
 `delete`/`remove` → DELETE, anything else → POST at its full name), and `{id}` for GET/PUT/DELETE when
 the input has a required primitive `id`. `Invoices.get({ id })` is `GET /api/invoices/{id}`,
 `HelloWorld.sayHello` is `POST /api/hello-world/say-hello`. A `@rest` JSDoc tag overrides the
-convention: `@rest /invoicing` on a class sets the class path; `@rest [METHOD] [path]` on a method sets
-the method and/or path (a relative path is appended to the class path, a path starting with `/` is
-relative to `/api`; path parameters are written `{name}`). Path parameters and, for GET and DELETE,
+convention: `@rest invoicing` on a class sets the class path; `@rest [METHOD] [path]` on a method sets
+the method and/or path (a relative path is appended to the class path; a path starting with `/` is the
+full path and must start with `/api`; path parameters are written `{name}`). Path parameters and, for GET and DELETE,
 the query string carry the input properties; POST and PUT take the rest as the JSON body. GET/DELETE
 inputs and path parameters must be `string`, `number` or `boolean`, otherwise the build fails with a
 message pointing at `@rest POST`. The `defaultMethod` option of `generateTools` / `buildPluginArtifacts`

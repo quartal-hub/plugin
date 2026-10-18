@@ -92,13 +92,15 @@ Comparable frameworks the convention is taken from:
 ### `@rest` tag on a class
 
 ```
-/** @rest /invoicing */
+/** @rest invoicing */
 export class InvoiceTools { … }
 ```
 
-- A path only; a leading `/` is optional and normalised. A method word in a class tag is a build
-  error. Replaces the kebab-cased class name in every route of the class.
-- The class path may carry parameters (`@rest /companies/{businessId}`); each method's input
+- A path only. Without a leading `/` it is relative to `/api` (`invoicing` → `/api/invoicing`);
+  with one it is the full path and must start with `/api` (`/api/invoicing`), so a path names its
+  root and later configuration of several roots needs no new syntax. A method word in a class tag
+  is a build error. Replaces the kebab-cased class name in every route of the class.
+- The class path may carry parameters (`@rest companies/{businessId}`); each method's input
   must then contain that property under the same rules as any other path parameter.
 
 ### `@rest` tag on a method
@@ -112,7 +114,8 @@ export class InvoiceTools { … }
 |---|---|
 | `@rest DELETE` | `DELETE /api/invoices/purge-old` (method from the tag, path by convention; `{id}` rule applies) |
 | `@rest DELETE old` | `DELETE /api/invoices/old` (relative: appended to the class path) |
-| `@rest DELETE /maintenance/old` | `DELETE /api/maintenance/old` (leading `/`: relative to `/api`, ignores the class path) |
+| `@rest DELETE /api/maintenance/old` | `DELETE /api/maintenance/old` (leading `/`: the full path, must start with `/api`) |
+| `@rest DELETE /maintenance/old` | build error: a leading-slash path must start with `/api` |
 | `@rest old/{year}` | `POST /api/invoices/old/{year}` (path only, method by convention) |
 | `@rest PATCH` or `@rest FETCH /x` | build error: unsupported method, lists GET, POST, PUT, DELETE |
 

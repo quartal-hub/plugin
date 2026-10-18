@@ -33,8 +33,9 @@ export function parseRestTag(text: string, where: string): RestRouteDeclaration 
 }
 
 /**
- * Parses the text of a `@rest` JSDoc tag on a tool class: a single path, normalised to a leading
- * `/` and no trailing `/`. A method word is an error, since a method cannot be set class-wide.
+ * Parses the text of a `@rest` JSDoc tag on a tool class: a single path, kept as written (a leading
+ * `/` means the full path including the API base path, otherwise the path is relative to the
+ * base path). A method word is an error, since a method cannot be set class-wide.
  * @param text Tag text after `@rest`.
  * @param where The class name, used as the error prefix.
  */
@@ -45,8 +46,7 @@ export function parseRestClassTag(text: string, where: string): RestClassDeclara
       `${where}: a class-level @rest takes only a path (the HTTP method is set per method), got "${text.trim()}"`,
     );
   }
-  const path = validateRestPath(tokens[0], where);
-  return { path: path.startsWith("/") ? path : `/${path}` };
+  return { path: validateRestPath(tokens[0], where) };
 }
 
 function parseMethod(word: string, where: string): RestMethod {

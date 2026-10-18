@@ -88,7 +88,7 @@ export function resolveRestRoutes(codeFiles: CodeFile[], basePath = "/api"): Map
   for (const file of codeFiles) {
     if (file.path === "__system__.ts") continue;
     for (const cls of file.classes) {
-      const classPath = cls.rest?.path ?? `/${toKebabCase(cls.name)}`;
+      const classPath = cls.rest ? joinRestPath(base, base, cls.rest.path, cls.name) : `${base}/${toKebabCase(cls.name)}`;
       for (const fn of cls.functions) {
         const where = restRouteKey(cls.name, fn.name);
         const route = resolveRestRoute(cls, fn, classPath, base, typeIndex, where);
@@ -144,6 +144,7 @@ export function resolveInputProperties(
 function resolveRestRoute(
   cls: CodeClass,
   fn: CodeFunction,
+  /** The class path including the base path (`/api/invoices`). */
   classPath: string,
   base: string,
   typeIndex: Map<string, CodeType>,
@@ -155,7 +156,7 @@ function resolveRestRoute(
 
   let path: string;
   if (fn.rest?.path !== undefined) {
-    path = fn.rest.path.startsWith("/") ? `${base}${fn.rest.path}` : `${base}${classPath}/${fn.rest.path}`;
+    path = joinRestPath(base, classPath, fn.rest.path, where);
   } else {
     let byId = false;
     let segment: string;
@@ -169,7 +170,7 @@ function resolveRestRoute(
     } else {
       segment = toKebabCase(fn.name);
     }
-    path = `${base}${classPath}${segment ? `/${segment}` : ""}`;
+    path = `${classPath}${segment ? `/${segment}` : ""}`;
     const id = props?.find((p) => p.name === "id");
     const idFitsPath = !!id && !id.optional && !id.nullable && isPrimitive(id, typeIndex);
     if (byId && !idFitsPath) {
@@ -204,6 +205,21 @@ function resolveRestRoute(
     ? (remaining.length ? "query" : "none")
     : (props && !remaining.length ? "none" : "body");
   return { method, path, pathParams, inputIn };
+}
+
+/**
+ * Resolves a `@rest` path: without a leading `/` it is appended to `parent` (the base path for a
+ * class, the class path for a method); with one it is the full path and must start with the base
+ * path, so a path names its root explicitly.
+ */
+function joinRestPath(base: string, parent: string, path: string, where: string): string {
+  if (!path.startsWith("/")) return `${parent}/${path}`;
+  if (path !== base && !path.startsWith(`${base}/`)) {
+    throw new Error(
+      `${where}: @rest path "${path}" must start with the API base path "${base}" (as in "${base}${path}"), or leave out the leading "/" for a path relative to ${parent}`,
+    );
+  }
+  return path;
 }
 
 /** Whether `rest` names the class: equal to the class name ignoring one trailing `s` on either side, case-insensitively. */

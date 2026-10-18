@@ -198,14 +198,16 @@ service verbs, so a REST client built against another such API finds familiar ro
 
 ```ts
 /** Invoicing tools.
- * @rest /invoicing
+ * @rest invoicing
  */
 export class InvoiceTools { … }
 ```
 
-A path only (a leading `/` is optional). It replaces the kebab-cased class name in every route of
-the class. The path may contain parameters (`@rest /companies/{businessId}`); every method's
-input must then have that property.
+A path only. It replaces the kebab-cased class name in every route of the class: `invoicing`
+puts the class at `/api/invoicing`. A path with a leading `/` is the full path as served and must
+start with `/api` (`@rest /api/invoicing`); anything else with a leading `/` fails the build.
+The path may contain parameters (`@rest companies/{businessId}`); every method's input must
+then have that property.
 
 ### `@rest` on a method
 
@@ -221,12 +223,14 @@ on a method `purgeOld` of `class Invoices`:
 |---|---|
 | `@rest DELETE` | `DELETE /api/invoices/purge-old` — method from the tag, path by convention (the `{id}` rule still applies) |
 | `@rest DELETE old` | `DELETE /api/invoices/old` — a relative path is appended to the class path |
-| `@rest DELETE /maintenance/old` | `DELETE /api/maintenance/old` — a path starting with `/` ignores the class path |
+| `@rest DELETE /api/maintenance/old` | `DELETE /api/maintenance/old` — a path starting with `/` is the full path; it must start with `/api` |
 | `@rest old/{year}` | `POST /api/invoices/old/{year}` — path only, method by convention |
 
 An explicit path is used as written: no segment from the name and no automatic `{id}`. Path
-parameters are written as `{name}` and must be properties of the input object. Unlike Spring or
-JAX-RS, a leading `/` makes the path independent of the class path (the ASP.NET rule).
+parameters are written as `{name}` and must be properties of the input object. The leading `/`
+rule is the same on both levels: without it the path is relative (to `/api` for a class, to the
+class path for a method); with it the path is the full path and names its root, so
+`@rest GET /invoices/stats` is an error rather than a route at `/api/invoices/stats`.
 
 ### Where the input goes
 
@@ -281,7 +285,7 @@ agent — they are how the agent decides *whether* and *how* to call your tool.
 
 | Tag | Purpose | Example |
 |---|---|---|
-| `@rest` | Path of the class on the REST API, replacing the kebab-cased class name — see [REST routes](#rest-routes). | `@rest /invoicing` |
+| `@rest` | Path of the class on the REST API, replacing the kebab-cased class name — see [REST routes](#rest-routes). | `@rest invoicing` |
 
 ### Tags on input/output properties
 

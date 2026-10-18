@@ -27,10 +27,10 @@ describe("parseRestTag (method)", () => {
 });
 
 describe("parseRestClassTag (class)", () => {
-  it("reads a path and normalises the leading slash", () => {
-    expect(parseRestClassTag("/invoicing", "Invoices")).toEqual({ path: "/invoicing" });
-    expect(parseRestClassTag("invoicing/v2", "Invoices")).toEqual({ path: "/invoicing/v2" });
-    expect(parseRestClassTag("/companies/{businessId}", "Companies")).toEqual({ path: "/companies/{businessId}" });
+  it("reads a path as written (relative, or full with a leading slash)", () => {
+    expect(parseRestClassTag("/api/invoicing", "Invoices")).toEqual({ path: "/api/invoicing" });
+    expect(parseRestClassTag("invoicing/v2", "Invoices")).toEqual({ path: "invoicing/v2" });
+    expect(parseRestClassTag("companies/{businessId}/", "Companies")).toEqual({ path: "companies/{businessId}" });
   });
 
   it("rejects a method word and multiple tokens", () => {
@@ -44,11 +44,11 @@ describe("@rest in source", () => {
     const files = analyzeSource({
       "/tools/Notes.ts": `
         /** Notes.
-         * @rest /notebook
+         * @rest notebook
          */
         export class Notes {
           /** Reads one.
-           * @rest GET /notebook/{id}
+           * @rest GET /api/notebook/{id}
            */
           read(input: { id: string }): string { return input.id; }
           /** @rest delete */
@@ -59,9 +59,9 @@ describe("@rest in source", () => {
       `,
     });
     const cls = files.find((f) => f.path === "tools/Notes.ts")!.classes[0];
-    expect(cls.rest).toEqual({ path: "/notebook" });
+    expect(cls.rest).toEqual({ path: "notebook" });
     const byName = Object.fromEntries(cls.functions.map((fn) => [fn.name, fn.rest]));
-    expect(byName.read).toEqual({ method: "GET", path: "/notebook/{id}" });
+    expect(byName.read).toEqual({ method: "GET", path: "/api/notebook/{id}" });
     expect(byName.purge).toEqual({ method: "DELETE" });
     expect(byName.plain).toBeUndefined();
   });

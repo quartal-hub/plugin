@@ -174,7 +174,7 @@ describe("resolveRestRoutes — naming convention", () => {
 describe("resolveRestRoutes — @rest tags", () => {
   it("uses the class path for every method, including convention routes", () => {
     expect(routesOf(`
-      /** @rest /notebook */
+      /** @rest notebook */
       export class Notes {
         list(): string[] { return []; }
         get(input: { id: string }): string { return ""; }
@@ -194,7 +194,7 @@ describe("resolveRestRoutes — @rest tags", () => {
         purgeOld(input: { id: string }): void {}
         /** @rest DELETE old */
         purgeOlder(input: { days: number }): void {}
-        /** @rest DELETE /maintenance/old */
+        /** @rest DELETE /api/maintenance/old */
         purgeOldest(): void {}
         /** @rest old/{year} */
         archiveYear(input: { year: number; dryRun?: boolean }): void {}
@@ -210,15 +210,34 @@ describe("resolveRestRoutes — @rest tags", () => {
     });
   });
 
+  it("requires a leading-slash path to start with the base path, on classes and methods", () => {
+    expect(() => routesOf(`
+      /** @rest /invoicing */
+      export class Invoices {
+        list(): string[] { return []; }
+      }
+    `, "Invoices")).toThrow(
+      'Invoices: @rest path "/invoicing" must start with the API base path "/api" (as in "/api/invoicing"), or leave out the leading "/" for a path relative to /api',
+    );
+    expect(() => routesOf(`
+      export class Invoices {
+        /** @rest GET /invoices/stats */
+        stats(): string { return ""; }
+      }
+    `, "Invoices")).toThrow(
+      'Invoices.stats: @rest path "/invoices/stats" must start with the API base path "/api" (as in "/api/invoices/stats"), or leave out the leading "/" for a path relative to /api/invoices',
+    );
+  });
+
   it("validates path parameters declared in a class path against every method", () => {
     expect(routesOf(`
-      /** @rest /companies/{businessId} */
+      /** @rest /api/companies/{businessId} */
       export class Companies {
         getNotices(input: { businessId: string; lang?: "fi" | "sv" }): string[] { return []; }
       }
     `, "Companies")).toEqual({ "Companies.getNotices": "GET /api/companies/{businessId}/notices" });
     expect(() => routesOf(`
-      /** @rest /companies/{businessId} */
+      /** @rest companies/{businessId} */
       export class Companies {
         getNotices(input: { lang?: string }): string[] { return []; }
       }
@@ -228,13 +247,13 @@ describe("resolveRestRoutes — @rest tags", () => {
   it("rejects an optional, nullable or non-primitive path parameter", () => {
     expect(() => routesOf(`
       export class Things {
-        /** @rest GET /things/{id} */
+        /** @rest GET /api/things/{id} */
         read(input: { id?: string }): string { return ""; }
       }
     `)).toThrow(/Things\.read: path parameter \{id\} must be a required, non-null string, number or boolean \(input property "id" is string, optional\)/);
     expect(() => routesOf(`
       export class Things {
-        /** @rest GET /things/{ref} */
+        /** @rest GET things/{ref} */
         read(input: { ref: { id: string } }): string { return ""; }
       }
     `)).toThrow(/input property "ref" is an object/);
@@ -277,9 +296,9 @@ describe("resolveRestRoutes — @rest tags", () => {
     `)).toThrow(/Things\.postThing: REST route POST \/api\/things is already used by Things\.createThing/);
     expect(() => routesOf(`
       export class Things {
-        /** @rest POST /things */
+        /** @rest POST /api/things */
         createThing(input: { name: string }): string { return ""; }
-        /** @rest POST /things */
+        /** @rest POST /api/things */
         addThing(input: { name: string }): string { return ""; }
       }
     `)).toThrow(/Things\.addThing: REST route POST \/api\/things is already used by Things\.createThing/);

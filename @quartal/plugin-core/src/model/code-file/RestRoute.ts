@@ -9,15 +9,18 @@ export interface RestRouteDeclaration {
   /** HTTP method named in the tag (upper-case). */
   method?: RestMethod;
   /**
-   * Path named in the tag. With a leading `/` it is relative to the API base path and ignores the
-   * class path; otherwise it is appended to the class path.
+   * Path named in the tag. With a leading `/` it is the full path and must start with the API base
+   * path (`/api/invoices/approve`); otherwise it is appended to the class path (`approve`).
    */
   path?: string;
 }
 
 /** What a `@rest` JSDoc tag on a tool class declares: the class path under the API base path. */
 export interface RestClassDeclaration {
-  /** Class path without the base path (normalised to a leading `/`). */
+  /**
+   * Path named in the tag. With a leading `/` it is the full class path and must start with the API
+   * base path (`/api/invoicing`); otherwise it is appended to the base path (`invoicing`).
+   */
   path: string;
 }
 
