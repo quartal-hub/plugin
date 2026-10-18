@@ -20,5 +20,11 @@ message pointing at `@rest POST`. The `defaultMethod` option of `generateTools` 
 is gone, `PluginToolExposure.restMethod` is upper-case (`"GET" | "POST" | "PUT" | "DELETE"`), and
 `CodeFunction.rest` / `CodeClass.rest` carry the declared tags. MCP tool names and schemas are unchanged.
 
+The same verbs shape the MCP side: a bare CRUD verb is completed with the class noun for the MCP tool
+name (`Invoices.get` → `getInvoice`, `Invoices.list` → `listInvoices`; a name two classes share is
+prefixed with the class on both), and the verb implies the tool annotations unless `@readOnly` & co. say
+otherwise (`get`/`list`/`find` read-only, `create` not destructive, `update` idempotent, `delete`/`remove`
+destructive and idempotent).
+
 A tool can be kept to one surface: `@rest hidden` (method or class) gives it no REST operation,
 `@mcp hidden` (method or class) leaves it out of the MCP server (`CodeFunction.mcp` / `CodeClass.mcp`).

@@ -1,23 +1,6 @@
 import type { CodeClass, CodeFile, CodeFunction, CodePropOrParam, CodeType, RestMethod, RestRoute } from "../model/index.ts";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
-
-/**
- * Leading method-name verbs that pick the HTTP method (ASP.NET Web API action prefixes, the Google
- * API design guide's standard methods and the Feathers / LoopBack service verbs). A name with any
- * other verb is a custom method: POST at its full name.
- */
-const VERB_METHODS: Record<string, RestMethod> = {
-  get: "GET",
-  list: "GET",
-  find: "GET",
-  create: "POST",
-  post: "POST",
-  update: "PUT",
-  replace: "PUT",
-  put: "PUT",
-  delete: "DELETE",
-  remove: "DELETE",
-};
+import { CRUD_VERBS, namesClass, splitLeadingVerb } from "./crudVerbs.ts";
 
 /** Methods whose convention route takes a required `id` input property as the `{id}` path parameter. */
 const ID_IN_PATH: ReadonlySet<RestMethod> = new Set<RestMethod>(["GET", "PUT", "DELETE"]);
@@ -51,23 +34,6 @@ export function toKebabCase(name: string): string {
 /** Key of a method in the map {@link resolveRestRoutes} returns. */
 export function restRouteKey(className: string, methodName: string): string {
   return `${className}.${methodName}`;
-}
-
-/**
- * Splits a method name into a recognised leading verb and the remainder (`getInvoice` →
- * `{ verb: "get", rest: "Invoice" }`). The verb must be followed by an upper-case letter, a digit,
- * `_` or the end of the name, so `listen` is not `list`.
- * @param name The method name.
- */
-export function splitLeadingVerb(name: string): { verb: string; rest: string } | undefined {
-  for (const verb of Object.keys(VERB_METHODS)) {
-    if (!name.startsWith(verb)) continue;
-    const next = name.charAt(verb.length);
-    if (next === "" || /[A-Z0-9_]/.test(next)) {
-      return { verb, rest: name.slice(verb.length).replace(/^_+/, "") };
-    }
-  }
-  return undefined;
 }
 
 /**
@@ -156,7 +122,7 @@ function resolveRestRoute(
 ): RestRoute {
   const props = resolveInputProperties(fn, typeIndex);
   const verb = splitLeadingVerb(fn.name);
-  const method = fn.rest?.method ?? (verb ? VERB_METHODS[verb.verb] : "POST");
+  const method = fn.rest?.method ?? (verb ? CRUD_VERBS[verb.verb].method : "POST");
 
   let path: string;
   if (fn.rest?.path !== undefined) {
@@ -224,13 +190,6 @@ function joinRestPath(base: string, parent: string, path: string, where: string)
     );
   }
   return path;
-}
-
-/** Whether `rest` names the class: equal to the class name ignoring one trailing `s` on either side, case-insensitively. */
-function namesClass(rest: string, className: string): boolean {
-  if (!rest) return true;
-  const singular = (s: string) => s.toLowerCase().replace(/s$/, "");
-  return singular(rest) === singular(className);
 }
 
 /** `string`, `number`, `boolean`, a string-literal union or an enum alias: representable as one query/path value. */

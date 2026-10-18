@@ -245,6 +245,16 @@ All existing `get*` / `find*` / `list*` methods take primitives or nothing, so n
 - Changeset: `minor` for `@quartal/plugin` and `@quartal/plugin-core`, `patch` for
   `@quartal/create-plugin` and `@quartal/ui-plugin`.
 
+## MCP side (implemented with the same verb table)
+
+`code/crudVerbs.ts` holds the verb table for both surfaces. Besides the HTTP method, a verb implies
+MCP tool annotations (`get`/`list`/`find` → `readOnlyHint`, `create`/`post` → `destructiveHint: false`,
+`update`/`replace`/`put` → `idempotentHint`, `delete`/`remove` → `destructiveHint` + `idempotentHint`),
+which explicit `@readOnly` ## Open decisions co. override, and a bare verb is completed with the class noun for the
+MCP tool name (`Invoices.get` → `getInvoice`, `Invoices.list` → `listInvoices`; singular = one trailing
+`s` dropped, collections keep the class name). A name two classes share is prefixed with the class on
+both. `@rest hidden` / `@mcp hidden` keep a tool to one surface.
+
 ## Open decisions
 
 1. A `get*` / `list*` / `find*` / `delete*` method whose input does not fit GET/DELETE: fail the

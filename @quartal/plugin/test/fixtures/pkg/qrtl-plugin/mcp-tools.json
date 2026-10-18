@@ -207,7 +207,7 @@
       }
     },
     {
-      "id": "list",
+      "id": "listInvoices",
       "fileName": "Invoices",
       "className": "Invoices",
       "methodName": "list",
@@ -242,10 +242,13 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true
       }
     },
     {
-      "id": "get",
+      "id": "getInvoice",
       "fileName": "Invoices",
       "className": "Invoices",
       "methodName": "get",
@@ -296,10 +299,13 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true
       }
     },
     {
-      "id": "create",
+      "id": "createInvoice",
       "fileName": "Invoices",
       "className": "Invoices",
       "methodName": "create",
@@ -359,10 +365,13 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "destructiveHint": false
       }
     },
     {
-      "id": "update",
+      "id": "updateInvoice",
       "fileName": "Invoices",
       "className": "Invoices",
       "methodName": "update",
@@ -427,10 +436,13 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "idempotentHint": true
       }
     },
     {
-      "id": "delete",
+      "id": "deleteInvoice",
       "fileName": "Invoices",
       "className": "Invoices",
       "methodName": "delete",
@@ -459,6 +471,10 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true
       }
     },
     {
@@ -550,6 +566,9 @@
           }
         },
         "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true
       }
     },
     {

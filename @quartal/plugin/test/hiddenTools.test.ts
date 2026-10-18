@@ -114,7 +114,7 @@ describe("@rest hidden / @mcp hidden", () => {
       hasReadme: false,
     });
     const byName = Object.fromEntries(info.tools.map((t) => [`${t.className}.${t.name}`, t.exposure]));
-    expect(byName["Invoices.list"]).toEqual({ mcpName: "list", restUrl: "/api/invoices", restMethod: "GET" });
+    expect(byName["Invoices.list"]).toEqual({ mcpName: "listInvoices", restUrl: "/api/invoices", restMethod: "GET" });
     expect(byName["Invoices.listRows"]).toEqual({ restUrl: "/api/invoices/rows", restMethod: "GET" });
     expect(byName["Invoices.draft"]).toEqual({ mcpName: "draft" });
     expect(byName["Internal.ping"]).toEqual({});

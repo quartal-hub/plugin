@@ -50,7 +50,8 @@ never exposed.
 
 | Tool field | Comes from | Notes |
 |---|---|---|
-| `name` | Method name | Prefixed with the class name (`Class_method`) only when the same method name exists in two classes. Characters outside `a–z A–Z 0–9 _ -` are replaced with `_`; max 128 characters. |
+| `name` | Method name | A bare CRUD verb is completed with the class noun (`Invoices.get` → `getInvoice`, `Invoices.list` → `listInvoices`) — see [One class, both surfaces](#one-class-both-surfaces). A name two classes share is prefixed on both (`Invoices_getInvoice`). Characters outside `a–z A–Z 0–9 _ -` are replaced with `_`; max 128 characters. |
+| `annotations` | `@readOnly` & co., or the leading verb | `get`/`list`/`find` imply read-only, `delete`/`remove` destructive and idempotent, … — see [Read-only and other hints](#read-only-and-other-hints). |
 | `title` | `@summary` JSDoc tag | Optional short display name. |
 | `description` | JSDoc body | The full comment text above the tags; paragraphs are kept. This is the main text the agent reads. |
 | `inputSchema` | The method's **first parameter** | See [Input types](#input-types). Any further parameters are treated as injected context (auth, request, …) and never appear in the schema. |
@@ -193,6 +194,28 @@ export class Invoices {
 The same rules are used by ASP.NET Web API (action-name prefixes), the Google API design guide
 (the `Get`, `List`, `Create`, `Update`, `Delete` standard methods) and the Feathers / LoopBack
 service verbs, so a REST client built against another such API finds familiar routes.
+
+### One class, both surfaces
+
+The verb drives the MCP side too, so the same class reads well to an agent and to a REST client:
+
+- The **MCP tool name** is the method name; a bare verb is completed with the class noun,
+  singular for one item and as written for `list` / `find` (`Invoices.get` → `getInvoice`,
+  `Invoices.list` → `listInvoices`). A name with its own noun (`listArchive`, `getInvoice`) and a
+  custom verb (`approve`, `add`) stay as they are.
+- The **MCP annotations** default from the verb (explicit tags win): `get` / `list` / `find`
+  are read-only, `create` only adds, `update` is idempotent, `delete` / `remove` are destructive
+  and idempotent.
+
+| Method | REST | MCP tool | Implied hints |
+|---|---|---|---|
+| `list(input: { page?: number })` | `GET /api/invoices?page=` | `listInvoices` | read-only |
+| `get(input: { id: string })` | `GET /api/invoices/{id}` | `getInvoice` | read-only |
+| `create(input: InvoiceFields)` | `POST /api/invoices` | `createInvoice` | not destructive |
+| `update(input: { id: string } & InvoiceFields)` | `PUT /api/invoices/{id}` | `updateInvoice` | idempotent |
+| `delete(input: { id: string })` | `DELETE /api/invoices/{id}` | `deleteInvoice` | destructive, idempotent |
+| `approve(input: { id: string })` | `POST /api/invoices/approve` | `approve` | none |
+| `listArchive(input: { year: number })` with `@rest GET archive/{year}` | `GET /api/invoices/archive/{year}` | `listArchive` | read-only |
 
 ### `@rest` on a class
 
@@ -355,7 +378,12 @@ model should never call directly — keeping the model's tool list small and foc
 
 MCP hosts decide whether to ask the user before a tool runs from the tool's **annotations**. A tool that says nothing
 is treated as one that may change or delete data, so a host such as Claude asks for approval on every call — slow
-when an agent reads many records. Declare what a tool does with JSDoc tags on the method:
+when an agent reads many records.
+
+The [leading verb](#one-class-both-surfaces) of the method name already says most of it: `get`, `list` and `find`
+are read-only; `create` only adds; `update` is idempotent; `delete` and `remove` are destructive and idempotent.
+Anything the verb does not say, or says wrongly (a `getOrCreateSession` that writes), you declare with JSDoc tags on
+the method; an explicit tag always wins over the verb:
 
 | Tag | MCP annotation | Meaning |
 |---|---|---|

@@ -161,7 +161,7 @@
         "type": "ArrayValue"
       },
       "exposure": {
-        "mcpName": "list",
+        "mcpName": "listInvoices",
         "restUrl": "/api/invoices",
         "restMethod": "GET"
       },
@@ -185,7 +185,7 @@
         "type": "Invoice"
       },
       "exposure": {
-        "mcpName": "get",
+        "mcpName": "getInvoice",
         "restUrl": "/api/invoices/{id}",
         "restMethod": "GET"
       },
@@ -209,7 +209,7 @@
         "type": "Invoice"
       },
       "exposure": {
-        "mcpName": "create",
+        "mcpName": "createInvoice",
         "restUrl": "/api/invoices",
         "restMethod": "POST"
       },
@@ -233,7 +233,7 @@
         "type": "Invoice"
       },
       "exposure": {
-        "mcpName": "update",
+        "mcpName": "updateInvoice",
         "restUrl": "/api/invoices/{id}",
         "restMethod": "PUT"
       },
@@ -257,7 +257,7 @@
         "type": "BooleanValue"
       },
       "exposure": {
-        "mcpName": "delete",
+        "mcpName": "deleteInvoice",
         "restUrl": "/api/invoices/{id}",
         "restMethod": "DELETE"
       },
@@ -659,7 +659,7 @@
             "type": "ArrayValue"
           },
           "exposure": {
-            "mcpName": "list",
+            "mcpName": "listInvoices",
             "restUrl": "/api/invoices",
             "restMethod": "GET"
           },
@@ -683,7 +683,7 @@
             "type": "Invoice"
           },
           "exposure": {
-            "mcpName": "get",
+            "mcpName": "getInvoice",
             "restUrl": "/api/invoices/{id}",
             "restMethod": "GET"
           },
@@ -707,7 +707,7 @@
             "type": "Invoice"
           },
           "exposure": {
-            "mcpName": "create",
+            "mcpName": "createInvoice",
             "restUrl": "/api/invoices",
             "restMethod": "POST"
           },
@@ -731,7 +731,7 @@
             "type": "Invoice"
           },
           "exposure": {
-            "mcpName": "update",
+            "mcpName": "updateInvoice",
             "restUrl": "/api/invoices/{id}",
             "restMethod": "PUT"
           },
@@ -755,7 +755,7 @@
             "type": "BooleanValue"
           },
           "exposure": {
-            "mcpName": "delete",
+            "mcpName": "deleteInvoice",
             "restUrl": "/api/invoices/{id}",
             "restMethod": "DELETE"
           },
