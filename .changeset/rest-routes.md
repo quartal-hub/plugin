@@ -1,9 +1,15 @@
 ---
-"@quartal/plugin-core": minor
-"@quartal/plugin": minor
-"@quartal/create-plugin": patch
-"@quartal/ui-plugin": patch
+"@quartal/plugin-core": major
+"@quartal/plugin": major
+"@quartal/plugin-vue": major
+"@quartal/create-plugin": major
+"@quartal/ui-plugin": major
+"@quartal/plugin-docs-web": major
 ---
+
+Version 1: every `@quartal/*` package moves to 1.0.0 together. The REST API changes shape, so a
+plugin built against 0.x serves different URLs after upgrading; the MCP surface gains the naming
+convention below but keeps its schemas.
 
 REST routes follow REST conventions instead of `POST /api/<Class>/<method>`. The route of a tool is
 `/api/<class>[/<segment>][/{id}]`: the class name in kebab-case, the HTTP method and segment from the
