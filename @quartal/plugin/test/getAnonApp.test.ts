@@ -39,7 +39,7 @@ describe("getAnonApp — full route assembly", () => {
   });
 
   it("executes a REST tool call", async () => {
-    const res = await app.request("/api/Calculator/add", {
+    const res = await app.request("/api/calculator/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ first: 2, second: 3 }),

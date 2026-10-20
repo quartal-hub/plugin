@@ -44,7 +44,7 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 
 | Endpoint | Returns |
 |---|---|
-| `POST /api/<Class>/<method>` | Executes one tool. The request body is validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `500` on execution errors. Every operation is described in `open-api.json`. |
+| `GET`, `POST`, `PUT` or `DELETE /api/<class>/…` | Executes one tool. The route follows from the class and method names (`Invoices.get({ id })` → `GET /api/invoices/{id}`, `HelloWorld.sayHello` → `POST /api/hello-world/say-hello`) or from a `@rest` tag — see [REST routes](/docs/tools/creating-tools#rest-routes). Path parameters, query string and JSON body are validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `500` on execution errors. Every operation is described in `open-api.json`. |
 
 ## Skills
 
@@ -91,21 +91,13 @@ assets stay public.
 
 ## Your own landing page
 
-Create `src/pages/index.astro` (or `index.md`, `.mdx`, `.html`) and it replaces the built-in docs
-site at `/` — Astro renders your page, and the `.html` redirects above are released with it. All
-machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep working
-unchanged, so the plugin stays fully functional. The page is detected when the server starts;
-restart `astro dev` after adding or removing it.
+Create `src/pages/index.astro` (or `index.md`, `.mdx`, `.html`, `.ts`, `.js`) and it replaces the
+built-in docs site at `/` — Astro renders your page, and the `.html` redirects above are released
+with it. All machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep
+working unchanged, so the plugin stays fully functional. The page is detected when the server
+starts; restart `astro dev` after adding or removing it.
 
-Want your own branding *and* the docs UI? Mount it on your page from
-[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) — the
-package README has a complete `index.astro` example:
-
-```astro
-<div id="docs"></div>
-<script>
-  import "@quartal/plugin-docs-web/style.css";
-  import { mountPluginDocs } from "@quartal/plugin-docs-web";
-  mountPluginDocs(document.getElementById("docs")!);
-</script>
-```
+[Custom docs](/docs/docs-site/custom-docs) walks through the whole range: the identity and README
+shown on the About page, a Bootstrap skin, and mounting the docs UI from
+[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) inside your
+own page.

@@ -34,4 +34,5 @@ export { default as PluginPromptDetail } from "./components/PluginPromptDetail.v
 export { default as PluginSummary } from "./components/PluginSummary.vue";
 export { default as PluginToolDetail } from "./components/PluginToolDetail.vue";
 export { default as PluginToolGroup } from "./components/PluginToolGroup.vue";
+export { default as PluginToolsIndex } from "./components/PluginToolsIndex.vue";
 export { default as PluginTypeDoc } from "./components/PluginTypeDoc.vue";

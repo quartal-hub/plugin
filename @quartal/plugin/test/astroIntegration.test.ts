@@ -27,7 +27,7 @@ class Calculator {
 describe("isServerPath", () => {
   it("matches Hono server routes", () => {
     const paths = [
-      "/", "/api/Calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
+      "/", "/api/calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
       "/agents/greeter.md", "/icons/0", "/plugin.json", "/widget-assets/_astro/x.js",
       "/.well-known/oauth-protected-resource",
     ];
@@ -47,7 +47,7 @@ describe("isServerPathWithOwnIndexPage", () => {
     for (const p of ["/", "/mcp.html", "/swagger.html", "/docs.html", "/skills.html", "/agents.html"]) {
       expect(isServerPathWithOwnIndexPage(p), p).toBe(false);
     }
-    for (const p of ["/plugin.json", "/mcp", "/api/Calculator/add", "/oauth/login", "/open-api.json"]) {
+    for (const p of ["/plugin.json", "/mcp", "/api/calculator/add", "/oauth/login", "/open-api.json"]) {
       expect(isServerPathWithOwnIndexPage(p), p).toBe(true);
     }
   });
@@ -67,7 +67,7 @@ describe("createPluginMiddleware", () => {
   it("delegates server routes to the Hono app", async () => {
     const mw = createPluginMiddleware(app);
     const res = await mw(
-      { request: new Request("http://x/api/Calculator/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ first: 2, second: 3 }) }) },
+      { request: new Request("http://x/api/calculator/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ first: 2, second: 3 }) }) },
       nextResponse,
     );
     expect(res.status).toBe(200);

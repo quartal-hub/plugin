@@ -17,7 +17,8 @@ export const samplePlugin: PluginInfo = {
       description: "Add two numbers together.",
       parameters: [{ name: "input", description: "Operands.", type: "Calculator_add_Input" }],
       returns: { name: "", description: "The sum.", type: "NumberValue" },
-      exposure: { mcpName: "calculator_add", restUrl: "/Calculator/add", restMethod: "post" },
+      exposure: { mcpName: "calculator_add", restUrl: "/api/calculator/add", restMethod: "POST" },
+      annotations: { readOnlyHint: true },
       hasWidget: false,
     },
     {
@@ -27,7 +28,7 @@ export const samplePlugin: PluginInfo = {
       description: "Multiply two numbers.",
       parameters: [{ name: "input", description: "Operands.", type: "MultiplyThese" }],
       returns: { name: "", description: "The product.", type: "NumberValue" },
-      exposure: { mcpName: "calculator_multiply", restUrl: "/Calculator/multiply", restMethod: "post" },
+      exposure: { mcpName: "calculator_multiply", restUrl: "/api/calculator/multiply", restMethod: "POST" },
       hasWidget: true,
     },
     {
@@ -38,7 +39,7 @@ export const samplePlugin: PluginInfo = {
       description: "Say hello to the world.",
       parameters: [{ name: "input", description: "Greeting input.", type: "HelloWorld_sayHello_Input" }],
       returns: { name: "", description: "The greeting.", type: "StringValue" },
-      exposure: { mcpName: "hello_say", restUrl: "/HelloWorld/sayHello", restMethod: "post" },
+      exposure: { mcpName: "hello_say", restUrl: "/api/hello-world/say-hello", restMethod: "POST" },
       hasWidget: false,
     },
   ],
@@ -46,6 +47,7 @@ export const samplePlugin: PluginInfo = {
     {
       className: "Calculator",
       fileName: "Calculator",
+      description: "Arithmetic on two numbers.",
       tools: [
         {
           name: "add",
@@ -55,7 +57,8 @@ export const samplePlugin: PluginInfo = {
           description: "Add two numbers together.",
           parameters: [{ name: "input", description: "Operands.", type: "Calculator_add_Input" }],
           returns: { name: "", description: "The sum.", type: "NumberValue" },
-          exposure: { mcpName: "calculator_add", restUrl: "/Calculator/add", restMethod: "post" },
+          exposure: { mcpName: "calculator_add", restUrl: "/api/calculator/add", restMethod: "POST" },
+          annotations: { readOnlyHint: true },
           hasWidget: false,
         },
         {
@@ -65,7 +68,7 @@ export const samplePlugin: PluginInfo = {
           description: "Multiply two numbers.",
           parameters: [{ name: "input", description: "Operands.", type: "MultiplyThese" }],
           returns: { name: "", description: "The product.", type: "NumberValue" },
-          exposure: { mcpName: "calculator_multiply", restUrl: "/Calculator/multiply", restMethod: "post" },
+          exposure: { mcpName: "calculator_multiply", restUrl: "/api/calculator/multiply", restMethod: "POST" },
           hasWidget: true,
         },
       ],
@@ -73,6 +76,7 @@ export const samplePlugin: PluginInfo = {
     {
       className: "HelloWorld",
       fileName: "HelloWorld",
+      description: "Greetings.",
       tools: [
         {
           name: "sayHello",
@@ -82,7 +86,7 @@ export const samplePlugin: PluginInfo = {
           description: "Say hello to the world.",
           parameters: [{ name: "input", description: "Greeting input.", type: "HelloWorld_sayHello_Input" }],
           returns: { name: "", description: "The greeting.", type: "StringValue" },
-          exposure: { mcpName: "hello_say", restUrl: "/HelloWorld/sayHello", restMethod: "post" },
+          exposure: { mcpName: "hello_say", restUrl: "/api/hello-world/say-hello", restMethod: "POST" },
           hasWidget: false,
         },
       ],

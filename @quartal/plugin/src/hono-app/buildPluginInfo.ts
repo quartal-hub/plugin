@@ -22,6 +22,8 @@ import type {
   WidgetCatalogEntry,
 } from "../model/index.ts";
 import { discoverAgents, type DiscoverAgentsOptions } from "../agents/discoverAgents.ts";
+import { resolveToolAnnotations } from "../code/crudVerbs.ts";
+import { resolveRestRoutes, restRouteKey } from "../code/resolveRestRoutes.ts";
 import { discoverSkills } from "./skillDiscovery.ts";
 import { resolveHomepage } from "./pluginMetadata.ts";
 import { buildMcpServerEntries } from "../agent-plugin/buildMcpServersConfig.ts";
@@ -50,8 +52,6 @@ export interface BuildPluginInfoInput {
   agents: PluginAgentSummary[];
   /** REST base path (e.g. `/api`). */
   basePath: string;
-  /** Default HTTP method for REST routes. */
-  defaultMethod: "get" | "post";
   /** Whether a README.md is available. */
   hasReadme: boolean;
   /** Server origin for homepage resolution (omit at build time). */
@@ -88,6 +88,7 @@ function toToolParameter(p: CodePropOrParam): PluginToolParameter {
 function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
   const mcpByMethod = new Map(input.mcpTools.map((t) => [`${t.className}.${t.methodName}`, t]));
   const widgetToolIds = new Set(input.widgetCatalog.map((w) => w.toolId));
+  const restRoutes = resolveRestRoutes(input.codeFiles, input.basePath);
   const tools: PluginToolEntry[] = [];
 
   for (const file of input.codeFiles) {
@@ -97,6 +98,8 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
       for (const fn of cls.functions) {
         const mcp = mcpByMethod.get(`${cls.name}.${fn.name}`);
         const mcpName = mcp?.id;
+        const route = restRoutes.get(restRouteKey(cls.name, fn.name));
+        const annotations = resolveToolAnnotations(fn.name, fn.annotations);
         tools.push({
           name: fn.name,
           className: cls.name,
@@ -107,9 +110,9 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
           returns: toToolParameter(fn.returns),
           exposure: {
             ...(mcpName ? { mcpName } : {}),
-            restUrl: `${input.basePath}/${cls.name}/${fn.name}`,
-            restMethod: input.defaultMethod,
+            ...(route ? { restUrl: route.path, restMethod: route.method } : {}),
           },
+          ...(annotations ? { annotations } : {}),
           hasWidget: mcpName ? widgetToolIds.has(mcpName) : false,
         });
       }
@@ -119,12 +122,24 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
   return tools;
 }
 
-function buildToolGroups(tools: PluginToolEntry[]): PluginToolGroup[] {
+/** The JSDoc of every tool class, by class name. */
+function classDescriptions(codeFiles: CodeFile[]): Map<string, string> {
+  const byClass = new Map<string, string>();
+  for (const file of codeFiles) {
+    for (const cls of file.classes) {
+      if (cls.description) byClass.set(cls.name, cls.description);
+    }
+  }
+  return byClass;
+}
+
+function buildToolGroups(tools: PluginToolEntry[], descriptions: Map<string, string>): PluginToolGroup[] {
   const byClass = new Map<string, PluginToolGroup>();
   for (const tool of tools) {
     let group = byClass.get(tool.className);
     if (!group) {
-      group = { className: tool.className, fileName: tool.fileName, tools: [] };
+      const description = descriptions.get(tool.className);
+      group = { className: tool.className, fileName: tool.fileName, ...(description ? { description } : {}), tools: [] };
       byClass.set(tool.className, group);
     }
     group.tools.push(tool);
@@ -244,7 +259,7 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
     style: manifest.style,
     hasReadme: input.hasReadme,
     tools,
-    toolGroups: buildToolGroups(tools),
+    toolGroups: buildToolGroups(tools, classDescriptions(input.codeFiles)),
     skills: input.skills,
     agents: input.agents,
     widgets: buildWidgets(input),

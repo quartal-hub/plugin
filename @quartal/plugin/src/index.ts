@@ -18,10 +18,15 @@ export {
 export type { PluginArtifacts } from "./code/buildPluginArtifacts.ts";
 export { buildMcpCatalog } from "./code/buildMcpCatalog.ts";
 export { buildMcpPrompts } from "./code/buildMcpPrompts.ts";
-export { buildMcpTools, makeMcpToolName } from "./code/buildMcpTools.ts";
+export { baseMcpToolName, buildMcpTools, makeMcpToolName } from "./code/buildMcpTools.ts";
+export { classNoun, CRUD_VERBS, resolveToolAnnotations, splitLeadingVerb } from "./code/crudVerbs.ts";
+export type { CrudVerb } from "./code/crudVerbs.ts";
 export { buildOpenApiDocument } from "./code/buildOpenApiDocument.ts";
 export { buildOpenApiTags } from "./code/buildOpenApiTags.ts";
 export type { OpenApiTag } from "./code/buildOpenApiTags.ts";
+export { parseMcpTag } from "./code/parseMcpTag.ts";
+export { parseRestClassTag, parseRestTag, REST_METHODS } from "./code/parseRestTag.ts";
+export { resolveInputProperties, resolveRestRoutes, restRouteKey, toKebabCase } from "./code/resolveRestRoutes.ts";
 export { getFunctionsWithResolvedTypes } from "./code/getFunctionsWithResolvedTypes.ts";
 export { getSystemCodeFile } from "./code/getSystemCodeFile.ts";
 export { loadCodeFiles } from "./code/loadCodeFiles.ts";

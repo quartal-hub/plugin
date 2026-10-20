@@ -70,6 +70,7 @@ export class Calculator {
    * @summary Get a report document.
    * @param input The input parameters. See ReportInput for details.
    * @returns The report document as HTML string.
+   * @rest POST
    */
   public async getReportDocument(input: ReportInput): Promise<string> {
     return createReport({
@@ -85,6 +86,7 @@ export class Calculator {
    * @summary Get a report fragment.
    * @param input The input parameters. See ReportInput for details.
    * @returns The report fragment as HTML string.
+   * @rest POST
    */
   public async getReportFragment(input: ReportInput): Promise<string> {
     return createReport({

@@ -42,8 +42,11 @@
       },
       "exposure": {
         "mcpName": "add",
-        "restUrl": "/api/Calculator/add",
-        "restMethod": "post"
+        "restUrl": "/api/calculator/add",
+        "restMethod": "POST"
+      },
+      "annotations": {
+        "readOnlyHint": true
       },
       "hasWidget": false
     },
@@ -66,8 +69,8 @@
       },
       "exposure": {
         "mcpName": "multiply",
-        "restUrl": "/api/Calculator/multiply",
-        "restMethod": "post"
+        "restUrl": "/api/calculator/multiply",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -90,8 +93,8 @@
       },
       "exposure": {
         "mcpName": "sayHello",
-        "restUrl": "/api/HelloWorld/sayHello",
-        "restMethod": "post"
+        "restUrl": "/api/hello-world/say-hello",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -114,8 +117,8 @@
       },
       "exposure": {
         "mcpName": "sayHelloAdvanced",
-        "restUrl": "/api/HelloWorld/sayHelloAdvanced",
-        "restMethod": "post"
+        "restUrl": "/api/hello-world/say-hello-advanced",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -138,8 +141,195 @@
       },
       "exposure": {
         "mcpName": "sayHelloWithThis",
-        "restUrl": "/api/HelloWorld/sayHelloWithThis",
-        "restMethod": "post"
+        "restUrl": "/api/hello-world/say-hello-with-this",
+        "restMethod": "POST"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "list",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Lists invoices, newest first.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoices_list_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "ArrayValue"
+      },
+      "exposure": {
+        "mcpName": "listInvoices",
+        "restUrl": "/api/invoices",
+        "restMethod": "GET"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "get",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Reads one invoice.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoices_get_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "Invoice"
+      },
+      "exposure": {
+        "mcpName": "getInvoice",
+        "restUrl": "/api/invoices/{id}",
+        "restMethod": "GET"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "create",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Creates an invoice.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "InvoiceFields"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "Invoice"
+      },
+      "exposure": {
+        "mcpName": "createInvoice",
+        "restUrl": "/api/invoices",
+        "restMethod": "POST"
+      },
+      "annotations": {
+        "destructiveHint": false
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "update",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Replaces the fields of an invoice.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoice"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "Invoice"
+      },
+      "exposure": {
+        "mcpName": "updateInvoice",
+        "restUrl": "/api/invoices/{id}",
+        "restMethod": "PUT"
+      },
+      "annotations": {
+        "idempotentHint": true
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "delete",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Deletes an invoice.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoices_delete_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "BooleanValue"
+      },
+      "exposure": {
+        "mcpName": "deleteInvoice",
+        "restUrl": "/api/invoices/{id}",
+        "restMethod": "DELETE"
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "approve",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Approves an invoice: a custom method, so it is POST at its own name.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoices_approve_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "Invoice"
+      },
+      "exposure": {
+        "mcpName": "approve",
+        "restUrl": "/api/invoices/approve",
+        "restMethod": "POST"
+      },
+      "hasWidget": false
+    },
+    {
+      "name": "listArchive",
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "Lists the invoices archived in a year.",
+      "parameters": [
+        {
+          "name": "input",
+          "description": "",
+          "type": "Invoices_listArchive_Input"
+        }
+      ],
+      "returns": {
+        "name": "",
+        "description": "",
+        "type": "ArrayValue"
+      },
+      "exposure": {
+        "mcpName": "listArchive",
+        "restUrl": "/api/invoices/archive/{year}",
+        "restMethod": "GET"
+      },
+      "annotations": {
+        "readOnlyHint": true
       },
       "hasWidget": false
     },
@@ -162,8 +352,8 @@
       },
       "exposure": {
         "mcpName": "treeSum",
-        "restUrl": "/api/TypesTester/treeSum",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/tree-sum",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -186,8 +376,8 @@
       },
       "exposure": {
         "mcpName": "primitives",
-        "restUrl": "/api/TypesTester/primitives",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/primitives",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -210,8 +400,8 @@
       },
       "exposure": {
         "mcpName": "jsonSchemaFormats",
-        "restUrl": "/api/TypesTester/jsonSchemaFormats",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/json-schema-formats",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -234,8 +424,8 @@
       },
       "exposure": {
         "mcpName": "optionalAndNull",
-        "restUrl": "/api/TypesTester/optionalAndNull",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/optional-and-null",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -258,8 +448,8 @@
       },
       "exposure": {
         "mcpName": "arrays",
-        "restUrl": "/api/TypesTester/arrays",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/arrays",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -282,8 +472,8 @@
       },
       "exposure": {
         "mcpName": "nestedObject",
-        "restUrl": "/api/TypesTester/nestedObject",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/nested-object",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -306,8 +496,8 @@
       },
       "exposure": {
         "mcpName": "unionParam",
-        "restUrl": "/api/TypesTester/unionParam",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/union-param",
+        "restMethod": "POST"
       },
       "hasWidget": false
     },
@@ -330,8 +520,8 @@
       },
       "exposure": {
         "mcpName": "mixed",
-        "restUrl": "/api/TypesTester/mixed",
-        "restMethod": "post"
+        "restUrl": "/api/types-tester/mixed",
+        "restMethod": "POST"
       },
       "hasWidget": false
     }
@@ -340,6 +530,7 @@
     {
       "className": "Calculator",
       "fileName": "Calculator",
+      "description": "A class that calculates things.",
       "tools": [
         {
           "name": "add",
@@ -360,8 +551,11 @@
           },
           "exposure": {
             "mcpName": "add",
-            "restUrl": "/api/Calculator/add",
-            "restMethod": "post"
+            "restUrl": "/api/calculator/add",
+            "restMethod": "POST"
+          },
+          "annotations": {
+            "readOnlyHint": true
           },
           "hasWidget": false
         },
@@ -384,8 +578,8 @@
           },
           "exposure": {
             "mcpName": "multiply",
-            "restUrl": "/api/Calculator/multiply",
-            "restMethod": "post"
+            "restUrl": "/api/calculator/multiply",
+            "restMethod": "POST"
           },
           "hasWidget": false
         }
@@ -394,6 +588,7 @@
     {
       "className": "HelloWorld",
       "fileName": "HelloWorld",
+      "description": "A class that says hello to the world.",
       "tools": [
         {
           "name": "sayHello",
@@ -414,8 +609,8 @@
           },
           "exposure": {
             "mcpName": "sayHello",
-            "restUrl": "/api/HelloWorld/sayHello",
-            "restMethod": "post"
+            "restUrl": "/api/hello-world/say-hello",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -438,8 +633,8 @@
           },
           "exposure": {
             "mcpName": "sayHelloAdvanced",
-            "restUrl": "/api/HelloWorld/sayHelloAdvanced",
-            "restMethod": "post"
+            "restUrl": "/api/hello-world/say-hello-advanced",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -462,8 +657,202 @@
           },
           "exposure": {
             "mcpName": "sayHelloWithThis",
-            "restUrl": "/api/HelloWorld/sayHelloWithThis",
-            "restMethod": "post"
+            "restUrl": "/api/hello-world/say-hello-with-this",
+            "restMethod": "POST"
+          },
+          "hasWidget": false
+        }
+      ]
+    },
+    {
+      "className": "Invoices",
+      "fileName": "Invoices",
+      "description": "A CRUD resource that relies on the REST naming convention: no `@rest` tags except where noted.",
+      "tools": [
+        {
+          "name": "list",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Lists invoices, newest first.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoices_list_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "ArrayValue"
+          },
+          "exposure": {
+            "mcpName": "listInvoices",
+            "restUrl": "/api/invoices",
+            "restMethod": "GET"
+          },
+          "annotations": {
+            "readOnlyHint": true
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "get",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Reads one invoice.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoices_get_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "Invoice"
+          },
+          "exposure": {
+            "mcpName": "getInvoice",
+            "restUrl": "/api/invoices/{id}",
+            "restMethod": "GET"
+          },
+          "annotations": {
+            "readOnlyHint": true
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "create",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Creates an invoice.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "InvoiceFields"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "Invoice"
+          },
+          "exposure": {
+            "mcpName": "createInvoice",
+            "restUrl": "/api/invoices",
+            "restMethod": "POST"
+          },
+          "annotations": {
+            "destructiveHint": false
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "update",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Replaces the fields of an invoice.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoice"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "Invoice"
+          },
+          "exposure": {
+            "mcpName": "updateInvoice",
+            "restUrl": "/api/invoices/{id}",
+            "restMethod": "PUT"
+          },
+          "annotations": {
+            "idempotentHint": true
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "delete",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Deletes an invoice.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoices_delete_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "BooleanValue"
+          },
+          "exposure": {
+            "mcpName": "deleteInvoice",
+            "restUrl": "/api/invoices/{id}",
+            "restMethod": "DELETE"
+          },
+          "annotations": {
+            "destructiveHint": true,
+            "idempotentHint": true
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "approve",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Approves an invoice: a custom method, so it is POST at its own name.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoices_approve_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "Invoice"
+          },
+          "exposure": {
+            "mcpName": "approve",
+            "restUrl": "/api/invoices/approve",
+            "restMethod": "POST"
+          },
+          "hasWidget": false
+        },
+        {
+          "name": "listArchive",
+          "className": "Invoices",
+          "fileName": "Invoices",
+          "description": "Lists the invoices archived in a year.",
+          "parameters": [
+            {
+              "name": "input",
+              "description": "",
+              "type": "Invoices_listArchive_Input"
+            }
+          ],
+          "returns": {
+            "name": "",
+            "description": "",
+            "type": "ArrayValue"
+          },
+          "exposure": {
+            "mcpName": "listArchive",
+            "restUrl": "/api/invoices/archive/{year}",
+            "restMethod": "GET"
+          },
+          "annotations": {
+            "readOnlyHint": true
           },
           "hasWidget": false
         }
@@ -472,6 +861,7 @@
     {
       "className": "TypesTester",
       "fileName": "TypesTester",
+      "description": "Tester class for validating different parameter types via the Hub API.\nEach method takes a single object parameter for easy Open API / MCP / RPC schema generation and validation.",
       "tools": [
         {
           "name": "treeSum",
@@ -492,8 +882,8 @@
           },
           "exposure": {
             "mcpName": "treeSum",
-            "restUrl": "/api/TypesTester/treeSum",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/tree-sum",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -516,8 +906,8 @@
           },
           "exposure": {
             "mcpName": "primitives",
-            "restUrl": "/api/TypesTester/primitives",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/primitives",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -540,8 +930,8 @@
           },
           "exposure": {
             "mcpName": "jsonSchemaFormats",
-            "restUrl": "/api/TypesTester/jsonSchemaFormats",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/json-schema-formats",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -564,8 +954,8 @@
           },
           "exposure": {
             "mcpName": "optionalAndNull",
-            "restUrl": "/api/TypesTester/optionalAndNull",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/optional-and-null",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -588,8 +978,8 @@
           },
           "exposure": {
             "mcpName": "arrays",
-            "restUrl": "/api/TypesTester/arrays",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/arrays",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -612,8 +1002,8 @@
           },
           "exposure": {
             "mcpName": "nestedObject",
-            "restUrl": "/api/TypesTester/nestedObject",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/nested-object",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -636,8 +1026,8 @@
           },
           "exposure": {
             "mcpName": "unionParam",
-            "restUrl": "/api/TypesTester/unionParam",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/union-param",
+            "restMethod": "POST"
           },
           "hasWidget": false
         },
@@ -660,8 +1050,8 @@
           },
           "exposure": {
             "mcpName": "mixed",
-            "restUrl": "/api/TypesTester/mixed",
-            "restMethod": "post"
+            "restUrl": "/api/types-tester/mixed",
+            "restMethod": "POST"
           },
           "hasWidget": false
         }
@@ -800,7 +1190,7 @@
     {
       "name": "test1",
       "url": "/mcp",
-      "toolCount": 13
+      "toolCount": 20
     }
   ],
   "links": {

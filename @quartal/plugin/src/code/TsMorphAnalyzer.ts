@@ -16,7 +16,9 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpToolVisibility } from "../model/index.ts";
+import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import { parseMcpTag } from "./parseMcpTag.ts";
+import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -153,13 +155,19 @@ export class TsMorphAnalyzer {
   private parseClass(cls: ClassDeclaration, fileTypes: CodeType[]): CodeClass {
     const methods = cls.getMethods().filter((m) => !isPrivateMember(m));
     const props = cls.getProperties().filter((p) => !isPrivateMember(p));
-    return {
-      name: cls.getName() ?? "?",
+    const name = cls.getName() ?? "?";
+    const out: CodeClass = {
+      name,
       description: description(cls),
-      functions: methods.map((m) => this.parseMethod(m, fileTypes, cls.getName() ?? "?")),
+      functions: methods.map((m) => this.parseMethod(m, fileTypes, name)),
       properties: props.map((p) => this.parseProperty(p, fileTypes)),
       implements: cls.getImplements().map((i) => i.getExpression().getText()),
     };
+    const rest = restClassTag(cls, name);
+    if (rest) out.rest = rest;
+    const mcp = mcpTag(cls, name);
+    if (mcp) out.mcp = mcp;
+    return out;
   }
 
   private parseClassAsType(cls: ClassDeclaration, fileTypes: CodeType[]): CodeType {
@@ -227,6 +235,10 @@ export class TsMorphAnalyzer {
     if (visibility) fn.visibility = visibility;
     const annotations = annotationTags(method);
     if (annotations) fn.annotations = annotations;
+    const rest = restTag(method, `${className}.${name}`);
+    if (rest) fn.rest = rest;
+    const mcp = mcpTag(method, `${className}.${name}`);
+    if (mcp) fn.mcp = mcp;
     return fn;
   }
 
@@ -516,6 +528,21 @@ function annotationTags(node: JSDocableNode): McpToolAnnotations | undefined {
     else if (value === "false") out[key] = false;
   }
   return Object.keys(out).length ? out : undefined;
+}
+/** Reads the `@rest` tag of a tool method (`[METHOD] [path]`); throws on an invalid tag. */
+function restTag(node: JSDocableNode, where: string): RestRouteDeclaration | undefined {
+  const t = tags(node).find((x) => x.getTagName() === "rest");
+  return t ? parseRestTag(tagText(t), where) : undefined;
+}
+/** Reads the `@rest` tag of a tool class (a path only); throws on an invalid tag. */
+function restClassTag(node: JSDocableNode, where: string): RestClassDeclaration | undefined {
+  const t = tags(node).find((x) => x.getTagName() === "rest");
+  return t ? parseRestClassTag(tagText(t), where) : undefined;
+}
+/** Reads the `@mcp` tag of a tool method or class (`hidden`); throws on an invalid tag. */
+function mcpTag(node: JSDocableNode, where: string): McpDeclaration | undefined {
+  const t = tags(node).find((x) => x.getTagName() === "mcp");
+  return t ? parseMcpTag(tagText(t), where) : undefined;
 }
 function exampleTag(node: JSDocableNode): unknown | undefined {
   const t = tags(node).find((x) => x.getTagName() === "example");

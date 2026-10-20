@@ -36,7 +36,7 @@ it is gitignored and regenerated on every change to `src/tools`, `src/prompts`, 
 | `contents.json` | The plugin overview: name, title, version, style, plus catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. Served at runtime as [`GET /com.quartal.plugin/contents.json`](/docs/reference/http-endpoints). |
 | `mcp-tools.json` | One descriptor per tool: id, source class/method, description, JSON Schema for input and output, and visibility. This drives both the MCP server and the REST routes. |
 | `mcp-prompts.json` | One descriptor per MCP prompt: id, description and arguments. |
-| `open-api.json` | A complete OpenAPI 3.0 document for the REST API — one `POST /api/<Class>/<method>` operation per tool, with your types as named component schemas and one tag per class. |
+| `open-api.json` | A complete OpenAPI 3.0 document for the REST API — one operation per tool at its [REST route](/docs/tools/creating-tools#rest-routes) (`GET /api/invoices/{id}`, `POST /api/hello-world/say-hello`, …), with your types as named component schemas and one tag per class. |
 | `tools.json` | The full source-code analysis (files, classes, types) that the metadata above is derived from. Used by the built-in docs site to show code-level detail. |
 | `types.json` | A flat index of all types referenced by the tools. |
 | `tools.registry.ts`, `prompts.registry.ts` | Static import maps that bind the metadata back to your classes at runtime, so the plugin works after bundling. |
@@ -50,7 +50,7 @@ types and tags map to schema fields.
 
 - The **MCP server(s)** at `/mcp` (and `/mcp/<name>`) serve the tools, prompts and widget
   resources.
-- The **REST API** at `/api/...` serves the same tools as HTTP actions, documented by
+- The **REST API** at `/api/...` serves the same tools as HTTP operations, documented by
   `open-api.json`.
 - The **Agent Plugins package** — the standard `plugin.json` + `mcp.json` manifests served at the
   origin root, downloadable as one installable zip at `/plugin.zip`.

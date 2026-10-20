@@ -199,6 +199,21 @@ importers:
         specifier: ^7.3.3
         version: 7.3.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.21.1))(yaml@2.9.0)
 
+  samples/iam-api:
+    dependencies:
+      '@astrojs/node':
+        specifier: ^11.0.0
+        version: 11.0.2(astro@7.3.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.21.1))(yaml@2.9.0))
+      '@quartal/plugin':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin
+      '@quartal/plugin-core':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-core
+      astro:
+        specifier: ^7.3.3
+        version: 7.3.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.21.1))(yaml@2.9.0)
+
   samples/prh-opendata:
     dependencies:
       '@astrojs/cloudflare':

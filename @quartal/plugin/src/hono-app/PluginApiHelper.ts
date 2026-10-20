@@ -7,6 +7,7 @@ import { buildMcpCatalog } from "../code/buildMcpCatalog.ts";
 import { buildMcpTools } from "../code/buildMcpTools.ts";
 import { buildOpenApiTags } from "../code/buildOpenApiTags.ts";
 import { loadCodeFiles } from "../code/loadCodeFiles.ts";
+import { resolveRestRoutes } from "../code/resolveRestRoutes.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
@@ -52,9 +53,6 @@ export class PluginApiHelper {
     this.baseDir = config.pluginRootFolder ?? process.cwd();
     this.qrtlPluginDir = config.qrtlPluginDir ?? "qrtl-plugin";
   }
-
-  /** Default HTTP method for the API routes (GET or POST) if not specified per function. */
-  public defaultMethod: "get" | "post" = "post";
 
   /** Code files loaded from `qrtl-plugin/tools.json`. Available after `init()`. */
   public codeFiles: CodeFile[] = [];
@@ -140,7 +138,6 @@ export class PluginApiHelper {
         pluginSkills: skills.map((s) => s.name),
       }),
       basePath: this.basePath,
-      defaultMethod: this.defaultMethod,
       hasReadme: !!this.readmeContent && this.readmeContent !== "No README.md found in the plugin.",
       origin,
       mcpOptions: typeof this.config.mcp === "object" ? this.config.mcp : undefined,
@@ -192,15 +189,16 @@ export class PluginApiHelper {
     const defs = this.functionDefs!;
 
     registerOpenApiRoutes(app, defs, {
-      basePath: this.basePath,
-      defaultMethod: this.defaultMethod,
+      routes: resolveRestRoutes(this.codeFiles, this.basePath),
       authName: this.config.auth?.name,
       createValidationHook: defaultValidationHook,
-      createHandler: ({ fileName, className, methodName }) => async (c: any) => {
-        const params = (this.defaultMethod === "get" ? (c.req as any).valid("query") : (c.req as any).valid("json")) as Record<
-          string,
-          unknown
-        >;
+      createHandler: ({ fileName, className, methodName, route }) => async (c: any) => {
+        // The tool still receives one input object: path parameters merged with the query or body.
+        const params: Record<string, unknown> = {
+          ...(route.pathParams.length ? (c.req as any).valid("param") : {}),
+          ...(route.inputIn === "query" ? (c.req as any).valid("query") : {}),
+          ...(route.inputIn === "body" ? (c.req as any).valid("json") : {}),
+        };
         const result = await this.execute(fileName, className, methodName, params, {
           headers: { Authorization: c.req.header("Authorization") ?? "" },
         });
