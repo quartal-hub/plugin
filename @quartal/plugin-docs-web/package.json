@@ -1,6 +1,6 @@
 {
   "name": "@quartal/plugin-docs-web",
-  "version": "0.5.1",
+  "version": "1.0.0-beta.0",
   "description": "The docs UI for Quartal Plugins as an embeddable library: mount the tools/MCP/skills/agents documentation app on any page a plugin serves.",
   "homepage": "https://plugin.quartal.com",
   "type": "module",
