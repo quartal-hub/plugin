@@ -45,6 +45,9 @@
         "restUrl": "/api/calculator/add",
         "restMethod": "POST"
       },
+      "annotations": {
+        "readOnlyHint": true
+      },
       "hasWidget": false
     },
     {
@@ -165,6 +168,9 @@
         "restUrl": "/api/invoices",
         "restMethod": "GET"
       },
+      "annotations": {
+        "readOnlyHint": true
+      },
       "hasWidget": false
     },
     {
@@ -188,6 +194,9 @@
         "mcpName": "getInvoice",
         "restUrl": "/api/invoices/{id}",
         "restMethod": "GET"
+      },
+      "annotations": {
+        "readOnlyHint": true
       },
       "hasWidget": false
     },
@@ -213,6 +222,9 @@
         "restUrl": "/api/invoices",
         "restMethod": "POST"
       },
+      "annotations": {
+        "destructiveHint": false
+      },
       "hasWidget": false
     },
     {
@@ -237,6 +249,9 @@
         "restUrl": "/api/invoices/{id}",
         "restMethod": "PUT"
       },
+      "annotations": {
+        "idempotentHint": true
+      },
       "hasWidget": false
     },
     {
@@ -260,6 +275,10 @@
         "mcpName": "deleteInvoice",
         "restUrl": "/api/invoices/{id}",
         "restMethod": "DELETE"
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true
       },
       "hasWidget": false
     },
@@ -308,6 +327,9 @@
         "mcpName": "listArchive",
         "restUrl": "/api/invoices/archive/{year}",
         "restMethod": "GET"
+      },
+      "annotations": {
+        "readOnlyHint": true
       },
       "hasWidget": false
     },
@@ -508,6 +530,7 @@
     {
       "className": "Calculator",
       "fileName": "Calculator",
+      "description": "A class that calculates things.",
       "tools": [
         {
           "name": "add",
@@ -530,6 +553,9 @@
             "mcpName": "add",
             "restUrl": "/api/calculator/add",
             "restMethod": "POST"
+          },
+          "annotations": {
+            "readOnlyHint": true
           },
           "hasWidget": false
         },
@@ -562,6 +588,7 @@
     {
       "className": "HelloWorld",
       "fileName": "HelloWorld",
+      "description": "A class that says hello to the world.",
       "tools": [
         {
           "name": "sayHello",
@@ -640,6 +667,7 @@
     {
       "className": "Invoices",
       "fileName": "Invoices",
+      "description": "A CRUD resource that relies on the REST naming convention: no `@rest` tags except where noted.",
       "tools": [
         {
           "name": "list",
@@ -662,6 +690,9 @@
             "mcpName": "listInvoices",
             "restUrl": "/api/invoices",
             "restMethod": "GET"
+          },
+          "annotations": {
+            "readOnlyHint": true
           },
           "hasWidget": false
         },
@@ -687,6 +718,9 @@
             "restUrl": "/api/invoices/{id}",
             "restMethod": "GET"
           },
+          "annotations": {
+            "readOnlyHint": true
+          },
           "hasWidget": false
         },
         {
@@ -710,6 +744,9 @@
             "mcpName": "createInvoice",
             "restUrl": "/api/invoices",
             "restMethod": "POST"
+          },
+          "annotations": {
+            "destructiveHint": false
           },
           "hasWidget": false
         },
@@ -735,6 +772,9 @@
             "restUrl": "/api/invoices/{id}",
             "restMethod": "PUT"
           },
+          "annotations": {
+            "idempotentHint": true
+          },
           "hasWidget": false
         },
         {
@@ -758,6 +798,10 @@
             "mcpName": "deleteInvoice",
             "restUrl": "/api/invoices/{id}",
             "restMethod": "DELETE"
+          },
+          "annotations": {
+            "destructiveHint": true,
+            "idempotentHint": true
           },
           "hasWidget": false
         },
@@ -807,6 +851,9 @@
             "restUrl": "/api/invoices/archive/{year}",
             "restMethod": "GET"
           },
+          "annotations": {
+            "readOnlyHint": true
+          },
           "hasWidget": false
         }
       ]
@@ -814,6 +861,7 @@
     {
       "className": "TypesTester",
       "fileName": "TypesTester",
+      "description": "Tester class for validating different parameter types via the Hub API.\nEach method takes a single object parameter for easy Open API / MCP / RPC schema generation and validation.",
       "tools": [
         {
           "name": "treeSum",

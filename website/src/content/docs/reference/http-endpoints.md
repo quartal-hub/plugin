@@ -91,21 +91,13 @@ assets stay public.
 
 ## Your own landing page
 
-Create `src/pages/index.astro` (or `index.md`, `.mdx`, `.html`) and it replaces the built-in docs
-site at `/` — Astro renders your page, and the `.html` redirects above are released with it. All
-machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep working
-unchanged, so the plugin stays fully functional. The page is detected when the server starts;
-restart `astro dev` after adding or removing it.
+Create `src/pages/index.astro` (or `index.md`, `.mdx`, `.html`, `.ts`, `.js`) and it replaces the
+built-in docs site at `/` — Astro renders your page, and the `.html` redirects above are released
+with it. All machine endpoints (`/plugin.json`, `/mcp`, `/api/*`, OAuth, skills and agents) keep
+working unchanged, so the plugin stays fully functional. The page is detected when the server
+starts; restart `astro dev` after adding or removing it.
 
-Want your own branding *and* the docs UI? Mount it on your page from
-[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) — the
-package README has a complete `index.astro` example:
-
-```astro
-<div id="docs"></div>
-<script>
-  import "@quartal/plugin-docs-web/style.css";
-  import { mountPluginDocs } from "@quartal/plugin-docs-web";
-  mountPluginDocs(document.getElementById("docs")!);
-</script>
-```
+[Custom docs](/docs/docs-site/custom-docs) walks through the whole range: the identity and README
+shown on the About page, a Bootstrap skin, and mounting the docs UI from
+[`@quartal/plugin-docs-web`](https://www.npmjs.com/package/@quartal/plugin-docs-web) inside your
+own page.

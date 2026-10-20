@@ -57,12 +57,13 @@ Every field in this group falls back to the `package.json` field of the same nam
 
 ### `style`
 
-Visual elements for the built-in docs site and plugin listings.
+Visual elements for the built-in docs site and plugin listings. [Custom docs](/docs/docs-site/custom-docs)
+describes how they shape the docs site and what a skin must contain.
 
 | Option | Type | Purpose |
 |---|---|---|
 | `style.logo` | `string` | Logo URL for the docs front page (at least 300px wide). Defaults to the Quartal logo. |
-| `style.skin` | `string` | Bootstrap skin CSS URL (CDN), injected into the docs site shell. |
+| `style.skin` | `string` | URL of the skin CSS, injected into the docs site shell: one self-contained Bootstrap 5.3 stylesheet that also includes Bootstrap Icons 1.13.1. Defaults to `https://cdn.quartal.com/skins/default.css`. |
 | `style.icons` | array | Icons in the MCP icon schema: `{ src, mimeType?, sizes?, theme? }`. Icon bytes are served from `/icons/{index}` on the plugin's own host. |
 
 ### `auth`

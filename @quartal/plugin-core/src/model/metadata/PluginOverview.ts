@@ -1,6 +1,7 @@
 import type { AgentColor } from "../agents/AgentColor.ts";
 import type { RestMethod } from "../code-file/RestRoute.ts";
 import type { PromptArgument } from "../mcp/McpPrompt.ts";
+import type { McpToolAnnotations } from "../mcp/McpTool.ts";
 
 /** A tool parameter or return slot with a type reference resolvable via `links.types`. */
 export interface PluginToolParameter {
@@ -32,6 +33,8 @@ export interface PluginToolGroup {
   className: string;
   /** Source file stem (without `.ts`). */
   fileName: string;
+  /** The class JSDoc: what this group of tools is about. */
+  description?: string;
   /** Methods defined on this class. */
   tools: PluginToolEntry[];
 }
@@ -54,6 +57,12 @@ export interface PluginToolEntry {
   returns: PluginToolParameter;
   /** MCP and REST exposure details. */
   exposure: PluginToolExposure;
+  /**
+   * Behavior hints: what the leading verb of the method name implies (`get`, `list` and `find` are read-only,
+   * `delete` and `remove` destructive and idempotent, …) under the explicit `@readOnly`, `@destructive`,
+   * `@idempotent` and `@openWorld` tags. Omitted when neither says anything.
+   */
+  annotations?: McpToolAnnotations;
   /** Whether an MCP Apps widget UI is registered for this tool. */
   hasWidget: boolean;
 }

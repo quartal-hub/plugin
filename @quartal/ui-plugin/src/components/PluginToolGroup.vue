@@ -12,6 +12,7 @@ defineProps<{
     <header class="mb-4">
       <p class="text-muted small mb-1 font-monospace">{{ group.fileName }}.ts</p>
       <h1 class="h3 mb-2">{{ group.className }}</h1>
+      <p v-if="group.description" class="lead mb-2">{{ group.description }}</p>
       <p class="text-muted mb-0">{{ group.tools.length }} tool{{ group.tools.length === 1 ? "" : "s" }}</p>
     </header>
 
@@ -27,9 +28,12 @@ defineProps<{
             <code class="font-monospace">{{ tool.name }}</code>
             <span v-if="tool.summary" class="ms-2">{{ tool.summary }}</span>
           </div>
-          <div class="d-flex gap-1 flex-shrink-0">
+          <div class="d-flex gap-1 flex-shrink-0 flex-wrap justify-content-end">
             <span v-if="tool.hasWidget" class="badge text-bg-secondary rounded-pill">UI</span>
-            <span v-if="tool.exposure.mcpName" class="badge text-bg-primary rounded-pill">MCP</span>
+            <span v-if="tool.exposure.mcpName" class="badge text-bg-primary rounded-pill">MCP {{ tool.exposure.mcpName }}</span>
+            <span v-if="tool.exposure.restUrl" class="badge text-bg-light border rounded-pill font-monospace">
+              {{ tool.exposure.restMethod }} {{ tool.exposure.restUrl }}
+            </span>
           </div>
         </div>
         <p v-if="tool.description" class="mb-0 mt-1 text-muted small">{{ tool.description }}</p>

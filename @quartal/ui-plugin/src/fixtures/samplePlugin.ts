@@ -18,6 +18,7 @@ export const samplePlugin: PluginInfo = {
       parameters: [{ name: "input", description: "Operands.", type: "Calculator_add_Input" }],
       returns: { name: "", description: "The sum.", type: "NumberValue" },
       exposure: { mcpName: "calculator_add", restUrl: "/api/calculator/add", restMethod: "POST" },
+      annotations: { readOnlyHint: true },
       hasWidget: false,
     },
     {
@@ -46,6 +47,7 @@ export const samplePlugin: PluginInfo = {
     {
       className: "Calculator",
       fileName: "Calculator",
+      description: "Arithmetic on two numbers.",
       tools: [
         {
           name: "add",
@@ -56,6 +58,7 @@ export const samplePlugin: PluginInfo = {
           parameters: [{ name: "input", description: "Operands.", type: "Calculator_add_Input" }],
           returns: { name: "", description: "The sum.", type: "NumberValue" },
           exposure: { mcpName: "calculator_add", restUrl: "/api/calculator/add", restMethod: "POST" },
+          annotations: { readOnlyHint: true },
           hasWidget: false,
         },
         {
@@ -73,6 +76,7 @@ export const samplePlugin: PluginInfo = {
     {
       className: "HelloWorld",
       fileName: "HelloWorld",
+      description: "Greetings.",
       tools: [
         {
           name: "sayHello",

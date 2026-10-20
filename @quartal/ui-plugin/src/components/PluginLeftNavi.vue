@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import type { PluginInfo } from "@quartal/plugin-core";
 
 defineProps<{
@@ -8,6 +8,7 @@ defineProps<{
 }>();
 
 const route = useRoute();
+const router = useRouter();
 /** null = follow route; "" = all collapsed; otherwise the open section id. */
 const openSection = ref<string | null>(null);
 
@@ -23,6 +24,15 @@ function toggleSection(section: string) {
     openSection.value = "";
   } else {
     openSection.value = section;
+  }
+}
+
+/** The Tools heading opens the "All tools" page; on that page it folds the section like any other heading. */
+function openTools() {
+  if (route.path === "/tools") {
+    toggleSection("tools");
+  } else {
+    void router.push("/tools");
   }
 }
 
@@ -55,6 +65,29 @@ function isSectionActive(section: string): boolean {
 function countEnabled(count: number): boolean {
   return count > 0;
 }
+
+/**
+ * Tool groups the user opened or closed by hand; a group not listed follows the route (open when one of
+ * its tools or its own page is shown), the way Swagger UI expands the tag of the current operation.
+ */
+const toggledGroups = ref(new Map<string, boolean>());
+
+watch(
+  () => route.path,
+  () => {
+    toggledGroups.value = new Map();
+  },
+);
+
+function isGroupOpen(className: string): boolean {
+  const toggled = toggledGroups.value.get(className);
+  if (toggled !== undefined) return toggled;
+  return route.params.className === className;
+}
+
+function toggleGroup(className: string) {
+  toggledGroups.value.set(className, !isGroupOpen(className));
+}
 </script>
 
 <template>
@@ -74,7 +107,7 @@ function countEnabled(count: number): boolean {
           class="list-group-item list-group-item-action w-100 d-flex justify-content-between align-items-center"
           :class="{ active: isSectionActive('tools') }"
           :disabled="!countEnabled(plugin.tools?.length)"
-          @click="toggleSection('tools')"
+          @click="openTools()"
         >
           <span>Tools
             <span v-if="plugin.tools?.length" class="badge bg-primary rounded-pill ms-1">{{ plugin.tools.length }}</span>
@@ -83,23 +116,38 @@ function countEnabled(count: number): boolean {
         </button>
         <div v-show="isSectionOpen('tools') && plugin.toolGroups.length" class="list-group list-group-flush border-start ms-2">
           <template v-for="group in plugin.toolGroups" :key="group.className">
-            <RouterLink
-              :to="{ name: 'toolGroup', params: { className: group.className } }"
-              class="list-group-item list-group-item-action py-1 ps-3 text-truncate fw-semibold"
+            <div
+              class="list-group-item list-group-item-action py-1 ps-3 pe-2 d-flex justify-content-between align-items-center"
               :class="{ active: route.params.className === group.className && !route.params.methodName }"
             >
-              {{ group.className }}
-              <span class="badge bg-secondary rounded-pill ms-1">{{ group.tools.length }}</span>
-            </RouterLink>
-            <RouterLink
-              v-for="tool in group.tools"
-              :key="`${group.className}.${tool.name}`"
-              :to="{ name: 'tool', params: { className: group.className, methodName: tool.name } }"
-              class="list-group-item list-group-item-action py-0 ps-4 text-truncate"
-              :class="{ active: route.params.className === group.className && route.params.methodName === tool.name }"
-            >
-              {{ tool.summary || tool.name }}
-            </RouterLink>
+              <RouterLink
+                :to="{ name: 'toolGroup', params: { className: group.className } }"
+                class="text-truncate fw-semibold text-reset text-decoration-none"
+              >
+                {{ group.className }}
+                <span class="badge bg-secondary rounded-pill ms-1">{{ group.tools.length }}</span>
+              </RouterLink>
+              <button
+                type="button"
+                class="btn btn-sm btn-link text-reset p-0 ms-2 lh-1"
+                :aria-expanded="isGroupOpen(group.className)"
+                :aria-label="`${isGroupOpen(group.className) ? 'Collapse' : 'Expand'} ${group.className}`"
+                @click.prevent="toggleGroup(group.className)"
+              >
+                <i class="bi" :class="isGroupOpen(group.className) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              </button>
+            </div>
+            <template v-if="isGroupOpen(group.className)">
+              <RouterLink
+                v-for="tool in group.tools"
+                :key="`${group.className}.${tool.name}`"
+                :to="{ name: 'tool', params: { className: group.className, methodName: tool.name } }"
+                class="list-group-item list-group-item-action py-0 ps-4 text-truncate"
+                :class="{ active: route.params.className === group.className && route.params.methodName === tool.name }"
+              >
+                {{ tool.summary || tool.name }}
+              </RouterLink>
+            </template>
           </template>
         </div>
       </div>

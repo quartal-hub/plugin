@@ -34,3 +34,10 @@ destructive and idempotent).
 
 A tool can be kept to one surface: `@rest hidden` (method or class) gives it no REST operation,
 `@mcp hidden` (method or class) leaves it out of the MCP server (`CodeFunction.mcp` / `CodeClass.mcp`).
+
+The docs site shows both surfaces side by side: its Tools page is an index of every tool with its REST
+operation and its MCP tool name, grouped by class the way Swagger UI groups operations by tag, with the
+class description, the behaviour hints as icons, a widget check mark, and a dash where a tool is hidden
+from one surface. The Tools heading in the left navigation opens that page, and its tool groups collapse
+per class. `contents.json` carries the class JSDoc as `toolGroups[].description` and each tool's resolved
+hints as `tools[].annotations`.
