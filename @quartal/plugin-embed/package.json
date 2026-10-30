@@ -1,0 +1,94 @@
+{
+  "name": "@quartal/plugin-embed",
+  "version": "1.0.0-beta.0",
+  "description": "Embed Quartal Plugin widgets in any web page: a lightweight MCP Apps host, a REST client and the <qrtl-widget> element, with React and Vue bindings",
+  "homepage": "https://plugin.quartal.com",
+  "type": "module",
+  "license": "MIT",
+  "author": "Quartal Accounting Software Oy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "@quartal/plugin-embed"
+  },
+  "keywords": [
+    "quartal",
+    "plugin",
+    "mcp",
+    "mcp-apps",
+    "widget",
+    "embed"
+  ],
+  "main": "./dist/mod.js",
+  "types": "./dist/mod.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/mod.d.ts",
+      "import": "./dist/mod.js",
+      "default": "./dist/mod.js"
+    },
+    "./element": {
+      "types": "./dist/element/index.d.ts",
+      "import": "./dist/element/index.js",
+      "default": "./dist/element/index.js"
+    },
+    "./guide": {
+      "types": "./dist/guide/index.d.ts",
+      "import": "./dist/guide/index.js",
+      "default": "./dist/guide/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.js",
+      "default": "./dist/vue/index.js"
+    },
+    "./script": {
+      "types": "./dist/script/index.d.ts",
+      "import": "./dist/script/index.js",
+      "default": "./dist/script/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./dist/element/index.js"
+  ],
+  "scripts": {
+    "build": "node scripts/bundleWidgetsScript.mjs && tsc -p tsconfig.build.json",
+    "test": "node scripts/bundleWidgetsScript.mjs && vitest run",
+    "test:watch": "vitest",
+    "typecheck": "node scripts/bundleWidgetsScript.mjs && tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
+    "@types/react": "^19.2.0",
+    "esbuild": "^0.25.0",
+    "react": "^19.2.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0",
+    "vue": "^3.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
