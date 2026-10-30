@@ -1,7 +1,7 @@
 import { App } from "@modelcontextprotocol/ext-apps";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWidgetHost, type WidgetHostOptions } from "../src/host/createWidgetHost.ts";
-import { createFrame, flush, okResult, type FakeFrame } from "./fakeWindows.ts";
+import { closeApp, createFrame, flush, okResult, type FakeFrame } from "./fakeWindows.ts";
 
 /**
  * Conformance: the real `@modelcontextprotocol/ext-apps` `App` (what `@quartal/plugin/widget`'s
@@ -28,7 +28,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  await app?.close().catch(() => undefined);
+  await closeApp(app);
   vi.restoreAllMocks();
 });
 

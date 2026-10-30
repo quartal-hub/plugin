@@ -43,7 +43,13 @@ const SERVER_EXACT = new Set([
   "/docs.html",
   "/skills.html",
   "/agents.html",
+  "/widgets.js",
+  "/widgets/routes.json",
+  "/widgets/embed.md",
 ]);
+
+/** The per-widget embedding guide (`/widgets/<toolId>/embed.md`); the widget pages themselves stay with Astro. */
+const WIDGET_EMBED_GUIDE = /^\/widgets\/[^/]+\/embed\.md$/;
 
 /**
  * The human-facing docs paths: the shell at `/` and the legacy redirects into its hash routes.
@@ -54,12 +60,12 @@ const DOCS_SHELL_PATHS = new Set(["/", "/mcp.html", "/swagger.html", "/docs.html
 
 /**
  * Whether a request path is served by the Hono app (REST/MCP/skills/agents/icons/docs-SPA/…)
- * rather than by an Astro page. Astro keeps everything else — widget pages (`/widgets/*`), its own
+ * rather than by an Astro page. Astro keeps everything else — widget pages (`/widgets/<toolId>`), its own
  * assets (`/_astro/*`, `/_image`), user pages, etc.
  * @param pathname URL pathname.
  */
 export function isServerPath(pathname: string): boolean {
-  if (SERVER_EXACT.has(pathname)) return true;
+  if (SERVER_EXACT.has(pathname) || WIDGET_EMBED_GUIDE.test(pathname)) return true;
   return SERVER_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 

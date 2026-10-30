@@ -110,7 +110,9 @@ function buildTools(input: BuildPluginInfoInput): PluginToolEntry[] {
           returns: toToolParameter(fn.returns),
           exposure: {
             ...(mcpName ? { mcpName } : {}),
-            ...(route ? { restUrl: route.path, restMethod: route.method } : {}),
+            ...(route
+              ? { restUrl: route.path, restMethod: route.method, restPathParams: route.pathParams, restInputIn: route.inputIn }
+              : {}),
           },
           ...(annotations ? { annotations } : {}),
           hasWidget: mcpName ? widgetToolIds.has(mcpName) : false,

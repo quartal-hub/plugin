@@ -25,6 +25,10 @@ export interface PluginToolExposure {
   restUrl?: string;
   /** HTTP method for the REST route (when {@link PluginToolExposure.restUrl} is set). */
   restMethod?: RestMethod;
+  /** Input properties bound from the `{name}` placeholders of {@link PluginToolExposure.restUrl}, in path order. */
+  restPathParams?: string[];
+  /** Where the other input properties travel: the query string, the JSON body, or nowhere. */
+  restInputIn?: "query" | "body" | "none";
 }
 
 /** Tools grouped by source class (OpenAPI tag / MCP grouping). */

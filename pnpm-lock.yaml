@@ -57,6 +57,9 @@ importers:
       '@quartal/plugin-core':
         specifier: workspace:*
         version: link:../plugin-core
+      '@quartal/plugin-embed':
+        specifier: workspace:*
+        version: link:../plugin-embed
       hono:
         specifier: ^4.13.1
         version: 4.13.1
@@ -130,6 +133,9 @@ importers:
       '@modelcontextprotocol/ext-apps':
         specifier: ^1.7.5
         version: 1.7.5(@modelcontextprotocol/sdk@1.30.0(zod@4.6.5))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.6.5)
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.30.0
+        version: 1.30.0(zod@4.6.5)
       '@types/react':
         specifier: ^19.2.0
         version: 19.2.17
@@ -148,6 +154,9 @@ importers:
       vue:
         specifier: ^3.5.0
         version: 3.5.39(typescript@5.9.3)
+      zod:
+        specifier: ^4.4.0
+        version: 4.6.5
 
   '@quartal/plugin-vue':
     dependencies:
@@ -6563,7 +6572,7 @@ snapshots:
 
   '@modelcontextprotocol/core@2.0.0':
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.5
 
   '@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)':
     dependencies:

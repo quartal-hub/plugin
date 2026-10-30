@@ -79,3 +79,8 @@ export function flush(ms = 5): Promise<void> {
 export function okResult(value: Record<string, unknown>): CallToolResult {
   return { structuredContent: value, content: [{ type: "text", text: JSON.stringify(value) }] };
 }
+
+/** Disconnects an ext-apps `App` (`Protocol.close`, which the App's published typings hide). */
+export async function closeApp(app: object | undefined): Promise<void> {
+  await (app as { close?: () => Promise<void> } | undefined)?.close?.().catch(() => undefined);
+}

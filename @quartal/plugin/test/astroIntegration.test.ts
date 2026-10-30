@@ -29,14 +29,15 @@ describe("isServerPath", () => {
     const paths = [
       "/", "/api/calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
       "/agents/greeter.md", "/icons/0", "/plugin.json", "/widget-assets/_astro/x.js",
-      "/.well-known/oauth-protected-resource",
+      "/.well-known/oauth-protected-resource", "/widgets.js", "/widgets/routes.json", "/widgets/embed.md",
+      "/widgets/simpleSalary/embed.md",
     ];
     for (const p of paths) {
       expect(isServerPath(p), p).toBe(true);
     }
   });
   it("lets Astro handle widget pages, static assets and user pages", () => {
-    for (const p of ["/widgets/simpleSalary", "/_astro/index.abc.js", "/assets/x.js", "/some-user-page", "/mcpanything"]) {
+    for (const p of ["/widgets/simpleSalary", "/widgets/simpleSalary/other.md", "/_astro/index.abc.js", "/assets/x.js", "/some-user-page", "/mcpanything"]) {
       expect(isServerPath(p), p).toBe(false);
     }
   });

@@ -93,6 +93,11 @@ export class PluginApiHelper {
     return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
   }
 
+  /** MCP tool descriptors: the generated `mcp-tools.json`, or built from the code files. Available after `init()`. */
+  public getMcpTools(): McpToolDescriptor[] {
+    return this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+  }
+
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
   public get mcpPrompts(): McpPromptDescriptor[] {
     return this.prebuiltMcpPrompts ?? [];
@@ -122,7 +127,7 @@ export class PluginApiHelper {
       return base;
     }
     const catalog = this.getMcpCatalog();
-    const mcpTools = this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+    const mcpTools = this.getMcpTools();
     const skills = await buildSkillSummaries(this.baseDir, this.manifest!.name);
     return buildPluginInfo({
       manifest: this.manifest!,

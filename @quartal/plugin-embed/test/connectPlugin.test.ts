@@ -4,7 +4,7 @@ import { buildToolRequest } from "../src/client/buildToolRequest.ts";
 import { connectPlugin } from "../src/client/connectPlugin.ts";
 import { PluginToolError } from "../src/client/PluginToolError.ts";
 import type { WidgetRoutes } from "../src/model/index.ts";
-import { createFrame, flush } from "./fakeWindows.ts";
+import { closeApp, createFrame, flush } from "./fakeWindows.ts";
 
 const routes: WidgetRoutes = {
   name: "hello",
@@ -155,7 +155,7 @@ describe("mountWidget", () => {
     const own = await app.callServerTool({ name: "sayHello", arguments: { name: "Self" } });
     expect(own.structuredContent).toEqual({ greeting: "Hello Self" });
 
-    await app.close();
+    await closeApp(app);
     await widget.dispose();
     expect(iframe.remove).toHaveBeenCalled();
   });
@@ -181,7 +181,7 @@ describe("mountWidget", () => {
     await flush();
     expect(results.at(-1)).toBe("error");
     expect(onError).toHaveBeenCalledWith("Nope");
-    await app.close();
+    await closeApp(app);
     await widget.dispose();
   });
 });
