@@ -53,8 +53,9 @@ export interface EmbedGuide {
 
 const indentLines = (text: string, pad: string): string => text.split("\n").map((l, i) => (i ? pad + l : l)).join("\n");
 
-function trimDescription(text: string | undefined): string {
-  return (text ?? "").trim();
+/** The first paragraph of a description, on one line. */
+function summary(text: string | undefined): string {
+  return (text ?? "").trim().split(/\n\s*\n/)[0].replace(/\s+/g, " ");
 }
 
 /**
@@ -118,13 +119,13 @@ const args = ${argsJson};
 
   const eventLines = appTools.map((t) => {
     const args = t.inputSchema ? schemaToTypeScript(t.inputSchema).replace(/\s+/g, " ") : "{}";
-    const what = trimDescription(t.description || t.title);
-    return `- \`${t.id}(${args})\`${what ? ` — ${what.split("\n")[0]}` : ""}`;
+    const what = summary(t.description || t.title);
+    return `- \`${t.id}(${args})\`${what ? ` — ${what}` : ""}`;
   });
 
   const prompt = [
     `Add the "${input.title}" widget from the ${input.pluginTitle} plugin (${url}) to this page.`,
-    trimDescription(input.description) ? `It shows: ${trimDescription(input.description).split("\n")[0]}` : "",
+    summary(input.description) ? `It shows: ${summary(input.description)}` : "",
     `Load \`<script type="module" src="${url}/widgets.js"></script>\` once and render \`<qrtl-widget tool="${tool}"></qrtl-widget>\` (in React use \`PluginWidget\` from \`@quartal/plugin-embed/react\`, in Vue \`PluginWidget\` from \`@quartal/plugin-embed/vue\`).`,
     `Set the element's \`args\` property (an object, not an attribute) to the tool input, typed:\n\n\`\`\`ts\ntype ${pascal(tool)}Input = ${inputType};\n\`\`\``,
     `Changing \`args\` calls the tool again. The element fires \`result\` (detail: the JSON result), \`error\` (detail: { message }) and \`toolcall\` (detail: { name, args, respondWith(value) }) events.`,
@@ -139,7 +140,7 @@ const args = ${argsJson};
 
   const markdown = [
     `# Embed the "${input.title}" widget`,
-    trimDescription(input.description),
+    (input.description ?? "").trim(),
     `Plugin: ${input.pluginTitle} (${url}). Tool: \`${tool}\`.`,
     `## HTML\n\n\`\`\`html\n${html}\n\`\`\``,
     `## Input\n\nSet \`args\` (a property, or a JSON \`args\` attribute) to:\n\n\`\`\`ts\ntype ${pascal(tool)}Input = ${inputType};\n\`\`\`\n\nChanging \`args\` calls the tool again. To show a result the page already has, set \`result\` instead; the tool is then not called.`,
@@ -168,7 +169,7 @@ export function buildEmbedIndex(
 ): string {
   const url = pluginUrl.replace(/\/+$/, "");
   const lines = widgets.map((w) => {
-    const what = trimDescription(w.description).split("\n")[0];
+    const what = summary(w.description);
     return `- [${w.title}](${url}/widgets/${encodeURIComponent(w.toolId)}/embed.md) — \`<qrtl-widget tool="${w.toolId}">\`${what ? `: ${what}` : ""}`;
   });
   return [

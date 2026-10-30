@@ -57,16 +57,21 @@ const widgetError = ref<string | null>(null);
 const activity = ref<Array<{ id: number; kind: string; text: string }>>([]);
 let nextId = 0;
 
+const exampleText = computed(() => JSON.stringify(guide.value.exampleArgs, null, 2));
 watch(
   () => props.widget.toolId,
   () => {
-    argsText.value = JSON.stringify(guide.value.exampleArgs, null, 2);
+    argsText.value = exampleText.value;
     args.value = null;
     activity.value = [];
     widgetError.value = null;
   },
   { immediate: true },
 );
+// The input schema can arrive after mount: refresh the example until the user edits it.
+watch(exampleText, (next, previous) => {
+  if (argsText.value === previous) argsText.value = next;
+});
 
 function run(): void {
   try {
