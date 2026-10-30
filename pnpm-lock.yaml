@@ -100,6 +100,9 @@ importers:
 
   '@quartal/plugin-docs-web':
     devDependencies:
+      '@quartal/plugin-embed':
+        specifier: workspace:*
+        version: link:../plugin-embed
       '@quartal/ui-core':
         specifier: 1.4.2
         version: 1.4.2(vue-router@4.6.4(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
@@ -173,12 +176,12 @@ importers:
 
   '@quartal/ui-plugin':
     dependencies:
-      '@modelcontextprotocol/ext-apps':
-        specifier: ^1.7.5
-        version: 1.7.5(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       '@modelcontextprotocol/sdk':
         specifier: ^1.30.0
         version: 1.30.0(zod@4.4.3)
+      '@quartal/plugin-embed':
+        specifier: workspace:*
+        version: link:../plugin-embed
     devDependencies:
       '@quartal/plugin-core':
         specifier: workspace:*
@@ -231,6 +234,19 @@ importers:
       astro:
         specifier: ^7.3.3
         version: 7.3.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.21.1))(yaml@2.9.0)
+
+  samples/embed-page:
+    dependencies:
+      '@quartal/plugin-embed':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-embed
+    devDependencies:
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.3
+        version: 6.4.3(@types/node@22.20.1)(lightningcss@1.32.0)(yaml@2.9.0)
 
   samples/iam-api:
     dependencies:

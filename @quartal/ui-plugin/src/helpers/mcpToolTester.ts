@@ -1,7 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Implementation, Tool } from "@modelcontextprotocol/sdk/types.js";
-import { getToolUiResourceUri } from "@modelcontextprotocol/ext-apps/app-bridge";
 
 /** A loose JSON Schema object (as advertised by MCP `tools/list#inputSchema`). */
 export type JsonSchema = Record<string, unknown>;
@@ -54,15 +53,19 @@ export async function connectMcpClient(
   return client;
 }
 
+/**
+ * The `ui://` resource URI of a tool's MCP Apps widget (`_meta.ui.resourceUri`, or the older flat
+ * `_meta["ui/resourceUri"]` key). A missing or non-`ui://` value means no previewable widget.
+ */
+function toolUiResourceUri(tool: Tool): string | undefined {
+  const meta = tool._meta as { ui?: { resourceUri?: unknown }; "ui/resourceUri"?: unknown } | undefined;
+  const uri = meta?.ui?.resourceUri ?? meta?.["ui/resourceUri"];
+  return typeof uri === "string" && uri.startsWith("ui://") ? uri : undefined;
+}
+
 /** Normalizes a raw MCP {@link Tool} into an {@link McpToolInfo}. */
 function toToolInfo(tool: Tool): McpToolInfo {
-  let resourceUri: string | undefined;
-  try {
-    resourceUri = getToolUiResourceUri(tool);
-  } catch {
-    // An invalid `_meta.ui.resourceUri` just means "no previewable widget" for the tester.
-    resourceUri = undefined;
-  }
+  const resourceUri = toolUiResourceUri(tool);
   return {
     name: tool.name,
     title: tool.title,

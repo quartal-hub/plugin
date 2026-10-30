@@ -8,7 +8,8 @@ export const WIDGET_IFRAME_SANDBOX = "allow-scripts allow-same-origin allow-form
 /**
  * Shows a plugin tool's widget in an iframe appended to `container` (see
  * `PluginConnection.mountWidget`). The iframe loads the widget page from the plugin origin; in call
- * mode the tool runs over REST while the page loads.
+ * mode the tool runs over REST while the page loads; without input or result the widget waits for
+ * `update()`.
  * @param plugin The plugin connection.
  * @param container Element the iframe is appended to.
  * @param options Tool, input or result, theme and callbacks.
@@ -27,7 +28,7 @@ export function mountPluginWidget(plugin: PluginConnection, container: Element, 
   let disposed = false;
   let callSeq = 0;
   let pendingContext: WidgetHostContext = {};
-  let args = options.args ?? {};
+  let args = options.args;
   /** The latest result, kept for a host that does not exist yet. */
   let delivered: CallToolResult | undefined;
 
@@ -45,7 +46,7 @@ export function mountPluginWidget(plugin: PluginConnection, container: Element, 
   /** Calls the tool with the current input and shows its result; a newer call wins. */
   const run = (): void => {
     const seq = ++callSeq;
-    plugin.callTool(options.tool, args, auth).then(
+    plugin.callTool(options.tool, args ?? {}, auth).then(
       (value) => {
         if (seq === callSeq && !disposed) showResult(value);
       },
@@ -74,7 +75,7 @@ export function mountPluginWidget(plugin: PluginConnection, container: Element, 
   ready.catch((error: unknown) => options.onError?.(error instanceof Error ? error.message : String(error)));
 
   if (options.result !== undefined) showResult(options.result);
-  else run();
+  else if (args !== undefined) run();
 
   const setHostContext = (change: WidgetHostContext): void => {
     if (host) host.setHostContext(change);

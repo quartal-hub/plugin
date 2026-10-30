@@ -160,6 +160,21 @@ describe("mountWidget", () => {
     expect(iframe.remove).toHaveBeenCalled();
   });
 
+  it("waits for input when given neither args nor a result", async () => {
+    const { container } = mountTarget();
+    const fetch = vi.fn(async () => jsonResponse({ greeting: "Hi" }));
+    const plugin = connectPlugin({ url: "https://plugin.example", routes, fetch });
+    const onResult = vi.fn();
+    const widget = plugin.mountWidget(container, { tool: "sayHello", onResult });
+    await flush();
+    expect(fetch).not.toHaveBeenCalled();
+    widget.update({ args: { name: "x" } });
+    await flush();
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(onResult).toHaveBeenCalledWith({ greeting: "Hi" });
+    await widget.dispose();
+  });
+
   it("shows a given result without calling the tool, and reports a failed call", async () => {
     vi.spyOn(console, "debug").mockImplementation(() => undefined);
     const { container } = mountTarget();

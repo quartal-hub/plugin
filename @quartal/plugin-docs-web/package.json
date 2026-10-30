@@ -44,6 +44,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
+    "@quartal/plugin-embed": "workspace:*",
     "@quartal/ui-core": "1.4.2",
     "@vitejs/plugin-vue": "^5.2.1",
     "redoc": "^2.5.2",

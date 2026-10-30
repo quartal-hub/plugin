@@ -36,7 +36,7 @@ export interface MountWidgetOptions extends WidgetCallbacks, PluginAuth {
   tool: string;
   /**
    * The tool's input. Without {@link MountWidgetOptions.result} the tool is called with it and the
-   * widget gets the result; default `{}`.
+   * widget gets the result. With neither, the widget waits until `update()` gives it one.
    */
   args?: Record<string, unknown>;
   /** A result the page already has: shown as is, without calling the tool. */

@@ -7,13 +7,14 @@ function asSchema(value: unknown): JsonSchema | undefined {
 }
 
 /**
- * A plausible example value for a schema: its `examples`, `default`, `const` or first `enum` value
+ * A plausible example value for a schema: its `example`, `examples`, `default`, `const` or first `enum` value
  * when it has one, else a placeholder of the right type, with every object property filled in.
  * @param schema The schema.
  * @param depth Nesting depth (internal).
  */
 export function exampleFromSchema(schema: JsonSchema | undefined, depth = 0): unknown {
   if (!schema || depth > MAX_DEPTH) return null;
+  if (schema.example !== undefined) return schema.example;
   if (Array.isArray(schema.examples) && schema.examples.length) return schema.examples[0];
   if ("default" in schema) return schema.default;
   if ("const" in schema) return schema.const;

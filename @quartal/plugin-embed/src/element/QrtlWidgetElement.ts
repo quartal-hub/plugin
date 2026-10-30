@@ -18,7 +18,8 @@ const BaseElement = (typeof HTMLElement === "undefined" ? class {} : HTMLElement
 
 /**
  * `<qrtl-widget tool="…">` — shows a plugin tool's widget. Set the input with the `args` property
- * (or a JSON `args` attribute), or a result the page already has with `result`. Auth comes from the
+ * (or a JSON `args` attribute), or a result the page already has with `result`; until one is set,
+ * the widget waits (a tool without input runs right away). Auth comes from the
  * `getToken` or `token` property. The plugin is the one whose `widgets.js` the page loaded, or the
  * origin in the `plugin` attribute.
  *
@@ -166,11 +167,17 @@ export class QrtlWidgetElement extends BaseElement {
       this.#emit("error", { message: error instanceof Error ? error.message : String(error) });
       return;
     }
+    // A tool that takes input waits for `args`; one without input runs right away.
+    let args = this.#args;
+    if (args === undefined && this.#result === undefined) {
+      const route = await plugin.routes().then((r) => r.tools[tool], () => undefined);
+      if (route && route.inputIn === "none" && !route.pathParams.length) args = {};
+    }
     if (key !== this.#mountedKey || !this.isConnected) return;
 
     this.#widget = plugin.mountWidget(this.#container, {
       tool,
-      args: this.#args ?? {},
+      ...(args !== undefined ? { args } : {}),
       ...(this.#result !== undefined ? { result: this.#result } : {}),
       theme: this.theme,
       title: this.getAttribute("title") ?? tool,
