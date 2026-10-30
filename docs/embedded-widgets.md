@@ -1,6 +1,7 @@
 # Plan: embedding widgets in web pages
 
-Status: proposal. Scope: a browser library that lets any web page (hand-written, or vibe coded
+Status: phases 1 and 2 implemented (`@quartal/plugin-embed`, `/widgets.js`, `/widgets/routes.json`,
+`embed.md`, docs Widgets view, `samples/embed-page`); phase 3 open. Scope: a browser library that lets any web page (hand-written, or vibe coded
 with Lovable, Claude Code, Cursor, …) call a plugin tool and show the tool's widget in an iframe,
 with the widget's own tool calls surfaced to the page. The same host powers the widget preview on
 the docs site, and its core is meant for Quartal Messages' chat later.

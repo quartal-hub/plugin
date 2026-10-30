@@ -130,3 +130,8 @@ check `availableDisplayModes` and keep the in-flow layout as the fallback.
 We recommend [MCPJam](https://www.mcpjam.com/) for local widget testing — point it at
 `http://localhost:4321/mcp`, call the tool, and the widget renders in place. Your plugin's own
 docs site at `/` also includes a widget tester.
+
+## On web pages
+
+The same widgets embed in any web page with one script tag and a `<qrtl-widget>` element, or with
+React and Vue components — see [Embedding widgets](/docs/widgets/embedding-widgets).

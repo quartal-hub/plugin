@@ -69,6 +69,10 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 |---|---|
 | `GET /widgets/<toolId>` | The widget page for a tool (rendered by Astro; any UI framework). The MCP server serves the same page as a `ui://` resource to MCP Apps hosts. |
 | `GET /widget-assets/*` | The plugin's own assets re-served with open CORS headers, so widgets work when embedded in an agent's sandbox. |
+| `GET /widgets.js` | The `<qrtl-widget>` element as a JavaScript module, with this plugin's route table built in: load it from any web page to [embed the widgets](/docs/widgets/embedding-widgets). |
+| `GET /widgets/routes.json` | The route table: the REST route of every tool (method, path, path parameters, and whether the rest of the input goes in the query string or the JSON body), keyed by MCP tool id, and the page of every widget. |
+| `GET /widgets/embed.md` | An index of the embeddable widgets, for people and coding agents. |
+| `GET /widgets/<toolId>/embed.md` | How to embed one widget: HTML, React and Vue snippets, the input type, the tools the widget calls, and a prompt for a coding agent. |
 
 ## Authentication (auth mode only)
 
