@@ -136,19 +136,21 @@ describe("mountWidget", () => {
     app.addEventListener("toolresult", (p) => results.push(p.structuredContent));
     await app.connect();
     await widget.ready;
-    await flush();
-    expect(inputs).toEqual([{ name: "Olli" }]);
-    expect(results).toEqual([{ greeting: "Hello Olli" }]);
-    expect(onResult).toHaveBeenCalledWith({ greeting: "Hello Olli" });
+    // The REST call goes through a mocked fetch: wait for its result rather than for a set time.
+    await vi.waitFor(() => {
+      expect(inputs).toEqual([{ name: "Olli" }]);
+      expect(results).toEqual([{ greeting: "Hello Olli" }]);
+      expect(onResult).toHaveBeenCalledWith({ greeting: "Hello Olli" });
+    });
 
     widget.update({ args: { name: "Ada" } });
-    await flush();
-    expect(inputs).toEqual([{ name: "Olli" }, { name: "Ada" }]);
-    expect(results.at(-1)).toEqual({ greeting: "Hello Ada" });
+    await vi.waitFor(() => {
+      expect(inputs).toEqual([{ name: "Olli" }, { name: "Ada" }]);
+      expect(results.at(-1)).toEqual({ greeting: "Hello Ada" });
+    });
 
     widget.update({ result: { greeting: "Given" } });
-    await flush();
-    expect(results.at(-1)).toEqual({ greeting: "Given" });
+    await vi.waitFor(() => expect(results.at(-1)).toEqual({ greeting: "Given" }));
     expect(fetch).toHaveBeenCalledTimes(2);
 
     // The widget's own tool call goes to the REST route.
@@ -169,9 +171,10 @@ describe("mountWidget", () => {
     await flush();
     expect(fetch).not.toHaveBeenCalled();
     widget.update({ args: { name: "x" } });
-    await flush();
-    expect(fetch).toHaveBeenCalledOnce();
-    expect(onResult).toHaveBeenCalledWith({ greeting: "Hi" });
+    await vi.waitFor(() => {
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(onResult).toHaveBeenCalledWith({ greeting: "Hi" });
+    });
     await widget.dispose();
   });
 
@@ -188,14 +191,14 @@ describe("mountWidget", () => {
     await flush();
     await app.connect();
     await widget.ready;
-    await flush();
-    expect(results).toEqual([{ greeting: "Hi" }]);
+    await vi.waitFor(() => expect(results).toEqual([{ greeting: "Hi" }]));
     expect(fetch).not.toHaveBeenCalled();
 
     widget.update({ args: { name: "x" } });
-    await flush();
-    expect(results.at(-1)).toBe("error");
-    expect(onError).toHaveBeenCalledWith("Nope");
+    await vi.waitFor(() => {
+      expect(results.at(-1)).toBe("error");
+      expect(onError).toHaveBeenCalledWith("Nope");
+    });
     await closeApp(app);
     await widget.dispose();
   });
