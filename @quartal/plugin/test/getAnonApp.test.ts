@@ -106,14 +106,6 @@ describe("getAnonApp — full route assembly", () => {
     expect(result.tools[0].inputSchema).toBeTruthy();
   });
 
-  it("serves /mcp-server.json", async () => {
-    const res = await app.request("/mcp-server.json");
-    expect(res.status).toBe(200);
-    const impl = await res.json() as { name: string; version: string };
-    expect(impl.name).toBe("test1");
-    expect(impl.version).toBeTruthy();
-  });
-
   it("serves /skills/catalog.json", async () => {
     const res = await app.request("/skills/catalog.json");
     expect(res.status).toBe(200);

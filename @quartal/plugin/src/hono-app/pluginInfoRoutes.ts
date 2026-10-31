@@ -1,5 +1,4 @@
 import type { Hono } from "hono";
-import type { Implementation } from "@modelcontextprotocol/server";
 import type { McpServerOptions, PluginFileMapEntry } from "../model/index.ts";
 import { QUARTAL_EXTENSION_NAMESPACE } from "../model/index.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
@@ -20,19 +19,16 @@ export interface PluginInfoRouteOptions {
   fileMap?: readonly PluginFileMapEntry[];
   /** README text resolved at build time (packaged into `plugin.zip` alongside the file map). */
   readme?: string;
-  /** Builds the MCP server implementation for a request origin (`/mcp-server.json`). */
-  getMcpServer: (origin: string) => Implementation;
 }
 
 /**
  * Registers the plugin's metadata endpoints, mirroring the installable Agent Plugins package:
  * `GET /plugin.json` (Agent Plugins 1.0 manifest), `GET /mcp.json` (standard MCP server config),
- * `GET /plugin.zip` (the whole installable package), the Quartal overview at
- * `GET /com.quartal.plugin/contents.json`, and `GET /mcp-server.json` (MCP implementation +
- * declared capabilities).
+ * `GET /plugin.zip` (the whole installable package) and the Quartal overview at
+ * `GET /com.quartal.plugin/contents.json`.
  * @param app Hono app to register routes on.
  * @param helper Shared hub API helper.
- * @param options Route dependencies (MCP options, plugin root, server-info builder).
+ * @param options Route dependencies (MCP options, plugin root, build-time file map).
  */
 export function registerPluginInfoRoutes(
   app: Hono,
@@ -79,13 +75,5 @@ export function registerPluginInfoRoutes(
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="${manifest.name.split("/").pop()?.replace(/^@/, "") ?? "plugin"}.zip"`,
     });
-  });
-
-  app.get("/mcp-server.json", (c) => {
-    const origin = new URL(c.req.url).origin;
-    const capabilities: Record<string, unknown> = { tools: {}, logging: {} };
-    if (helper.widgetCatalog.length > 0) capabilities.resources = {};
-    if (helper.mcpPrompts.length > 0) capabilities.prompts = {};
-    return c.json({ ...options.getMcpServer(origin), capabilities });
   });
 }

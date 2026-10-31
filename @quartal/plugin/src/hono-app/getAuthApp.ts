@@ -11,7 +11,6 @@ import { registerAgentRoutes } from "../agents/agentRoutes.ts";
 import { registerPluginInfoRoutes } from "./pluginInfoRoutes.ts";
 import { registerDocsSpaRoutes } from "./docsSpaRoutes.ts";
 import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
-import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
 import { registerWidgetEmbedRoutes } from "../widgets/widgetEmbedRoutes.ts";
@@ -132,7 +131,6 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     pluginRootFolder: config.pluginRootFolder,
     fileMap,
     readme: artifacts?.readme,
-    getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
   });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);
   registerWidgetEmbedRoutes(app as Hono, helper, { widgets, requiresAuth: true });

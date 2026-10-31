@@ -24,7 +24,6 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 
 | Endpoint | Returns |
 |---|---|
-| `GET /mcp-server.json` | MCP server info (name, version, title, website, icons) plus the declared MCP capabilities. |
 | `GET /open-api.json` | The OpenAPI 3.0 document for the REST API. |
 | `GET /types.json` | A flat index of the TypeScript types used by the tools. |
 | `GET /readme.md` | The plugin's README as plain text. |

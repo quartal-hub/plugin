@@ -99,7 +99,6 @@ extension namespace.
 | `GET /open-api.json`, `POST /api/...` | unchanged (OpenAPI) | runtime |
 | `ALL /mcp` (+ `/mcp/<server>` for multi-server, see below) | MCP streamable HTTP | runtime |
 | **`GET /mcp/tools.json`, `/mcp/prompts.json`, `/mcp/resources.json`** | **REST mirror of MCP**: byte-equivalent to `tools/list` / `prompts/list` / `resources/list` results, MCP-native `Tool`/`Prompt`/`Resource` shapes incl. `_meta.ui` | runtime — same code path as the MCP handlers, so it can never drift |
-| `GET /mcp-server.json` | MCP `Implementation` + declared capabilities, aligned with the MCP `initialize` result | runtime |
 
 The REST mirror replaces the served role of `mcp-tools.json` / `mcp-prompts.json`: anything a
 consumer reads over HTTP uses MCP's own shapes. The build-internal descriptor files
@@ -189,8 +188,6 @@ Three server kinds:
 3. **SEP-2640 (skills over MCP)**: `io.modelcontextprotocol/skills`, `skill://` resources with
    `skill://index.json` discovery — accepted but only shipped in fast-agent. Add a serving
    surface behind a feature flag once Claude Code or Codex ships support; do not build on it now.
-4. Whether `mcp-server.json` should be dropped entirely in favor of the `initialize` result and
-   `/plugin.json`.
 
 ## Implementation status
 
@@ -199,7 +196,7 @@ Three server kinds:
    offline distribution is deferred until a public base URL is part of the deploy config.
 2. ✅ Endpoint alignment: `/plugin.json` → manifest, `/mcp.json`, `/com.quartal.plugin/contents.json`,
    `/plugin.zip`, MCP REST mirror (`/mcp/tools.json` etc., shared code path with the protocol
-   handlers in `PluginMcpHelper`), `/mcp-server.json` + capabilities. `PluginClient` and the docs
+   handlers in `PluginMcpHelper`). `PluginClient` and the docs
    SPA updated; the Salaxy projects outside this repo are still to be updated by hand.
 3. ✅ `mcp.servers` config: local multi-server mounting (`/mcp/<name>`) + external emission
    (`resolveMcpServers`). ⏳ Proxy servers (upstream MCP / OpenAPI introspection, harmonized auth)

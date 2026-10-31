@@ -228,7 +228,6 @@ function defaultLinks(): PluginLinks {
     contents: `/${QUARTAL_EXTENSION_NAMESPACE}/contents.json`,
     openApi: "/open-api.json",
     types: "/types.json",
-    mcpServer: "/mcp-server.json",
     skillsCatalog: "/skills/catalog.json",
     agentsCatalog: "/agents/catalog.json",
     readme: "/readme.md",

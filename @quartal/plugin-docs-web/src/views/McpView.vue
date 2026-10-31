@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed } from "vue";
 import { RouterLink } from "vue-router";
-import type { McpServerInfo, PluginInfo } from "@quartal/plugin-core";
+import type { PluginInfo } from "@quartal/plugin-core";
 import { pluginClient } from "../lib/pluginClient.ts";
 import CopyButton from "../components/CopyButton.vue";
 
 const props = defineProps<{ plugin: PluginInfo | null }>();
 
-const server = ref<McpServerInfo | null>(null);
-const error = ref("");
 const mcpEndpoint = new URL(pluginClient.url("/mcp"), window.location.origin).toString();
 
 // All declared servers with display URLs: hosted URLs made absolute (so the copy button yields a
@@ -26,14 +24,6 @@ const mcpTools = computed(() => (props.plugin?.tools ?? []).filter((t) => t.expo
 const widgets = computed(() => props.plugin?.widgets ?? []);
 const resources = computed(() => props.plugin?.resources ?? []);
 const prompts = computed(() => props.plugin?.prompts ?? []);
-
-onMounted(async () => {
-  try {
-    server.value = await pluginClient.getMcpServer();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
-});
 </script>
 
 <template>
@@ -45,9 +35,7 @@ onMounted(async () => {
       Overview: <a :href="pluginClient.url('/package.json')" target="_blank" rel="noopener">package.json</a>
     </p>
 
-    <div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-    <section v-if="mcpServers.length > 1" class="mb-4">
+    <section v-if="mcpServers.length" class="mb-4">
       <h2 class="h5">Servers ({{ mcpServers.length }})</h2>
       <table class="table table-sm align-middle">
         <thead>
@@ -66,19 +54,6 @@ onMounted(async () => {
             </td>
             <td class="text-muted small">{{ s.description }}</td>
           </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section v-if="server" class="mb-4">
-      <h2 class="h5">Server (initialize)</h2>
-      <table class="table table-sm">
-        <tbody>
-          <tr><th>name</th><td><code>{{ server.name }}</code></td></tr>
-          <tr v-if="server.title"><th>title</th><td>{{ server.title }}</td></tr>
-          <tr><th>version</th><td>{{ server.version }}</td></tr>
-          <tr v-if="server.description"><th>description</th><td>{{ server.description }}</td></tr>
-          <tr v-if="server.websiteUrl"><th>website</th><td><a :href="server.websiteUrl" target="_blank" rel="noopener">{{ server.websiteUrl }}</a></td></tr>
         </tbody>
       </table>
     </section>
