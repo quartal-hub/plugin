@@ -31,5 +31,6 @@ The iframe follows the content up to the limit, and the widget gets it as
 the snippets in the read-only code viewer.
 
 `contents.json` records the `@quartal/plugin` version a plugin was built with
-(`PluginInfo.generator: { name, version }`), and the docs front page shows it as "Created with
-@quartal/plugin, <version>", linking to plugin.quartal.com and the version's npm page.
+(`PluginInfo.generator: { name, version }`), and the docs front page shows it under the plugin's name as
+"Created with @quartal/plugin, version <version>", linking to plugin.quartal.com and the version's npm
+page.

@@ -48,6 +48,11 @@ const summaryCards = computed(() => [
       <div class="col-9">
         <h1 class="display-5 mb-0">{{ plugin.title }}</h1>
         <p class="mb-0"><code class="text-muted fs-4">{{ plugin.name }} ({{ plugin.version }})</code></p>
+        <p v-if="plugin.generator" class="q-plugin-about__generator small text-muted mb-2">
+          Created with
+          <a href="https://plugin.quartal.com" target="_blank" rel="noopener">{{ plugin.generator.name }}</a>, version
+          <a :href="generatorNpmUrl" target="_blank" rel="noopener">{{ plugin.generator.version }}</a>
+        </p>
         <p class="lead">{{ plugin.description }}</p>
         <div v-if="multiServer" class="lead-x">
           <p class="mb-1">To connect Claude or ChatGPT to the API, use the <b>MCP servers</b>:</p>
@@ -93,10 +98,5 @@ const summaryCards = computed(() => [
       </div>
       <div v-else class="text-start q-plugin-about__readme" v-html="readmeHtml" />
     </div>
-    <p v-if="plugin.generator" class="q-plugin-about__generator small text-muted mt-4 mb-0">
-      Created with
-      <a href="https://plugin.quartal.com" target="_blank" rel="noopener">{{ plugin.generator.name }}</a>,
-      <a :href="generatorNpmUrl" target="_blank" rel="noopener">{{ plugin.generator.version }}</a>
-    </p>
   </div>
 </template>
