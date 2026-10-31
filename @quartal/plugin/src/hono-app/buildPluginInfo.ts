@@ -170,7 +170,9 @@ function buildWidgets(input: BuildPluginInfoInput): PluginWidgetEntry[] {
     const mcp = mcpById.get(w.toolId);
     return {
       name: w.name,
-      title: mcp?.title ?? w.toolId,
+      // The configured widget name (`widgets.entries[toolId].name`) is the display title; without one
+      // the catalog carries the tool id as the name, and the tool's own title stands in.
+      title: w.name !== w.toolId ? w.name : mcp?.title ?? w.toolId,
       description: mcp?.description ?? `MCP widget UI for the \`${w.toolId}\` tool.`,
       toolId: w.toolId,
       resourceUri: `ui://widgets/${w.toolId}.html`,

@@ -125,7 +125,7 @@ export interface PluginAgentSummary {
 export interface PluginWidgetEntry {
   /** Display name: the `name` of the widget's `widgets.entries` config entry, or the tool id. */
   name: string;
-  /** Title of the MCP tool the widget visualizes, or the tool id when the tool has no title. */
+  /** Display title: the `name` of the widget's `widgets.entries` config entry, else the MCP tool's title, else the tool id. */
   title: string;
   /** Widget description (from MCP catalog when available). */
   description: string;

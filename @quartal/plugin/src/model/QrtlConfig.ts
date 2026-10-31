@@ -81,7 +81,7 @@ export interface QrtlConfig {
   widgets?: {
     /** CSP applied to every widget. */
     csp?: WidgetCsp;
-    /** Per-widget overrides keyed by tool id. */
+    /** Per-widget overrides keyed by tool id: `name` is the widget's display title (defaults to the tool's title). */
     entries?: Record<string, { name?: string; csp?: WidgetCsp }>;
   };
 }
