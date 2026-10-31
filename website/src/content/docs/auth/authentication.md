@@ -5,6 +5,10 @@ section: creating
 order: 7
 ---
 
+> **Experimental.** OAuth2 authentication (the `quartal-hub` and `custom` modes) is still experimental.
+> Its configuration, token requirements and defaults can change in a minor or patch release;
+> breaking changes here do not wait for a new major version.
+
 A plugin has one authentication mode, set with `auth` in `qrtl.config.ts`. It applies to the
 whole server app — both the REST API (`/api/*`) and the MCP server(s) (`/mcp`). Documentation
 pages, widget pages and static assets always stay public (the sandboxed widget iframe carries no
