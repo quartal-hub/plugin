@@ -1,5 +1,65 @@
 # @quartal/plugin-vue
 
+## 1.0.0
+
+### Major Changes
+
+- ba40a2d: Version 1: every `@quartal/*` package moves to 1.0.0 together. The REST API changes shape, so a
+  plugin built against 0.x serves different URLs after upgrading; the MCP surface gains the naming
+  convention below but keeps its schemas.
+  
+  REST routes follow REST conventions instead of `POST /api/<Class>/<method>`. The route of a tool is
+  `/api/<class>[/<segment>][/{id}]`: the class name in kebab-case, the HTTP method and segment from the
+  leading verb of the method name (`get`/`list`/`find` → GET, `create` → POST, `update`/`replace` → PUT,
+  `delete`/`remove` → DELETE, anything else → POST at its full name), and `{id}` for GET/PUT/DELETE when
+  the input has a required primitive `id`. `Invoices.get({ id })` is `GET /api/invoices/{id}`,
+  `HelloWorld.sayHello` is `POST /api/hello-world/say-hello`. A `@rest` JSDoc tag overrides the
+  convention: `@rest invoicing` on a class sets the class path; `@rest [METHOD] [path]` on a method sets
+  the method and/or path (a relative path is appended to the class path; a path starting with `/` is the
+  full path and must start with `/api`; path parameters are written `{name}`). Path parameters and, for GET and DELETE,
+  the query string carry the input properties; POST and PUT take the rest as the JSON body. GET/DELETE
+  inputs and path parameters must be `string`, `number` or `boolean`, otherwise the build fails with a
+  message pointing at `@rest POST`. The `defaultMethod` option of `generateTools` / `buildPluginArtifacts`
+  is gone, `PluginToolExposure.restMethod` is upper-case (`"GET" | "POST" | "PUT" | "DELETE"`), and
+  `CodeFunction.rest` / `CodeClass.rest` carry the declared tags. MCP tool names and schemas are unchanged.
+  
+  The same verbs shape the MCP side: a bare CRUD verb is completed with the class noun for the MCP tool
+  name (`Invoices.get` → `getInvoice`, `Invoices.list` → `listInvoices`; a name two classes share is
+  prefixed with the class on both), and the verb implies the tool annotations unless `@readOnly` & co. say
+  otherwise (`get`/`list`/`find` read-only, `create` not destructive, `update` idempotent, `delete`/`remove`
+  destructive and idempotent).
+  
+  A tool can be kept to one surface: `@rest hidden` (method or class) gives it no REST operation,
+  `@mcp hidden` (method or class) leaves it out of the MCP server (`CodeFunction.mcp` / `CodeClass.mcp`).
+  
+  The docs site shows both surfaces side by side: its Tools page is an index of every tool with its REST
+  operation and its MCP tool name, grouped by class the way Swagger UI groups operations by tag, with the
+  class description, the behaviour hints as icons, a widget check mark, and a dash where a tool is hidden
+  from one surface. The Tools heading in the left navigation opens that page, and its tool groups collapse
+  per class. `contents.json` carries the class JSDoc as `toolGroups[].description` and each tool's resolved
+  hints as `tools[].annotations`.
+
+### Patch Changes
+
+- 1da3ea3: Dependencies moved to their current releases. The MCP stack is now v2 throughout: the widget
+  runtime uses `@modelcontextprotocol/ext-apps` 2.x, the docs site's tool tester connects with
+  `@modelcontextprotocol/client`, and the v1 `@modelcontextprotocol/sdk` is no longer a dependency
+  of any package. `@quartal/plugin` lists `@modelcontextprotocol/client` and `zod` as dependencies
+  because ext-apps needs them at runtime. Toolchain: TypeScript 6.0, Vite 8, Vitest 5, Astro 7.4
+  (which requires Node.js 22.23.4 or later), Vue Router 5, vue-tsc 3, Storybook 10.6. The
+  `@quartal/create-plugin` CLI declares the same Node.js requirement.
+  
+  `@quartal/ui-plugin` ships a single bundled `dist/index.d.ts` again. Its types import `PluginInfo`,
+  `CodeType` and the other plugin metadata types from `@quartal/plugin-core`, which is now a dependency
+  of the package; the previous build wrote those imports as relative paths into the workspace sources,
+  which do not exist in the published package.
+- Updated dependencies [1da3ea3]
+- Updated dependencies [1da3ea3]
+- Updated dependencies [1da3ea3]
+- Updated dependencies [c490195]
+- Updated dependencies [ba40a2d]
+  - @quartal/plugin@1.0.0
+
 ## 1.0.0-beta.1
 
 ### Patch Changes
