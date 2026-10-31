@@ -15,6 +15,8 @@ export interface PluginWidgetProps extends WidgetCallbacks, PluginAuth {
   result?: unknown;
   /** Color theme. Default `light`. */
   theme?: WidgetTheme;
+  /** Largest height in pixels; the widget scrolls inside itself beyond it. Default: no limit. */
+  maxHeight?: number;
   /** More host context (locale, display modes, styles), read when the widget mounts. */
   hostContext?: WidgetHostContext;
   /** Called with the JSON result the widget shows. */
@@ -55,6 +57,7 @@ export function PluginWidget(props: PluginWidgetProps): ReactElement {
       args: p.args ?? {},
       ...(p.result !== undefined ? { result: p.result } : {}),
       theme: p.theme ?? "light",
+      ...(p.maxHeight !== undefined ? { maxHeight: p.maxHeight } : {}),
       ...(p.hostContext ? { hostContext: p.hostContext } : {}),
       title: p.title ?? p.tool,
       getToken: async () => (latest.current.getToken ? await latest.current.getToken() : latest.current.token),
@@ -80,6 +83,10 @@ export function PluginWidget(props: PluginWidgetProps): ReactElement {
   useEffect(() => {
     widget.current?.setTheme(props.theme ?? "light");
   }, [props.theme]);
+
+  useEffect(() => {
+    widget.current?.setMaxHeight(props.maxHeight);
+  }, [props.maxHeight]);
 
   return createElement("div", { ref: container, className: props.className, style: props.style });
 }

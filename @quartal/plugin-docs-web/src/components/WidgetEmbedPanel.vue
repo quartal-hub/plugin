@@ -47,6 +47,13 @@ const guide = computed(() =>
 );
 const embedMdUrl = computed(() => `${props.pluginUrl}/widgets/${encodeURIComponent(props.widget.toolId)}/embed.md`);
 const snippet = computed(() => (tab.value === "preview" ? "" : guide.value[tab.value]));
+/** Monaco language of the snippet tabs; the prompt is prose and stays wrapped plain text. */
+const SNIPPET_LANGS: Partial<Record<Tab, string>> = { html: "html", react: "typescript", vue: "html" };
+const snippetLang = computed(() => SNIPPET_LANGS[tab.value]);
+const snippetHeight = computed(() => `${Math.min(560, snippet.value.split("\n").length * 20 + 28)}px`);
+
+/** The preview's height limit: chat hosts may cap inline widgets, so show how a tall widget behaves. */
+const PREVIEW_MAX_HEIGHT = 600;
 
 // Preview: an editable input, run on demand.
 const argsText = ref("");
@@ -142,6 +149,7 @@ const onError = (message: string) => {
         :tool="widget.toolId"
         :args="args"
         :theme="theme"
+        :max-height="PREVIEW_MAX_HEIGHT"
         :token="token"
         :on-tool-call="onToolCall"
         :on-tool-result="onToolResult"
@@ -149,6 +157,10 @@ const onError = (message: string) => {
         :on-message="(m) => log('message', m.content)"
         :on-model-context="(c) => log('modelcontext', c)"
       />
+      <p v-if="args" class="small text-muted mt-1 mb-0">
+        The preview is at most {{ PREVIEW_MAX_HEIGHT }} px tall, as chat hosts may limit inline widgets; a taller widget
+        should scroll inside itself.
+      </p>
       <div v-if="widgetError" class="alert alert-danger mt-2 mb-0 py-2 px-3 small">{{ widgetError }}</div>
       <details v-if="activity.length" class="mt-3" open>
         <summary class="small text-muted">Widget activity ({{ activity.length }})</summary>
@@ -168,10 +180,11 @@ const onError = (message: string) => {
       <p v-else-if="tab !== 'html'" class="small text-muted">
         <code>npm install @quartal/plugin-embed</code>
       </p>
-      <div class="position-relative">
-        <div class="position-absolute top-0 end-0"><CopyButton :text="snippet" /></div>
-        <pre class="q-widget-embed-panel__code border rounded p-3 small mb-2"><code>{{ snippet }}</code></pre>
+      <div class="d-flex justify-content-end"><CopyButton :text="snippet" /></div>
+      <div v-if="snippetLang" class="card overflow-hidden mb-2" :style="{ height: snippetHeight }">
+        <qrtl-editor :key="tab" type="monaco" read-only :lang="snippetLang" :code="snippet"></qrtl-editor>
       </div>
+      <pre v-else class="q-widget-embed-panel__code border rounded p-3 small mb-2"><code>{{ snippet }}</code></pre>
       <p class="small mb-0">
         The full guide for people and agents: <a :href="embedMdUrl" target="_blank" rel="noopener">{{ embedMdUrl }}</a>
         <CopyButton :text="embedMdUrl" />

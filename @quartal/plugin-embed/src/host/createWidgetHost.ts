@@ -42,6 +42,11 @@ export interface WidgetHostOptions extends WidgetCallbacks {
   hostInfo?: { name: string; version: string };
   /** Size the iframe height to the widget's content. Default `true`. */
   autoResize?: boolean;
+  /**
+   * Largest iframe height in pixels. The iframe follows the content up to this height, and the
+   * widget is told (`containerDimensions.maxHeight`) so it can scroll inside itself. Default: no limit.
+   */
+  maxHeight?: number;
 }
 
 /** A running widget host. */
@@ -134,7 +139,13 @@ export function createWidgetHost(options: WidgetHostOptions): WidgetHost {
     ?? (options.src !== undefined ? new URL(options.src, hostWindow.location.href).origin : "*");
   const targetOrigin = expectedOrigin === "null" ? "*" : expectedOrigin;
 
-  let hostContext: WidgetHostContext = { ...defaultHostContext(hostInfo.name), ...options.hostContext };
+  let hostContext: WidgetHostContext = {
+    ...defaultHostContext(hostInfo.name),
+    ...options.hostContext,
+    ...(options.maxHeight !== undefined ? { containerDimensions: { maxHeight: options.maxHeight } } : {}),
+  };
+  /** The content height the widget last reported. */
+  let contentHeight: number | undefined;
   let toolInput = options.toolInput;
   let toolResult = options.toolResult;
   let initialized = false;
@@ -302,9 +313,8 @@ export function createWidgetHost(options: WidgetHostOptions): WidgetHost {
       case "ui/notifications/size-changed": {
         const width = typeof params.width === "number" ? params.width : undefined;
         const height = typeof params.height === "number" ? params.height : undefined;
-        if (options.autoResize !== false && height !== undefined && height > 0) {
-          iframe.style.height = `${Math.ceil(height)}px`;
-        }
+        if (height !== undefined && height > 0) contentHeight = height;
+        applyHeight();
         options.onSize?.({ width, height });
         return;
       }
@@ -355,8 +365,22 @@ export function createWidgetHost(options: WidgetHostOptions): WidgetHost {
     );
   };
 
+  /**
+   * Sizes the iframe: a fixed `containerDimensions.height` wins; otherwise the content height,
+   * capped by `containerDimensions.maxHeight`.
+   */
+  function applyHeight(): void {
+    if (options.autoResize === false) return;
+    const { height: fixed, maxHeight } = hostContext.containerDimensions ?? {};
+    let height = typeof fixed === "number" ? fixed : contentHeight;
+    if (height === undefined) return;
+    if (typeof fixed !== "number" && typeof maxHeight === "number") height = Math.min(height, maxHeight);
+    iframe.style.height = `${Math.ceil(height)}px`;
+  }
+
   function setHostContext(change: WidgetHostContext): void {
     hostContext = { ...hostContext, ...change };
+    if ("containerDimensions" in change) applyHeight();
     if (initialized) notify("ui/notifications/host-context-changed", change);
   }
 

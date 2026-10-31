@@ -23,6 +23,11 @@ export interface WidgetHostContext {
   userAgent?: string;
   /** Platform type. */
   platform?: "web" | "desktop" | "mobile";
+  /**
+   * Room the host gives the widget: a fixed `height`/`width`, or a `maxHeight`/`maxWidth` the
+   * widget may grow to (it scrolls inside itself beyond that).
+   */
+  containerDimensions?: { height?: number; maxHeight?: number; width?: number; maxWidth?: number };
   /** Theme variables and fonts for the widget (`McpUiHostStyles`). */
   styles?: { variables?: Record<string, string | undefined>; css?: { fonts?: string } };
   [key: string]: unknown;

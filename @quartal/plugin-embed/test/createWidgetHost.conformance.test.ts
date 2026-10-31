@@ -195,6 +195,30 @@ describe("createWidgetHost against the ext-apps App", () => {
     expect(onLog).toHaveBeenCalledWith({ level: "warning", source: "w", data: "careful" });
   });
 
+  it("caps the iframe at maxHeight and tells the widget", async () => {
+    const h = host({ maxHeight: 300 });
+    await connectApp();
+    expect(app.getHostContext()?.containerDimensions).toEqual({ maxHeight: 300 });
+    await app.sendSizeChanged({ width: 300, height: 1200 });
+    await flush();
+    expect(frame.iframe.style.height).toBe("300px");
+    await app.sendSizeChanged({ width: 300, height: 120 });
+    await flush();
+    expect(frame.iframe.style.height).toBe("120px");
+
+    // A new limit re-applies to the last content height and reaches the widget.
+    await app.sendSizeChanged({ width: 300, height: 800 });
+    await flush();
+    h.setHostContext({ containerDimensions: { maxHeight: 500 } });
+    await flush();
+    expect(frame.iframe.style.height).toBe("500px");
+    expect(app.getHostContext()?.containerDimensions).toEqual({ maxHeight: 500 });
+
+    // A fixed height wins over the content.
+    h.setHostContext({ containerDimensions: { height: 250 } });
+    expect(frame.iframe.style.height).toBe("250px");
+  });
+
   it("keeps the iframe height with autoResize false", async () => {
     host({ autoResize: false });
     await connectApp();

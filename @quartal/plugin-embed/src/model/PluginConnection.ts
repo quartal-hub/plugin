@@ -49,6 +49,11 @@ export interface MountWidgetOptions extends WidgetCallbacks, PluginAuth {
   onResult?: (value: unknown) => void;
   /** Size the iframe height to the widget's content. Default `true`. */
   autoResize?: boolean;
+  /**
+   * Largest iframe height in pixels: the iframe follows the content up to it and the widget scrolls
+   * inside itself beyond it. Default: no limit.
+   */
+  maxHeight?: number;
   /** `title` attribute of the iframe. Default: the widget title. */
   title?: string;
 }
@@ -68,6 +73,8 @@ export interface MountedWidget {
   setTheme(theme: WidgetTheme): void;
   /** Merges a change into the host context. */
   setHostContext(change: WidgetHostContext): void;
+  /** Changes the largest iframe height (`undefined` removes the limit). */
+  setMaxHeight(maxHeight: number | undefined): void;
   /** Stops the host and removes the iframe. */
   dispose(): Promise<void>;
 }

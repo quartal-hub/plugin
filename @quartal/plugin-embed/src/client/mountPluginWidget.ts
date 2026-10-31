@@ -67,7 +67,14 @@ export function mountPluginWidget(plugin: PluginConnection, container: Element, 
       toolName: options.tool,
       toolInput: args,
       toolResult: delivered,
-      hostContext: { theme: options.theme ?? "light", ...options.hostContext, ...pendingContext },
+      // The height limit travels as host context, so a later setMaxHeight() wins over the initial one.
+      maxHeight: undefined,
+      hostContext: {
+        theme: options.theme ?? "light",
+        ...(options.maxHeight !== undefined ? { containerDimensions: { maxHeight: options.maxHeight } } : {}),
+        ...options.hostContext,
+        ...pendingContext,
+      },
       callTool: (name, callArgs, { signal }) => plugin.callToolResult(name, callArgs, { ...auth, signal }),
     });
     await host.ready;
@@ -101,6 +108,9 @@ export function mountPluginWidget(plugin: PluginConnection, container: Element, 
       setHostContext({ theme });
     },
     setHostContext,
+    setMaxHeight(maxHeight) {
+      setHostContext({ containerDimensions: maxHeight !== undefined ? { maxHeight } : {} });
+    },
     async dispose() {
       disposed = true;
       await host?.dispose();

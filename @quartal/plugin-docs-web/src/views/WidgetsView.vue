@@ -78,11 +78,6 @@ onMounted(async () => {
         <div v-if="current" class="col-md-8 col-lg-9">
           <h2 class="h5">{{ current.title }}</h2>
           <p>{{ current.description }}</p>
-          <p class="small">
-            <a :href="pluginClient.url('/widgets/' + encodeURIComponent(current.toolId))" target="_blank" rel="noopener">
-              Open the widget page
-            </a>
-          </p>
           <WidgetEmbedPanel
             :key="current.toolId"
             :widget="current"

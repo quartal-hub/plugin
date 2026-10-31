@@ -115,6 +115,10 @@ const { result, displayMode, availableDisplayModes, requestDisplayMode } = useEx
 });
 ```
 
+Hosts may also limit how tall an inline widget gets, or give it a fixed height (MCP Apps
+`containerDimensions` in the host context), so a long list or table should scroll inside the widget
+rather than rely on the frame growing; avoid `100vh` in inline mode.
+
 The inline frame is only as tall as the widget's content, so a `position: fixed` dialog is clipped when the
 content is short. Either render the dialog in the page flow, or ask the host for more room:
 

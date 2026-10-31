@@ -23,3 +23,9 @@ placement, keyed by MCP tool id, and each widget's page), `GET /widgets/embed.md
 (`mountMcpWidget` replaces `mountWidget`; `WidgetHostHandle.host` replaces `bridge`), so the ext-apps
 `AppBridge` is no longer bundled. The docs site's Widgets page shows a live preview of each widget and
 its embedding snippets. `@quartal/create-plugin` scaffolds the new `@quartal/*` versions.
+
+A widget's height can be limited: `maxHeight` on `createWidgetHost`, `mountWidget` (plus
+`setMaxHeight`), the React and Vue `PluginWidget`, and the `max-height` attribute of `<qrtl-widget>`.
+The iframe follows the content up to the limit, and the widget gets it as
+`containerDimensions.maxHeight`. The docs preview limits widgets to 600 px, and its Embed tab shows
+the snippets in the read-only code viewer.

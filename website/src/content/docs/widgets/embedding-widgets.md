@@ -33,11 +33,15 @@ site for a live preview, copy-paste snippets and a ready-made prompt for a codin
   no input runs right away.
 - **`result`** shows a result the page already has, without calling the tool.
 - **`theme`** is `light` (default) or `dark`.
+- **`max-height`** limits the height in pixels (the `maxHeight` property, and the `maxHeight` prop in
+  React and Vue).
 - **`plugin`** names the plugin's origin. It is only needed when the page loads widgets from several
   plugins and two of them have a widget for the same tool id.
 
-The widget runs in an iframe on the plugin's own origin, and the iframe follows the height of the
-widget's content.
+The widget runs in an iframe on the plugin's own origin. The iframe follows the height of the
+widget's content, up to `max-height` when you set one; the widget is told the limit and scrolls inside
+itself beyond it. MCP clients such as Claude and ChatGPT may limit or fix the height of an inline
+widget too, so design tall widgets to scroll inside themselves, or to ask for fullscreen.
 
 ### Events
 
@@ -153,6 +157,7 @@ const widget = plugin.mountWidget(document.getElementById("hello")!, {
 });
 widget.update({ args: { name: "Grace" } });
 widget.setTheme("dark");
+widget.setMaxHeight(600);
 await widget.dispose();
 ```
 
@@ -174,6 +179,7 @@ URLs and it has everything it needs.
 - The element frames `/widgets/<toolId>` from the plugin and speaks the MCP Apps protocol with it over
   `postMessage`: it answers the widget's handshake, sends the input and the result, and handles the
   widget's requests — tool calls, links (opened in a new tab), chat messages, model context,
-  display modes and size changes. It accepts messages only from that iframe and the plugin's origin.
+  display modes and size changes. A height limit reaches the widget as the MCP Apps
+  `containerDimensions.maxHeight`. It accepts messages only from that iframe and the plugin's origin.
 - The same host runs the widget preview in the plugin's docs site, so a widget that works there
   works on your page.

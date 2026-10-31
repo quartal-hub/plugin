@@ -143,7 +143,7 @@ const args = ${argsJson};
     (input.description ?? "").trim(),
     `Plugin: ${input.pluginTitle} (${url}). Tool: \`${tool}\`.`,
     `## HTML\n\n\`\`\`html\n${html}\n\`\`\``,
-    `## Input\n\nSet \`args\` (a property, or a JSON \`args\` attribute) to:\n\n\`\`\`ts\ntype ${pascal(tool)}Input = ${inputType};\n\`\`\`\n\nChanging \`args\` calls the tool again. To show a result the page already has, set \`result\` instead; the tool is then not called.`,
+    `## Input\n\nSet \`args\` (a property, or a JSON \`args\` attribute) to:\n\n\`\`\`ts\ntype ${pascal(tool)}Input = ${inputType};\n\`\`\`\n\nChanging \`args\` calls the tool again. To show a result the page already has, set \`result\` instead; the tool is then not called. The height follows the widget's content; set a \`max-height\` attribute (pixels) to limit it.`,
     `## Events\n\n| Event | \`detail\` |\n| --- | --- |\n| \`ready\` | — |\n| \`result\` | the tool's JSON result |\n| \`error\` | \`{ message }\` |\n| \`toolcall\` | \`{ name, args, respondWith(value) }\` — the widget calls a tool; call \`respondWith\` to answer it yourself |\n| \`toolresult\` | \`{ name, args, result, value?, error? }\` |\n| \`message\` | \`{ role, content }\` — the widget posts a chat message |\n| \`modelcontext\` | \`{ content?, structuredContent? }\` |`,
     eventLines.length ? `### Tools the widget calls\n\n${eventLines.join("\n")}` : "",
     `## Authentication\n\n${input.requiresAuth ? "The plugin's API needs a bearer token." : "The plugin's API is anonymous; no token is needed."} The library brings no login of its own: set \`getToken\` (a function returning the token) or \`token\` on the element, or call \`plugin.setAuth({ getToken })\` on the \`plugin\` export of \`widgets.js\`.`,

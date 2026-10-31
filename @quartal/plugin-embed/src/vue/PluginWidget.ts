@@ -36,6 +36,8 @@ export const PluginWidget = defineComponent({
     result: { type: null as unknown as PropType<unknown>, default: undefined },
     /** Color theme. */
     theme: { type: String as PropType<WidgetTheme>, default: "light" },
+    /** Largest height in pixels; the widget scrolls inside itself beyond it. Default: no limit. */
+    maxHeight: { type: Number, default: undefined },
     /** More host context, read when the widget mounts. */
     hostContext: { type: Object as PropType<WidgetHostContext>, default: undefined },
     /** Bearer token for the plugin's API. */
@@ -69,6 +71,7 @@ export const PluginWidget = defineComponent({
         args: props.args ?? {},
         ...(props.result !== undefined ? { result: props.result } : {}),
         theme: props.theme,
+        ...(props.maxHeight !== undefined ? { maxHeight: props.maxHeight } : {}),
         ...(props.hostContext ? { hostContext: props.hostContext } : {}),
         title: props.title ?? props.tool,
         getToken: async () => (props.getToken ? await props.getToken() : props.token),
@@ -96,6 +99,7 @@ export const PluginWidget = defineComponent({
       },
     );
     watch(() => props.theme, (theme) => widget?.setTheme(theme));
+    watch(() => props.maxHeight, (maxHeight) => widget?.setMaxHeight(maxHeight));
 
     return () => h("div", { ref: container });
   },

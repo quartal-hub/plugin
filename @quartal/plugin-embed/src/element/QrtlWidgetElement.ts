@@ -27,7 +27,7 @@ const BaseElement = (typeof HTMLElement === "undefined" ? class {} : HTMLElement
  * `toolcall` (detail: {@link ToolCallEventDetail}), `toolresult`, `message`, `modelcontext`.
  */
 export class QrtlWidgetElement extends BaseElement {
-  static observedAttributes = ["tool", "plugin", "theme", "args"];
+  static observedAttributes = ["tool", "plugin", "theme", "args", "max-height"];
 
   /** Returns the bearer token for the plugin's API. Wins over {@link QrtlWidgetElement.token}. */
   getToken?: TokenProvider;
@@ -71,6 +71,19 @@ export class QrtlWidgetElement extends BaseElement {
     this.setAttribute("theme", value);
   }
 
+  /**
+   * Largest height in pixels (`max-height` attribute): the widget follows its content up to it and
+   * scrolls inside itself beyond it. No limit when unset.
+   */
+  get maxHeight(): number | undefined {
+    const value = Number(this.getAttribute("max-height"));
+    return this.hasAttribute("max-height") && value > 0 ? value : undefined;
+  }
+  set maxHeight(value: number | undefined) {
+    if (value === undefined) this.removeAttribute("max-height");
+    else this.setAttribute("max-height", String(value));
+  }
+
   /** The tool's input. Setting it calls the tool again. */
   get args(): Record<string, unknown> | undefined {
     return this.#args;
@@ -109,6 +122,10 @@ export class QrtlWidgetElement extends BaseElement {
     }
     if (name === "theme") {
       this.#widget?.setTheme(this.theme);
+      return;
+    }
+    if (name === "max-height") {
+      this.#widget?.setMaxHeight(this.maxHeight);
       return;
     }
     this.#queueRender();
@@ -180,6 +197,7 @@ export class QrtlWidgetElement extends BaseElement {
       ...(args !== undefined ? { args } : {}),
       ...(this.#result !== undefined ? { result: this.#result } : {}),
       theme: this.theme,
+      ...(this.maxHeight !== undefined ? { maxHeight: this.maxHeight } : {}),
       title: this.getAttribute("title") ?? tool,
       getToken: async () => (this.getToken ? await this.getToken() : this.token),
       onReady: () => this.#emit("ready"),
