@@ -16,9 +16,9 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/node": "^11.0.0",
+    "@astrojs/node": "^11.1.9",
     "@quartal/plugin": "workspace:*",
     "@quartal/plugin-core": "workspace:*",
-    "astro": "^7.3.3"
+    "astro": "^7.4.4"
   }
 }

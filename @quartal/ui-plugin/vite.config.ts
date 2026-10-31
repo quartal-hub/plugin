@@ -16,7 +16,7 @@ export default defineConfig({
       formats: ["es"],
       fileName: "index",
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: ["vue", "vue-router"],
       output: {
         globals: { vue: "Vue", "vue-router": "VueRouter" },

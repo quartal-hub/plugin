@@ -1,6 +1,4 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { Implementation, Tool } from "@modelcontextprotocol/sdk/types.js";
+import { Client, type Implementation, StreamableHTTPClientTransport, type Tool } from "@modelcontextprotocol/client";
 
 /** A loose JSON Schema object (as advertised by MCP `tools/list#inputSchema`). */
 export type JsonSchema = Record<string, unknown>;

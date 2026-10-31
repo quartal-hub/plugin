@@ -281,10 +281,12 @@
           },
           "time": {
             "type": "string",
+            "format": "time",
             "description": "A time string (ISO 8601, e.g. 12:00:00.000)."
           },
           "duration": {
             "type": "string",
+            "format": "duration",
             "description": "A duration string (ISO 8601, e.g. P1Y2M3DT4H5M6S)."
           },
           "email": {

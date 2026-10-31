@@ -46,14 +46,14 @@
   "devDependencies": {
     "@quartal/plugin-embed": "workspace:*",
     "@quartal/ui-core": "1.4.2",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "redoc": "^2.5.2",
-    "swagger-ui-dist": "^5.32.6",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.3",
-    "vue": "^3.5.13",
-    "vue-router": "^4.6.4",
-    "vue-tsc": "^2.2.0"
+    "@vitejs/plugin-vue": "^6.0.10",
+    "redoc": "^3.0.1",
+    "swagger-ui-dist": "^5.34.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0",
+    "vue-tsc": "^3.3.14"
   },
   "publishConfig": {
     "access": "public"

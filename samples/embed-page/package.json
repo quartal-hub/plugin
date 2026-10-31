@@ -19,7 +19,7 @@
     "@quartal/plugin-embed": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.9.0",
-    "vite": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5"
   }
 }

@@ -16,11 +16,11 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/node": "^11.0.0",
-    "@astrojs/vue": "^7.0.0",
+    "@astrojs/node": "^11.1.9",
+    "@astrojs/vue": "^7.1.2",
     "@quartal/plugin": "workspace:*",
     "@quartal/plugin-vue": "workspace:*",
-    "astro": "^7.3.3",
-    "vue": "^3.5.0"
+    "astro": "^7.4.4",
+    "vue": "^3.5.44"
   }
 }
