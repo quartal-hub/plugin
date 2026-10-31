@@ -123,9 +123,9 @@ export interface PluginAgentSummary {
 
 /** Widget summary linked to an MCP tool. */
 export interface PluginWidgetEntry {
-  /** Display name from `vue/widgets.json`. */
+  /** Display name: the `name` of the widget's `widgets.entries` config entry, or the tool id. */
   name: string;
-  /** MCP widget title (typically the tool id). */
+  /** Title of the MCP tool the widget visualizes, or the tool id when the tool has no title. */
   title: string;
   /** Widget description (from MCP catalog when available). */
   description: string;
