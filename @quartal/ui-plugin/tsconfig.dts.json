@@ -4,7 +4,11 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "noEmit": false,
-    "outDir": "./dist"
+    "rootDir": "./src",
+    "outDir": "./dist",
+    // Declarations import `@quartal/plugin-core` as a package (resolved to its built dist/mod.d.ts),
+    // not the workspace sources: those live outside rootDir and would be emitted into dist.
+    "paths": {}
   },
   "include": ["src/**/*.ts", "src/**/*.vue"],
   "exclude": ["src/**/*.stories.ts"]

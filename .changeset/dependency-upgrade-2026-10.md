@@ -14,3 +14,8 @@ of any package. `@quartal/plugin` lists `@modelcontextprotocol/client` and `zod`
 because ext-apps needs them at runtime. Toolchain: TypeScript 6.0, Vite 8, Vitest 5, Astro 7.4
 (which requires Node.js 22.23.4 or later), Vue Router 5, vue-tsc 3, Storybook 10.6. The
 `@quartal/create-plugin` CLI declares the same Node.js requirement.
+
+`@quartal/ui-plugin` ships a single bundled `dist/index.d.ts` again. Its types import `PluginInfo`,
+`CodeType` and the other plugin metadata types from `@quartal/plugin-core`, which is now a dependency
+of the package; the previous build wrote those imports as relative paths into the workspace sources,
+which do not exist in the published package.

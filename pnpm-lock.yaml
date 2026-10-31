@@ -182,13 +182,16 @@ importers:
       '@modelcontextprotocol/client':
         specifier: ^2.4.0
         version: 2.4.0
+      '@quartal/plugin-core':
+        specifier: workspace:*
+        version: link:../plugin-core
       '@quartal/plugin-embed':
         specifier: workspace:*
         version: link:../plugin-embed
     devDependencies:
-      '@quartal/plugin-core':
-        specifier: workspace:*
-        version: link:../plugin-core
+      '@microsoft/api-extractor':
+        specifier: ^7.58.9
+        version: 7.58.9(@types/node@22.20.1)
       '@storybook/addon-docs':
         specifier: ^10.6.5
         version: 10.6.5(@types/react@19.3.0)(storybook@10.6.5(@types/react@19.3.0)(react@19.3.1))
@@ -6132,7 +6135,6 @@ snapshots:
       '@rushstack/node-core-library': 5.23.1(@types/node@22.20.1)
     transitivePeerDependencies:
       - '@types/node'
-    optional: true
 
   '@microsoft/api-extractor@7.58.9(@types/node@22.20.1)':
     dependencies:
@@ -6151,7 +6153,6 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
-    optional: true
 
   '@microsoft/tsdoc-config@0.18.1':
     dependencies:
@@ -6159,10 +6160,8 @@ snapshots:
       ajv: 8.18.0
       jju: 1.4.0
       resolve: 1.22.13
-    optional: true
 
-  '@microsoft/tsdoc@0.16.0':
-    optional: true
+  '@microsoft/tsdoc@0.16.0': {}
 
   '@modelcontextprotocol/client@2.4.0':
     dependencies:
@@ -6617,18 +6616,15 @@ snapshots:
       semver: 7.7.4
     optionalDependencies:
       '@types/node': 22.20.1
-    optional: true
 
   '@rushstack/problem-matcher@0.2.1(@types/node@22.20.1)':
     optionalDependencies:
       '@types/node': 22.20.1
-    optional: true
 
   '@rushstack/rig-package@0.7.3':
     dependencies:
       jju: 1.4.0
       resolve: 1.22.13
-    optional: true
 
   '@rushstack/terminal@0.24.0(@types/node@22.20.1)':
     dependencies:
@@ -6637,7 +6633,6 @@ snapshots:
       supports-color: 8.1.1
     optionalDependencies:
       '@types/node': 22.20.1
-    optional: true
 
   '@rushstack/ts-command-line@5.3.10(@types/node@22.20.1)':
     dependencies:
@@ -6647,7 +6642,6 @@ snapshots:
       string-argv: 0.3.2
     transitivePeerDependencies:
       - '@types/node'
-    optional: true
 
   '@salaxy/core@7.0.0-beta.1':
     dependencies:
@@ -6816,8 +6810,7 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@types/argparse@1.0.38':
-    optional: true
+  '@types/argparse@1.0.38': {}
 
   '@types/aria-query@5.0.4': {}
 
@@ -7268,12 +7261,10 @@ snapshots:
   ajv-draft-04@1.0.0(ajv@8.18.0):
     optionalDependencies:
       ajv: 8.18.0
-    optional: true
 
   ajv-formats@3.0.1(ajv@8.18.0):
     optionalDependencies:
       ajv: 8.18.0
-    optional: true
 
   ajv@6.15.0:
     dependencies:
@@ -7288,7 +7279,6 @@ snapshots:
       fast-uri: 3.1.3
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
-    optional: true
 
   alien-signals@3.2.1: {}
 
@@ -7314,7 +7304,6 @@ snapshots:
   argparse@1.0.10:
     dependencies:
       sprintf-js: 1.0.3
-    optional: true
 
   argparse@2.0.1: {}
 
@@ -7656,8 +7645,7 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  diff@8.0.4:
-    optional: true
+  diff@8.0.4: {}
 
   diff@9.0.0: {}
 
@@ -7939,8 +7927,7 @@ snapshots:
     dependencies:
       fast-string-truncated-width: 3.0.3
 
-  fast-uri@3.1.3:
-    optional: true
+  fast-uri@3.1.3: {}
 
   fast-wrap-ansi@0.2.2:
     dependencies:
@@ -7991,7 +7978,6 @@ snapshots:
       graceful-fs: 4.2.11
       jsonfile: 6.2.1
       universalify: 2.0.1
-    optional: true
 
   fsevents@2.3.3:
     optional: true
@@ -8041,8 +8027,7 @@ snapshots:
 
   gopd@1.2.0: {}
 
-  graceful-fs@4.2.11:
-    optional: true
+  graceful-fs@4.2.11: {}
 
   h3@1.15.11:
     dependencies:
@@ -8065,8 +8050,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
-  has-flag@4.0.0:
-    optional: true
+  has-flag@4.0.0: {}
 
   has-symbols@1.1.0: {}
 
@@ -8131,8 +8115,7 @@ snapshots:
 
   ignore@5.3.2: {}
 
-  import-lazy@4.0.0:
-    optional: true
+  import-lazy@4.0.0: {}
 
   import-meta-resolve@4.2.0: {}
 
@@ -8214,8 +8197,7 @@ snapshots:
 
   json-schema-traverse@0.4.1: {}
 
-  json-schema-traverse@1.0.0:
-    optional: true
+  json-schema-traverse@1.0.0: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
@@ -8228,7 +8210,6 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
-    optional: true
 
   jstransformer@1.0.0:
     dependencies:
@@ -8439,7 +8420,6 @@ snapshots:
   minimatch@10.2.3:
     dependencies:
       brace-expansion: 5.0.12
-    optional: true
 
   minimatch@10.2.6:
     dependencies:
@@ -8855,8 +8835,7 @@ snapshots:
 
   require-directory@2.1.1: {}
 
-  require-from-string@2.0.2:
-    optional: true
+  require-from-string@2.0.2: {}
 
   require-main-filename@2.0.0: {}
 
@@ -8955,8 +8934,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.7.4:
-    optional: true
+  semver@7.7.4: {}
 
   semver@7.8.5: {}
 
@@ -9055,8 +9033,7 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
-  sprintf-js@1.0.3:
-    optional: true
+  sprintf-js@1.0.3: {}
 
   stable-hash-x@0.2.0: {}
 
@@ -9090,8 +9067,7 @@ snapshots:
       - react
       - utf-8-validate
 
-  string-argv@0.3.2:
-    optional: true
+  string-argv@0.3.2: {}
 
   string-width@4.2.3:
     dependencies:
@@ -9131,7 +9107,6 @@ snapshots:
   supports-color@8.1.1:
     dependencies:
       has-flag: 4.0.0
-    optional: true
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
@@ -9205,8 +9180,7 @@ snapshots:
     dependencies:
       tagged-tag: 1.0.0
 
-  typescript@5.9.3:
-    optional: true
+  typescript@5.9.3: {}
 
   typescript@6.0.3: {}
 
@@ -9273,8 +9247,7 @@ snapshots:
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.1.0
 
-  universalify@2.0.1:
-    optional: true
+  universalify@2.0.1: {}
 
   unplugin-dts@1.1.2(@microsoft/api-extractor@7.58.9(@types/node@22.20.1))(@vue/language-core@3.3.14)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.62.2)(typescript@6.0.3)(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.2)(yaml@2.9.1)):
     dependencies:

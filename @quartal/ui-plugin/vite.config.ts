@@ -4,7 +4,6 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import dts from "vite-plugin-dts";
 
-const pluginCoreRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../plugin-core/src");
 const isLibBuild = process.env.npm_lifecycle_event === "build";
 
 export default defineConfig({
@@ -29,15 +28,13 @@ export default defineConfig({
       ? [
         dts({
           tsconfigPath: "./tsconfig.dts.json",
-          rollupTypes: true,
+          bundleTypes: true,
           cleanVueFileName: true,
         }),
       ]
       : []),
   ],
-  resolve: {
-    alias: {
-      "@quartal/plugin-core": path.join(pluginCoreRoot, "mod.ts"),
-    },
-  },
+  // `@quartal/plugin-core` resolves to the built package (a dependency), not to its workspace
+  // sources: the declaration bundle must import it by package name, and the plugin rewrites
+  // declaration imports through Vite aliases. Storybook aliases it to the sources in .storybook/main.ts.
 });

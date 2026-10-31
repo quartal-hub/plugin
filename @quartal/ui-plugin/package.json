@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/client": "^2.4.0",
+    "@quartal/plugin-core": "workspace:*",
     "@quartal/plugin-embed": "workspace:*"
   },
   "peerDependencies": {
@@ -37,7 +38,7 @@
     "vue-router": "^4.6.4 || ^5.0.0"
   },
   "devDependencies": {
-    "@quartal/plugin-core": "workspace:*",
+    "@microsoft/api-extractor": "^7.58.9",
     "@storybook/addon-docs": "^10.6.5",
     "@storybook/vue3": "^10.6.5",
     "@storybook/vue3-vite": "^10.6.5",
