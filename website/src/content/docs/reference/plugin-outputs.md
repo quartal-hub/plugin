@@ -33,7 +33,7 @@ it is gitignored and regenerated on every change to `src/tools`, `src/prompts`, 
 
 | File | Contents |
 |---|---|
-| `contents.json` | The plugin overview: name, title, version, style, plus catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. Served at runtime as [`GET /com.quartal.plugin/contents.json`](/docs/reference/http-endpoints). |
+| `contents.json` | The plugin overview: name, title, version, style, the `@quartal/plugin` version it was built with (`generator: { name, version }`), plus catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. Served at runtime as [`GET /com.quartal.plugin/contents.json`](/docs/reference/http-endpoints). |
 | `mcp-tools.json` | One descriptor per tool: id, source class/method, description, JSON Schema for input and output, and visibility. This drives both the MCP server and the REST routes. |
 | `mcp-prompts.json` | One descriptor per MCP prompt: id, description and arguments. |
 | `open-api.json` | A complete OpenAPI 3.0 document for the REST API — one operation per tool at its [REST route](/docs/tools/creating-tools#rest-routes) (`GET /api/invoices/{id}`, `POST /api/hello-world/say-hello`, …), with your types as named component schemas and one tag per class. |

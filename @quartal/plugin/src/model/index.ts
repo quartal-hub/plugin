@@ -65,6 +65,7 @@ export type {
   McpToolVisibility,
   PluginAgentSummary,
   PluginIcon,
+  PluginGenerator,
   PluginInfo,
   PluginLinks,
   PluginManifest,

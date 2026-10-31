@@ -18,7 +18,7 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 | `GET /plugin.json` | The [Agent Plugins 1.0 manifest](https://agent-plugins.org/specification): name, version, description, author, license, keywords. Quartal-specific links (the OpenAPI document, the overview, the package) live under `extensions["com.quartal.plugin"]`. |
 | `GET /mcp.json` | The standard MCP server configuration: every MCP server of the plugin as `streamable-http` entries — the plugin's own hosted servers on this origin, plus any declared external servers at their original URLs. |
 | `GET /plugin.zip` | The whole installable Agent Plugin as a zip: both manifests (`plugin.json` and Claude's `.claude-plugin/plugin.json`), both MCP configs (`mcp.json` and `.mcp.json`), the skills, the agents, the README and the Quartal overview. |
-| `GET /com.quartal.plugin/contents.json` | The rich Quartal overview: identity, style, and catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. This is what the built-in docs site renders. |
+| `GET /com.quartal.plugin/contents.json` | The rich Quartal overview: identity, style, the `@quartal/plugin` version the plugin was built with (`generator`), and catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. This is what the built-in docs site renders. |
 
 ## Other metadata
 

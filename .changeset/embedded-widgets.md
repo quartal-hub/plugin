@@ -29,3 +29,7 @@ A widget's height can be limited: `maxHeight` on `createWidgetHost`, `mountWidge
 The iframe follows the content up to the limit, and the widget gets it as
 `containerDimensions.maxHeight`. The docs preview limits widgets to 600 px, and its Embed tab shows
 the snippets in the read-only code viewer.
+
+`contents.json` records the `@quartal/plugin` version a plugin was built with
+(`PluginInfo.generator: { name, version }`), and the docs front page shows it as "Created with
+@quartal/plugin, <version>", linking to plugin.quartal.com and the version's npm page.

@@ -11,6 +11,7 @@ import type {
   McpServerOptions,
   McpToolDescriptor,
   PluginAgentSummary,
+  PluginGenerator,
   PluginInfo,
   PluginLinks,
   PluginPromptEntry,
@@ -58,6 +59,8 @@ export interface BuildPluginInfoInput {
   origin?: string;
   /** MCP options (`qrtl.config` `mcp`) — resolved into the overview's `mcpServers`. */
   mcpOptions?: McpServerOptions;
+  /** The `@quartal/plugin` package the plugin is built with. */
+  generator?: PluginGenerator;
 }
 
 function fileNameFromPath(filePath: string): string {
@@ -260,6 +263,7 @@ export function buildPluginInfo(input: BuildPluginInfoInput): PluginInfo {
     ...(manifest.repository ? { repository: manifest.repository } : {}),
     style: manifest.style,
     hasReadme: input.hasReadme,
+    ...(input.generator ? { generator: input.generator } : {}),
     tools,
     toolGroups: buildToolGroups(tools, classDescriptions(input.codeFiles)),
     skills: input.skills,

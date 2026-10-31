@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import type { PluginRuntimeArtifacts, WidgetCatalogEntry } from "../model/index.ts";
 import { buildPluginArtifacts, writePluginArtifacts, writeJsonToFile } from "./buildPluginArtifacts.ts";
 import { Helpers } from "../helpers/Helpers.ts";
+import { pluginGenerator } from "../helpers/pluginGenerator.ts";
 import { buildToolsRegistrySource } from "./buildToolsRegistry.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "../hono-app/buildPluginInfo.ts";
 import { mcpServerDisplayName } from "../hono-app/pluginMetadata.ts";
@@ -126,6 +127,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     basePath,
     hasReadme: readme !== undefined,
     mcpOptions,
+    generator: pluginGenerator(),
   });
   await writeJsonToFile(join(out, "contents.json"), contents);
 

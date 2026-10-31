@@ -10,6 +10,7 @@ import { loadCodeFiles } from "../code/loadCodeFiles.ts";
 import { resolveRestRoutes } from "../code/resolveRestRoutes.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
+import { pluginGenerator } from "../helpers/pluginGenerator.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
@@ -146,6 +147,7 @@ export class PluginApiHelper {
       hasReadme: !!this.readmeContent && this.readmeContent !== "No README.md found in the plugin.",
       origin,
       mcpOptions: typeof this.config.mcp === "object" ? this.config.mcp : undefined,
+      generator: pluginGenerator(),
     });
   }
 
