@@ -110,6 +110,33 @@ changeset.** That file holds the version ranges the scaffolder writes into new p
 release automation does not touch it — without a manual update and a create-plugin release, the
 published scaffolder keeps emitting the previous ranges.
 
+### Adding a new published package
+
+The release workflow (`.github/workflows/release.yml`) publishes to npm with trusted publishing
+(OIDC); it holds no npm token. npm sets up a trusted publisher in the settings of an existing
+package, so the workflow cannot create a package that is not on npm yet. A maintainer with publish
+rights in the `@quartal` npm organization therefore does the first publish by hand, **before the
+"chore: version packages" pull request that releases the package is merged**:
+
+1. Add the package to the list of published packages above and to the library table in `AGENTS.md`,
+   and give it `"publishConfig": { "access": "public" }` and a `prepublishOnly` build script.
+2. Build and check what will be published, then publish the version in its `package.json` under the
+   prerelease tag (`beta` while the repository is in prerelease mode, see `.changeset/pre.json`), so
+   it does not become `latest`:
+
+   ```bash
+   pnpm install && pnpm --filter @quartal/<name> run build
+   cd @quartal/<name>
+   npm pack --dry-run
+   npm publish --access public --tag beta
+   ```
+
+3. On npmjs.com, open the package's **Settings → Trusted publishing** and add GitHub Actions with
+   repository `quartal-hub/plugin` and workflow `release.yml`, the same as the other `@quartal`
+   packages.
+
+From then on the workflow publishes the package's versions like the others, with provenance.
+
 ## Comments
 
 Comments describe what the code does now, and warn about edits that would break it. They do not

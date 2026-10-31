@@ -6,6 +6,9 @@ import type { CallToolResult } from "../src/model/index.ts";
  * sender's origin, asynchronously, the way browsers do. A targeted message whose origin does not
  * match the receiver is dropped.
  */
+/** Messages posted between fake windows and not yet dispatched. */
+let inFlight = 0;
+
 export class FakeWindow extends EventTarget {
   peer!: FakeWindow;
   parent: FakeWindow = this;
@@ -24,7 +27,9 @@ export class FakeWindow extends EventTarget {
 
   /** Dispatches a message as if `source` had sent it. */
   deliver(data: unknown, source: FakeWindow): void {
+    inFlight++;
     setTimeout(() => {
+      inFlight--;
       const event = new Event("message");
       Object.defineProperties(event, {
         data: { value: data },
@@ -70,9 +75,19 @@ export function createFrame(widgetOrigin = "https://plugin.example"): FakeFrame 
   return { host, widget, iframe };
 }
 
-/** Resolves after pending timers and microtasks have run. */
-export function flush(ms = 5): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Resolves once the fake windows are quiet: no message in flight across several turns of the event
+ * loop, so replies posted from async handlers are delivered too. It waits on the conversation
+ * itself rather than a fixed time, so a slow machine cannot cut it short.
+ */
+export async function flush(): Promise<void> {
+  const deadline = Date.now() + 5000;
+  let quietTurns = 0;
+  while (quietTurns < 3) {
+    if (Date.now() > deadline) throw new Error("Fake windows did not settle within 5 s.");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    quietTurns = inFlight === 0 ? quietTurns + 1 : 0;
+  }
 }
 
 /** A successful tool result carrying `value`. */

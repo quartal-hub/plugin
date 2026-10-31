@@ -8,6 +8,9 @@ import { connectWidget } from "../src/widget/index.ts";
  * and the iframe: `postMessage` structured-clones the payload and dispatches it asynchronously with
  * the sender as `source`.
  */
+/** Messages posted between the fake windows and not yet dispatched. */
+let inFlight = 0;
+
 class FakeWindow extends EventTarget {
   peer!: FakeWindow;
   parent: FakeWindow = this;
@@ -20,7 +23,9 @@ class FakeWindow extends EventTarget {
     if (targetOrigin !== "*" && targetOrigin !== this.origin) return;
     const source = this.peer;
     const cloned = structuredClone(data);
+    inFlight++;
     setTimeout(() => {
+      inFlight--;
       const event = new Event("message");
       Object.defineProperties(event, { data: { value: cloned }, origin: { value: source.origin }, source: { value: source } });
       this.dispatchEvent(event);
@@ -42,7 +47,14 @@ function frame() {
   return { iframe };
 }
 
-const flush = () => new Promise((resolve) => setTimeout(resolve, 5));
+/** Waits until no message is in flight across several event-loop turns (not a fixed time, which a slow CI runner can outlast). */
+async function flush(): Promise<void> {
+  let quietTurns = 0;
+  while (quietTurns < 3) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    quietTurns = inFlight === 0 ? quietTurns + 1 : 0;
+  }
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
