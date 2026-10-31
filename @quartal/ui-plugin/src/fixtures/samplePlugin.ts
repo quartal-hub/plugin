@@ -8,6 +8,7 @@ export const samplePlugin: PluginInfo = {
   homepage: "https://example.com",
   style: { logo: "https://cdn.quartal.com/img/logo/quartal-logo-vertical.png", icons: [] },
   hasReadme: true,
+  generator: { name: "@quartal/plugin", version: "1.0.0-beta.0" },
   tools: [
     {
       name: "add",

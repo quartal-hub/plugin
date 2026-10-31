@@ -17,8 +17,8 @@ export {
   toolResultToValue,
 } from "./helpers/mcpToolTester.ts";
 export {
-  mountWidget,
-  type MountWidgetOptions,
+  mountMcpWidget,
+  type MountMcpWidgetOptions,
   type WidgetHostCallbacks,
   type WidgetHostHandle,
   type WidgetLogEntry,

@@ -22,6 +22,12 @@ const mcpServers = computed(() => {
 });
 const multiServer = computed(() => mcpServers.value.length > 1);
 
+/** The npm page of the exact `@quartal/plugin` version the plugin was built with. */
+const generatorNpmUrl = computed(() => {
+  const generator = props.plugin.generator;
+  return generator ? `https://www.npmjs.com/package/${generator.name}/v/${encodeURIComponent(generator.version)}` : undefined;
+});
+
 // Resources come last: they are not in use yet, so they never lead the row.
 const summaryCards = computed(() => [
   { label: "Tools", count: props.plugin.tools.length, to: "/tools", bg: "text-bg-primary" },
@@ -42,6 +48,11 @@ const summaryCards = computed(() => [
       <div class="col-9">
         <h1 class="display-5 mb-0">{{ plugin.title }}</h1>
         <p class="mb-0"><code class="text-muted fs-4">{{ plugin.name }} ({{ plugin.version }})</code></p>
+        <p v-if="plugin.generator" class="q-plugin-about__generator small text-muted mb-2">
+          Created with
+          <a href="https://plugin.quartal.com" target="_blank" rel="noopener">{{ plugin.generator.name }}</a>, version
+          <a :href="generatorNpmUrl" target="_blank" rel="noopener">{{ plugin.generator.version }}</a>
+        </p>
         <p class="lead">{{ plugin.description }}</p>
         <div v-if="multiServer" class="lead-x">
           <p class="mb-1">To connect Claude or ChatGPT to the API, use the <b>MCP servers</b>:</p>

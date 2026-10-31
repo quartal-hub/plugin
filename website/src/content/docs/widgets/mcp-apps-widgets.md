@@ -115,6 +115,10 @@ const { result, displayMode, availableDisplayModes, requestDisplayMode } = useEx
 });
 ```
 
+Hosts may also limit how tall an inline widget gets, or give it a fixed height (MCP Apps
+`containerDimensions` in the host context), so a long list or table should scroll inside the widget
+rather than rely on the frame growing; avoid `100vh` in inline mode.
+
 The inline frame is only as tall as the widget's content, so a `position: fixed` dialog is clipped when the
 content is short. Either render the dialog in the page flow, or ask the host for more room:
 
@@ -127,6 +131,28 @@ check `availableDisplayModes` and keep the in-flow layout as the fallback.
 
 ## Testing widgets
 
-We recommend [MCPJam](https://www.mcpjam.com/) for local widget testing — point it at
-`http://localhost:4321/mcp`, call the tool, and the widget renders in place. Your plugin's own
-docs site at `/` also includes a widget tester.
+The quickest way to see a widget is your plugin's own docs site. Run the plugin
+(`pnpm dev`) and open the **Widgets** page at `http://localhost:4321/#/widgets`:
+
+1. Pick the widget. The input box is filled with an example built from the tool's input type.
+2. Edit the input and select **Run**: the tool runs over the REST API and the widget shows the
+   result. Run again with other input, including input that makes the tool fail, to check the error
+   view.
+3. Switch on **Dark theme** to check the widget in a dark host.
+4. Watch the activity log under the widget: every tool call the widget makes, its result, chat
+   messages and model-context updates are listed there.
+
+The preview is limited to 600 px in height, as chat hosts may limit inline widgets, so you also see
+whether a tall widget scrolls inside itself. When the plugin needs a login, log in from the top
+right first. The same page has the snippets for [embedding the widget](/docs/widgets/embedding-widgets)
+in a web page.
+
+For advanced cases, use [MCPJam](https://www.mcpjam.com/): point it at `http://localhost:4321/mcp`,
+call the tool, and the widget renders in place inside a full MCP client. Use it to check what only a
+real MCP host does — the widget loaded as a sandboxed `ui://` resource with its declared CSP,
+fullscreen and picture-in-picture display modes, and a model calling the tool in a conversation.
+
+## On web pages
+
+The same widgets embed in any web page with one script tag and a `<qrtl-widget>` element, or with
+React and Vue components — see [Embedding widgets](/docs/widgets/embedding-widgets).

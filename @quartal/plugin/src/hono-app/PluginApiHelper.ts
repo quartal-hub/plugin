@@ -10,6 +10,7 @@ import { loadCodeFiles } from "../code/loadCodeFiles.ts";
 import { resolveRestRoutes } from "../code/resolveRestRoutes.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
+import { pluginGenerator } from "../helpers/pluginGenerator.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
@@ -93,6 +94,11 @@ export class PluginApiHelper {
     return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
   }
 
+  /** MCP tool descriptors: the generated `mcp-tools.json`, or built from the code files. Available after `init()`. */
+  public getMcpTools(): McpToolDescriptor[] {
+    return this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+  }
+
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
   public get mcpPrompts(): McpPromptDescriptor[] {
     return this.prebuiltMcpPrompts ?? [];
@@ -122,7 +128,7 @@ export class PluginApiHelper {
       return base;
     }
     const catalog = this.getMcpCatalog();
-    const mcpTools = this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+    const mcpTools = this.getMcpTools();
     const skills = await buildSkillSummaries(this.baseDir, this.manifest!.name);
     return buildPluginInfo({
       manifest: this.manifest!,
@@ -141,6 +147,7 @@ export class PluginApiHelper {
       hasReadme: !!this.readmeContent && this.readmeContent !== "No README.md found in the plugin.",
       origin,
       mcpOptions: typeof this.config.mcp === "object" ? this.config.mcp : undefined,
+      generator: pluginGenerator(),
     });
   }
 

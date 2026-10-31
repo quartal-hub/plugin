@@ -13,6 +13,7 @@ import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
+import { registerWidgetEmbedRoutes } from "../widgets/widgetEmbedRoutes.ts";
 
 /**
  * Returns a Hono app with all standard routes mounted, anonymous (no auth): REST API + OpenAPI,
@@ -60,6 +61,7 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
     getMcpServer: (origin) => buildMcpServerImplementation(helper.manifest!, mcpOptions, origin),
   });
   if (widgets.length > 0 && config.mcp !== false) registerWidgetAssetRoutes(app as Hono);
+  registerWidgetEmbedRoutes(app as Hono, helper, { widgets, requiresAuth: false });
   await PluginMcpHelper.applyToApp(app as Hono, helper, config, widgets);
   registerPublicFolderRoutes(app as Hono, config.pluginRootFolder);
 

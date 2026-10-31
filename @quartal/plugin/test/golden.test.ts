@@ -40,7 +40,15 @@ describe("golden: TsMorphAnalyzer reproduces the committed test1 artifacts", () 
     it(`${file} matches the committed artifact`, async () => {
       const generated = JSON.parse(await readFile(join(out, file), "utf-8"));
       const committed = JSON.parse(await readFile(join(PKG_DIR, "qrtl-plugin", file), "utf-8"));
+      // `generator` carries the @quartal/plugin version, which changes with every release.
+      if (file === "contents.json") delete generated.generator;
       expect(sortDeep(generated)).toEqual(sortDeep(committed));
     });
   }
+
+  it("contents.json records the @quartal/plugin version it was built with", async () => {
+    const contents = JSON.parse(await readFile(join(out, "contents.json"), "utf-8"));
+    const pkg = JSON.parse(await readFile(fileURLToPath(new URL("../package.json", import.meta.url)), "utf-8"));
+    expect(contents.generator).toEqual({ name: "@quartal/plugin", version: pkg.version });
+  });
 });

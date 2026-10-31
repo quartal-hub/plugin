@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { type McpToolResult, readWidgetHtml } from "../helpers/mcpToolTester.ts";
-import { mountWidget, type WidgetHostHandle, type WidgetLogEntry, type WidgetTheme } from "../helpers/mcpWidgetHost.ts";
+import { mountMcpWidget, type WidgetHostHandle, type WidgetLogEntry, type WidgetTheme } from "../helpers/mcpWidgetHost.ts";
 
 const props = withDefaults(
   defineProps<{
@@ -41,7 +41,7 @@ async function mount(): Promise<void> {
     const html = await readWidgetHtml(props.client, props.resourceUri);
     const iframe = frame.value;
     if (!iframe) throw new Error("Widget iframe not available.");
-    handle = await mountWidget({
+    handle = await mountMcpWidget({
       client: props.client,
       iframe,
       html,

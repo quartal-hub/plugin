@@ -90,8 +90,8 @@ used across layers belong in `model/` (or in `@quartal/plugin-core` if consumed 
 ## Changesets
 
 Any change to a **published** package needs a changeset — `@quartal/plugin`, `@quartal/plugin-core`,
-`@quartal/plugin-vue`, `@quartal/ui-plugin`, and `@quartal/create-plugin`. The samples and
-`@quartal/plugin-docs-web` are private and need none.
+`@quartal/plugin-embed`, `@quartal/plugin-vue`, `@quartal/ui-plugin`, and `@quartal/create-plugin`. The
+samples and `@quartal/plugin-docs-web` are private and need none.
 
 ```bash
 pnpm changeset

@@ -24,8 +24,8 @@ from this repo.
 
 - No custom registry needed — everything installs from npm. Tool type-introspection uses the
   TypeScript compiler via **`ts-morph`** (a build-time dependency of `@quartal/plugin`).
-- `pnpm run build` — build every workspace project (`build:libs` for just `@quartal/plugin-core` + `@quartal/plugin` + `@quartal/plugin-vue`).
-- `pnpm run test` — run all workspace tests (currently the `@quartal/plugin` suite).
+- `pnpm run build` — build every workspace project (`build:libs` for just `@quartal/plugin-core` + `@quartal/plugin-embed` + `@quartal/plugin` + `@quartal/plugin-vue`).
+- `pnpm run test` — run all workspace tests (the `@quartal/plugin` and `@quartal/plugin-embed` suites).
 - `pnpm run typecheck` — `vue-tsc`/`tsc` across packages (kept out of `build`).
 - `pnpm run lint` — ESLint import-hygiene rules (`lint:fix` auto-fixes import order).
 
@@ -64,6 +64,7 @@ folders.
 | `@quartal/plugin-core`     | Core types + HTTP client for connecting to a published plugin (npm)                           |
 | `@quartal/plugin`          | The Astro integration + Vite codegen plugin + Hono runtime for creating plugins (npm)         |
 | `@quartal/plugin-vue`      | Vue bindings for widgets (composables over the framework-agnostic `@quartal/plugin/widget`)   |
+| `@quartal/plugin-embed`    | Embed widgets in any web page: lite MCP Apps host, REST client, `<qrtl-widget>`, React/Vue bindings (`/react`, `/vue`); bundled into every plugin's `/widgets.js` |
 | `@quartal/ui-plugin`       | Vue artifact UI components (workspace pkg; Storybook here)                                    |
 | `@quartal/plugin-docs-web` | Docs SPA library; the website's `/plugin-index` page publishes it as the shell every plugin fetches and serves at `/` |
 | `@quartal/website`         | Marketing + docs web site for the product (`website/`, Astro + Vue, static; not published)   |
@@ -88,7 +89,8 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
   - `POST /api/<Class>/<method>`, docs SPA at `/`, Agent Plugins manifest at `/plugin.json` (package at
     `/plugin.zip`, MCP config at `/mcp.json`, overview at `/com.quartal.plugin/contents.json`),
     `/skills/catalog.json`, MCP at `/mcp` (+ `/mcp/tools.json` REST mirror), widgets at
-    `/widgets/<toolId>`, agents at `/agents/catalog.json`.
+    `/widgets/<toolId>`, agents at `/agents/catalog.json`, embedding: `/widgets.js`, `/widgets/routes.json`,
+    `/widgets/<toolId>/embed.md` (see `samples/embed-page`).
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).
 - `@quartal/ui-plugin` Storybook: `pnpm --filter @quartal/ui-plugin storybook` (port 6007).
 - The docs UI ships via the website: plugins fetch `https://plugin.quartal.com/plugin-index/` at runtime

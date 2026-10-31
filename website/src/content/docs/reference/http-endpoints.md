@@ -18,7 +18,7 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 | `GET /plugin.json` | The [Agent Plugins 1.0 manifest](https://agent-plugins.org/specification): name, version, description, author, license, keywords. Quartal-specific links (the OpenAPI document, the overview, the package) live under `extensions["com.quartal.plugin"]`. |
 | `GET /mcp.json` | The standard MCP server configuration: every MCP server of the plugin as `streamable-http` entries — the plugin's own hosted servers on this origin, plus any declared external servers at their original URLs. |
 | `GET /plugin.zip` | The whole installable Agent Plugin as a zip: both manifests (`plugin.json` and Claude's `.claude-plugin/plugin.json`), both MCP configs (`mcp.json` and `.mcp.json`), the skills, the agents, the README and the Quartal overview. |
-| `GET /com.quartal.plugin/contents.json` | The rich Quartal overview: identity, style, and catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. This is what the built-in docs site renders. |
+| `GET /com.quartal.plugin/contents.json` | The rich Quartal overview: identity, style, the `@quartal/plugin` version the plugin was built with (`generator`), and catalogs of tools, tool groups, skills, agents, widgets, prompts and MCP servers. This is what the built-in docs site renders. |
 
 ## Other metadata
 
@@ -69,6 +69,10 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 |---|---|
 | `GET /widgets/<toolId>` | The widget page for a tool (rendered by Astro; any UI framework). The MCP server serves the same page as a `ui://` resource to MCP Apps hosts. |
 | `GET /widget-assets/*` | The plugin's own assets re-served with open CORS headers, so widgets work when embedded in an agent's sandbox. |
+| `GET /widgets.js` | The `<qrtl-widget>` element as a JavaScript module, with this plugin's route table built in: load it from any web page to [embed the widgets](/docs/widgets/embedding-widgets). |
+| `GET /widgets/routes.json` | The route table: the REST route of every tool (method, path, path parameters, and whether the rest of the input goes in the query string or the JSON body), keyed by MCP tool id, and the page of every widget. |
+| `GET /widgets/embed.md` | An index of the embeddable widgets, for people and coding agents. |
+| `GET /widgets/<toolId>/embed.md` | How to embed one widget: HTML, React and Vue snippets, the input type, the tools the widget calls, and a prompt for a coding agent. |
 
 ## Authentication (auth mode only)
 

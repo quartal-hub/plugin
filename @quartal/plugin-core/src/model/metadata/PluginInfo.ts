@@ -1,3 +1,4 @@
+import type { PluginGenerator } from "./PluginGenerator.ts";
 import type { PluginLinks } from "./PluginLinks.ts";
 import type { PluginManifest } from "./PluginManifest.ts";
 import type { McpCatalogEntry } from "../mcp/McpCatalog.ts";
@@ -18,6 +19,8 @@ import type {
 export interface PluginInfo extends PluginManifest {
   /** Whether a readme is available at {@link PluginLinks.readme}. */
   hasReadme: boolean;
+  /** The `@quartal/plugin` version the plugin was built with. */
+  generator?: PluginGenerator;
   /** Tools exposed by this plugin (MCP and REST). */
   tools: PluginToolEntry[];
   /** Tools grouped by source class for navigation and docs. */

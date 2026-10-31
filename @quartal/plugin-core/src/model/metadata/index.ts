@@ -1,3 +1,4 @@
+export * from "./PluginGenerator.ts";
 export * from "./PluginIcon.ts";
 export * from "./PluginInfo.ts";
 export * from "./PluginLinks.ts";
