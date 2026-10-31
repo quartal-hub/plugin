@@ -22,6 +22,23 @@ update `@quartal/create-plugin/src/dependencyVersions.ts` to the new ranges and 
 `@quartal/create-plugin` changeset: the Version Packages PR rewrites internal dependency ranges in
 `package.json` files only, not the ranges the scaffolder writes into new projects.
 
+## Versioning
+
+Every package has its own version. A bump applies only to the packages whose changesets name
+it (the default changesets behaviour: `config.json` has no `fixed` or `linked` group), so a major
+in one package does not move the others. `@quartal/plugin` can go to 2.0 over a change in the
+widget runtime while `@quartal/plugin-core` stays on 1.x.
+
+What keeps the packages compatible is their dependency ranges, not a shared number:
+`@quartal/plugin` depends on `@quartal/plugin-core` and `@quartal/plugin-embed`,
+`@quartal/plugin-vue` and `@quartal/ui-plugin` depend on them in turn, and the Version Packages PR
+rewrites every internal `workspace:*` range to the released version. A plugin author installs the
+ranges `@quartal/create-plugin` wrote into the project and upgrades each package on its own
+schedule; the ranges say which versions work together.
+
+The 1.0.0 release moved every package to the same number at once. That was a one-time alignment,
+not a rule.
+
 ## How a release happens
 
 1. Changesets accumulate on `main` as PRs merge.

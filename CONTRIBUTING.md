@@ -90,8 +90,11 @@ used across layers belong in `model/` (or in `@quartal/plugin-core` if consumed 
 ## Changesets
 
 Any change to a **published** package needs a changeset — `@quartal/plugin`, `@quartal/plugin-core`,
-`@quartal/plugin-embed`, `@quartal/plugin-vue`, `@quartal/ui-plugin`, and `@quartal/create-plugin`. The
-samples and `@quartal/plugin-docs-web` are private and need none.
+`@quartal/plugin-embed`, `@quartal/plugin-vue`, `@quartal/ui-plugin`, `@quartal/plugin-docs-web` and
+`@quartal/create-plugin`. The samples and the website are private and need none.
+
+Packages are versioned independently; a bump moves only the packages a changeset names. See the
+"Versioning" section of [`.changeset/README.md`](./.changeset/README.md).
 
 ```bash
 pnpm changeset
