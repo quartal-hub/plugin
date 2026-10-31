@@ -36,8 +36,11 @@ function fileNameFromPath(filePath: string): string {
  * input schema (they arrive as strings), the JSON body from the plain one; the path parameters are
  * left out of both.
  */
+/** A `pick` / `omit` key mask: zod types it so that only string keys are allowed. */
+type KeyMask = Record<string, true> & Record<number, never>;
+
 function requestSchemas(def: FunctionZodDefinition, route: RestRoute): Record<string, unknown> {
-  const mask = Object.fromEntries(route.pathParams.map((name) => [name, true as const]));
+  const mask = Object.fromEntries(route.pathParams.map((name) => [name, true as const])) as KeyMask;
   const withoutPathParams = (schema: z.ZodTypeAny): z.ZodTypeAny =>
     route.pathParams.length && schema instanceof z.ZodObject ? schema.omit(mask) : schema;
   const request: Record<string, unknown> = {};

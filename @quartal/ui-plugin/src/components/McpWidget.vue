@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import { type McpToolResult, readWidgetHtml } from "../helpers/mcpToolTester.ts";
 import { mountMcpWidget, type WidgetHostHandle, type WidgetLogEntry, type WidgetTheme } from "../helpers/mcpWidgetHost.ts";
 

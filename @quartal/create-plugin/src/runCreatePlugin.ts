@@ -23,12 +23,12 @@ export function validatePluginName(name: string, cwd: string): string | undefine
 }
 
 /** Exits the process when the prompt was cancelled (Ctrl+C / Esc); otherwise returns the value. */
-function unwrap<T>(value: T | symbol): T {
+function unwrap<T>(value: T): Exclude<T, symbol> {
   if (isCancel(value)) {
     cancel("Cancelled — nothing was created.");
     process.exit(1);
   }
-  return value as T;
+  return value as Exclude<T, symbol>;
 }
 
 /**

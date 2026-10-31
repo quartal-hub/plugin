@@ -25,15 +25,15 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@clack/prompts": "^1.0.0"
+    "@clack/prompts": "^1.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.9.0",
-    "vitest": "^3.0.0"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.23.4"
   },
   "publishConfig": {
     "access": "public"

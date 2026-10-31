@@ -30,7 +30,6 @@ export default defineConfig(({ mode }) => {
         "/com.quartal.plugin": apiTarget,
         "/open-api.json": apiTarget,
         "/types.json": apiTarget,
-        "/mcp-server.json": apiTarget,
         "/skills": apiTarget,
         "/agents": apiTarget,
         "/readme.md": apiTarget,

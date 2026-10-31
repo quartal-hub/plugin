@@ -15,7 +15,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "jsx": "preserve",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@quartal/plugin-core": ["../plugin-core/src/mod.ts"],

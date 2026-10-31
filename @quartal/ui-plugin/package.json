@@ -29,26 +29,27 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@quartal/plugin-core": "workspace:*",
     "@quartal/plugin-embed": "workspace:*"
   },
   "peerDependencies": {
     "vue": "^3.5.0",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4 || ^5.0.0"
   },
   "devDependencies": {
-    "@quartal/plugin-core": "workspace:*",
-    "@storybook/addon-docs": "^10.3.3",
-    "@storybook/vue3": "^10.3.3",
-    "@storybook/vue3-vite": "^10.3.3",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "storybook": "^10.3.3",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.3",
-    "vite-plugin-dts": "^4.5.0",
-    "vue": "^3.5.0",
-    "vue-router": "^4.6.4",
-    "vue-tsc": "^2.2.0"
+    "@microsoft/api-extractor": "^7.58.9",
+    "@storybook/addon-docs": "^10.6.5",
+    "@storybook/vue3": "^10.6.5",
+    "@storybook/vue3-vite": "^10.6.5",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "storybook": "^10.6.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vite-plugin-dts": "^5.1.2",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0",
+    "vue-tsc": "^3.3.14"
   },
   "publishConfig": {
     "access": "public"

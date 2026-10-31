@@ -2,7 +2,6 @@ import type {
   AgentPluginManifest,
   AgentsCatalogResponse,
   CodeType,
-  McpServerInfo,
   McpServersConfig,
   PluginInfo,
   SkillsCatalogResponse,
@@ -73,11 +72,6 @@ export class PluginClient {
   /** Fetches `GET /readme.md`. */
   getReadme(): Promise<string> {
     return this.#fetchText("/readme.md");
-  }
-
-  /** Fetches `GET /mcp-server.json`. */
-  getMcpServer(): Promise<McpServerInfo> {
-    return this.#fetchJson<McpServerInfo>("/mcp-server.json");
   }
 
   /** Fetches `GET /skills/catalog.json`. */

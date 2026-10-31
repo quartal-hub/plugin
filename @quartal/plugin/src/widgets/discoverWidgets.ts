@@ -29,7 +29,7 @@ export interface DiscoveredWidget {
 
 /** Per-widget overrides keyed by tool id. */
 export interface WidgetConfigEntry {
-  /** Display name override (defaults to the tool id). */
+  /** Display title of the widget (defaults to the tool's title, else the tool id). */
   name?: string;
   /** CSP for this widget; merged over the shared {@link DiscoverWidgetsOptions.csp}. */
   csp?: WidgetCsp;

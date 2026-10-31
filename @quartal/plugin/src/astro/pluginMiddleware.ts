@@ -34,7 +34,6 @@ const SERVER_EXACT = new Set([
   "/plugin.json",
   "/plugin.zip",
   "/mcp.json",
-  "/mcp-server.json",
   "/open-api.json",
   "/types.json",
   "/readme.md",

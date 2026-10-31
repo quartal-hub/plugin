@@ -7,10 +7,9 @@ export const DEPENDENCY_VERSIONS: Record<string, string> = {
   "@astrojs/node": "^11.0.0",
   "@astrojs/react": "^6.0.0",
   "@astrojs/vue": "^7.0.0",
-  // A caret range on a prerelease matches later betas of the same release and the final 1.x.
-  "@quartal/plugin": "^1.0.0-beta.1",
-  "@quartal/plugin-core": "^1.0.0-beta.1",
-  "@quartal/plugin-vue": "^1.0.0-beta.1",
+  "@quartal/plugin": "^1.0.0",
+  "@quartal/plugin-core": "^1.0.0",
+  "@quartal/plugin-vue": "^1.0.0",
   "@types/react": "^19.0.0",
   "@types/react-dom": "^19.0.0",
   astro: "^7.0.0",

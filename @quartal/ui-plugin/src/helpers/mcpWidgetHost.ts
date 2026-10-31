@@ -1,4 +1,4 @@
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import {
   type CallToolResult,
   createWidgetHost,
@@ -78,7 +78,7 @@ export async function mountMcpWidget(opts: MountMcpWidgetOptions): Promise<Widge
       return undefined;
     },
     callTool: async (name, args, { signal }) =>
-      (await opts.client.callTool({ name, arguments: args }, undefined, { signal })) as CallToolResult,
+      (await opts.client.callTool({ name, arguments: args }, { signal })) as CallToolResult,
   });
 
   return {

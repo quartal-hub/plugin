@@ -139,7 +139,7 @@ Content Security Policy for the sandboxed widget iframes, plus per-widget displa
 | Option | Type | Purpose |
 |---|---|---|
 | `widgets.csp` | object | CSP applied to every widget (see the domain lists below). |
-| `widgets.entries` | record | Per-widget overrides keyed by tool id: `{ name?, csp? }`. |
+| `widgets.entries` | record | Per-widget overrides keyed by tool id: `{ name?, csp? }`. `name` is the widget's display title (shown on the docs site, in `/widgets/routes.json` and in the embed guide); without it the tool's title is used. |
 
 A CSP object lists the external domains a widget may use:
 
