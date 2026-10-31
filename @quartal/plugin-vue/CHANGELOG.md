@@ -1,5 +1,12 @@
 # @quartal/plugin-vue
 
+## 1.0.0-beta.1
+
+### Patch Changes
+
+- Updated dependencies [c490195]
+  - @quartal/plugin@1.0.0-beta.1
+
 ## 1.0.0-beta.0
 
 ### Major Changes
