@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import type { McpServerInfo, PluginInfo } from "@quartal/plugin-core";
 import { pluginClient } from "../lib/pluginClient.ts";
 import CopyButton from "../components/CopyButton.vue";
@@ -96,7 +97,7 @@ onMounted(async () => {
       <div v-for="w in widgets" :key="w.name" class="mb-2">
         <code>{{ w.title ?? w.name }}</code>
         <div v-if="w.description" class="text-muted small">{{ w.description }}</div>
-        <a v-if="w.toolId" :href="pluginClient.url('/widgets/' + encodeURIComponent(w.toolId))" target="_blank" rel="noopener">Preview</a>
+        <RouterLink v-if="w.toolId" :to="{ name: 'widgets', query: { tool: w.toolId } }">Preview</RouterLink>
       </div>
       <p v-if="!widgets.length" class="text-muted">None registered.</p>
     </section>

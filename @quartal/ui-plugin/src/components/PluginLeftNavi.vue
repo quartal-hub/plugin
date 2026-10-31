@@ -195,7 +195,7 @@ function toggleGroup(className: string) {
           <RouterLink
             v-for="widget in plugin.widgets"
             :key="widget.toolId"
-            :to="{ name: 'widgets' }"
+            :to="{ name: 'widgets', query: { tool: widget.toolId } }"
             class="list-group-item list-group-item-action py-0 ps-3 text-truncate"
           >
             {{ widget.title }}

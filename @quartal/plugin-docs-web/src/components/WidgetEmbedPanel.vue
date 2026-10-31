@@ -4,6 +4,7 @@ import type { PluginWidgetEntry } from "@quartal/plugin-core";
 import type { WidgetTheme, WidgetToolCall, WidgetToolResult } from "@quartal/plugin-embed";
 import { buildEmbedGuide, type EmbedGuideTool, type JsonSchema } from "@quartal/plugin-embed/guide";
 import { PluginWidget } from "@quartal/plugin-embed/vue";
+import { QMonacoEditor } from "@quartal/ui-core";
 import CopyButton from "./CopyButton.vue";
 
 const props = defineProps<{
@@ -47,15 +48,17 @@ const guide = computed(() =>
 );
 const embedMdUrl = computed(() => `${props.pluginUrl}/widgets/${encodeURIComponent(props.widget.toolId)}/embed.md`);
 const snippet = computed(() => (tab.value === "preview" ? "" : guide.value[tab.value]));
-/** Monaco language of the snippet tabs; the prompt is prose and stays wrapped plain text. */
-const SNIPPET_LANGS: Partial<Record<Tab, string>> = { html: "html", react: "typescript", vue: "html" };
-const snippetLang = computed(() => SNIPPET_LANGS[tab.value]);
+/** Monaco language of each snippet tab. */
+const SNIPPET_LANGS: Record<Exclude<Tab, "preview">, string> = { html: "html", react: "typescript", vue: "html", prompt: "markdown" };
+const snippetLang = computed(() => (tab.value === "preview" ? undefined : SNIPPET_LANGS[tab.value]));
 const snippetHeight = computed(() => `${Math.min(560, snippet.value.split("\n").length * 20 + 28)}px`);
 
 /** The preview's height limit: chat hosts may cap inline widgets, so show how a tall widget behaves. */
 const PREVIEW_MAX_HEIGHT = 600;
 
 // Preview: an editable input, run on demand.
+/** The input schema for the JSON editor's validation and completion; the editor reads it when it loads. */
+const schemaText = computed(() => (props.inputSchema ? JSON.stringify(props.inputSchema) : undefined));
 const argsText = ref("");
 const argsError = ref<string | null>(null);
 const args = ref<Record<string, unknown> | null>(null);
@@ -120,14 +123,11 @@ const onError = (message: string) => {
       <div v-if="requiresAuth && !token" class="alert alert-warning py-2 small">
         This plugin's API needs a login: log in (top right) to run the widget.
       </div>
-      <label class="form-label small text-muted" :for="`args-${widget.toolId}`">Input (<code>args</code>)</label>
-      <textarea
-        :id="`args-${widget.toolId}`"
-        v-model="argsText"
-        class="form-control font-monospace small"
-        rows="6"
-        spellcheck="false"
-      ></textarea>
+      <div class="form-label small text-muted">Input (<code>args</code>)</div>
+      <div class="card overflow-hidden q-widget-embed-panel__input">
+        <!-- Keyed on the schema: the editor takes the schema only when it loads, and it can arrive later. -->
+        <QMonacoEditor :key="schemaText ?? ''" v-model="argsText" lang="json" :schema="schemaText" />
+      </div>
       <div v-if="argsError" class="text-danger small mt-1">{{ argsError }}</div>
       <div class="d-flex align-items-center gap-2 mt-2 mb-3">
         <button type="button" class="btn btn-sm btn-primary" @click="run">Run</button>
@@ -184,10 +184,9 @@ const onError = (message: string) => {
       <!-- Keyed on the tab so the sized container is created anew with the editor: when Vue reuses an
            element it patches the children before the element's own style, so a new editor would
            measure the previous tab's height and keep it. -->
-      <div v-if="snippetLang" :key="tab" class="card overflow-hidden mb-2" :style="{ height: snippetHeight }">
+      <div :key="tab" class="card overflow-hidden mb-2" :style="{ height: snippetHeight }">
         <qrtl-editor type="monaco" read-only :lang="snippetLang" :code="snippet"></qrtl-editor>
       </div>
-      <pre v-else class="q-widget-embed-panel__code border rounded p-3 small mb-2"><code>{{ snippet }}</code></pre>
       <p class="small mb-0">
         The full guide for people and agents: <a :href="embedMdUrl" target="_blank" rel="noopener">{{ embedMdUrl }}</a>
         <CopyButton :text="embedMdUrl" />
@@ -197,10 +196,7 @@ const onError = (message: string) => {
 </template>
 
 <style scoped>
-.q-widget-embed-panel__code {
-  white-space: pre-wrap;
-  background: var(--bs-tertiary-bg);
-  max-height: 28rem;
-  overflow: auto;
+.q-widget-embed-panel__input {
+  height: 220px;
 }
 </style>

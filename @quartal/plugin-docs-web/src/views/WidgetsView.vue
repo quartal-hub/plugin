@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import type { PluginInfo } from "@quartal/plugin-core";
 import type { EmbedGuideTool, JsonSchema } from "@quartal/plugin-embed/guide";
 import { useDocsAuth } from "../lib/docsAuth.ts";
@@ -22,7 +23,11 @@ interface ListedTool {
   _meta?: { ui?: { visibility?: string[] } };
 }
 const listedTools = ref<ListedTool[]>([]);
-const selected = ref<string | null>(null);
+const route = useRoute();
+const router = useRouter();
+/** The widget shown, from `?tool=` so other pages can link to a widget's preview. */
+const selected = computed(() => (typeof route.query.tool === "string" ? route.query.tool : null));
+const select = (toolId: string) => router.replace({ query: { ...route.query, tool: toolId } });
 
 const widgets = computed(() => props.plugin?.widgets ?? []);
 const current = computed(() => widgets.value.find((w) => w.toolId === selected.value) ?? widgets.value[0]);
@@ -68,7 +73,7 @@ onMounted(async () => {
               type="button"
               class="list-group-item list-group-item-action"
               :class="{ active: current?.toolId === widget.toolId }"
-              @click="selected = widget.toolId"
+              @click="select(widget.toolId)"
             >
               <div class="fw-semibold">{{ widget.title }}</div>
               <code class="small" :class="{ 'text-white': current?.toolId === widget.toolId }">{{ widget.toolId }}</code>
