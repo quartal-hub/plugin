@@ -181,8 +181,11 @@ const onError = (message: string) => {
         <code>npm install @quartal/plugin-embed</code>
       </p>
       <div class="d-flex justify-content-end"><CopyButton :text="snippet" /></div>
-      <div v-if="snippetLang" class="card overflow-hidden mb-2" :style="{ height: snippetHeight }">
-        <qrtl-editor :key="tab" type="monaco" read-only :lang="snippetLang" :code="snippet"></qrtl-editor>
+      <!-- Keyed on the tab so the sized container is created anew with the editor: when Vue reuses an
+           element it patches the children before the element's own style, so a new editor would
+           measure the previous tab's height and keep it. -->
+      <div v-if="snippetLang" :key="tab" class="card overflow-hidden mb-2" :style="{ height: snippetHeight }">
+        <qrtl-editor type="monaco" read-only :lang="snippetLang" :code="snippet"></qrtl-editor>
       </div>
       <pre v-else class="q-widget-embed-panel__code border rounded p-3 small mb-2"><code>{{ snippet }}</code></pre>
       <p class="small mb-0">
