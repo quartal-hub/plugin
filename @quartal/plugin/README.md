@@ -6,28 +6,26 @@
 
 ![quartal-plugin](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/quartal-plugin.svg)
 
-Quartal **Plugins** are packaged business functionality for **AI agents**: Chatbots, Autonomous agents as well as Vibe coding tools. However, the packaging is done in a way that also more **traditional software** such as SaaS software and internal Corporate systems and automation can use the same plugins / packages. The functionalities are packaged as Tools (services), Widgets (UI), Agent Skills, Agents and Prompts.
+Quartal **Plugins** are packaged business functionality for **AI agents**: chatbots, autonomous agents and vibe-coding tools. The packaging is done in a way that more **traditional software** — SaaS products, internal corporate systems and automations — can use the same plugins too. The functionality is packaged as Tools (services), Widgets (UI), Agent Skills, Agents and Prompts.
 
 ![Plugins overview](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/plugins-overview.svg)
-The basic idea is that you can create a Quartal **Plugins** package once containing all the business logic for a specific business domain. You can then publish that package as a simple web site and other people inside or outside your organization can use that logic in different chatbots, agents, vibe tools, integrations and other software using Model Context Protocol ([MCP](https://modelcontextprotocol.io/)), [Open API](https://www.openapis.org/) (REST), [Claude plugins](https://code.claude.com/docs/en/plugins), [Agent skills](https://agentskills.io/) and more...
+You create a Quartal **Plugins** package once, containing the business logic for one business domain. You publish it as a plain web site, and people inside or outside your organization use that logic from chatbots, agents, vibe-coding tools, integrations and other software over the Model Context Protocol ([MCP](https://modelcontextprotocol.io/)), [OpenAPI](https://www.openapis.org/) (REST), [Agent Skills](https://agentskills.io/) and the [Agent Plugins](https://agent-plugins.org/) package format.
+
+This page is a short overview. The full documentation — guides, reference and deployment — lives at **[plugin.quartal.com](https://plugin.quartal.com/)**.
 
 > [!NOTE]
-> **Under construction**
-> We are currently pushing Quartal **Plugins** to TEST as of 08/2026 and v01 PROD in 09/2026. This description is written for the PROD target stage in 09/2026: Some features described below may not be present in the current published version and we do not guarantee that all of these features make the final cut.
+> **Release 1.0**
+> This is the first production release of Quartal **Plugins**. The generation of a ready-to-install **Claude plugin** and **ChatGPT plugin** from your plugin project is not part of the 1.0 release: it is planned for the 1.1 release before 10.11.2026. Until then, connect Claude, ChatGPT and other clients to the plugin's MCP server and skills directly.
 
-## Getting Started
-### Requirements
-- Node.js 20+
-- We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
-### Create a plugin
+## Getting started
+Requirements: Node.js 22+. We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
+
 ```bash
 pnpm create @quartal/plugin
 ```
 
-Alternatively, fork the template repository at
-[quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template).
+Alternatively, fork the template repository at [quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template). Then:
 
-### Run it
 ```bash
 pnpm install
 pnpm dev
@@ -35,119 +33,98 @@ pnpm dev
 
 Your plugin is an [Astro](https://astro.build) project running on `http://localhost:4321`, serving:
 
-| URL                     | What                                                                     |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `/`                     | Documentation site for your plugin (tools, widgets, skills, API testers) |
-| `/mcp`                  | The MCP server — connect any MCP client here                             |
-| `/api/<Class>/<method>` | The generated OpenAPI / REST actions                                     |
-| `/plugin.json`          | The plugin manifest                                                      |
-| `/widgets/<toolId>`     | Your widget pages                                                        |
-| `/skills/catalog.json`  | The Agent Skills catalog                                                 |
-### Make it yours
-1. Add a tool: create a class in `src/tools/` and export it from `src/tools/mod.ts` —
-   see [Creating tools](https://plugin.quartal.com/docs/tools/creating-tools).
-2. Add a widget for a tool: create a page in `src/pages/widgets/` —
-   see [MCP Apps widgets](https://plugin.quartal.com/docs/widgets/mcp-apps-widgets).
-3. Add a skill: create a folder with a `SKILL.md` under `skills/` —
-   see [Agent Skills](https://plugin.quartal.com/docs/skills/agent-skills).
-See more in [https://plugin.quartal.com/docs/](https://plugin.quartal.com/docs/)
-### Test with an MCP client
-Point [MCPJam](https://www.mcpjam.com/) (or Claude, or any MCP client) at
-`http://localhost:4321/mcp` and try your tools live.
+| URL                     | What                                                                       |
+| ----------------------- | -------------------------------------------------------------------------- |
+| `/`                     | Documentation site for your plugin (tools, widgets, skills, API testers)   |
+| `/mcp`                  | The MCP server — connect any MCP client here                               |
+| `/api/<class>/…`        | The generated OpenAPI / REST operations                                    |
+| `/plugin.json`          | The Agent Plugins manifest (`/plugin.zip` is the installable package)      |
+| `/widgets/<toolId>`     | Your widget pages                                                          |
+| `/skills/catalog.json`  | The Agent Skills catalog                                                   |
 
-### Deploy
-Build and run like any server-output Astro site — then deploy to
-[any modern hosting platform](https://docs.astro.build/en/guides/deploy/):
+Add a tool as a class in `src/tools/`, a widget as a page in `src/pages/widgets/` and a skill as a folder with a `SKILL.md` under `skills/`. Point [MCPJam](https://www.mcpjam.com/) (or Claude, or any MCP client) at `http://localhost:4321/mcp` and try your tools live.
 
-```bash
-pnpm build
-node ./dist/server/entry.mjs
-```
+Read the full guide: [Getting started](https://plugin.quartal.com/docs/getting-started) · [Creating tools](https://plugin.quartal.com/docs/tools/creating-tools) · [MCP Apps widgets](https://plugin.quartal.com/docs/widgets/mcp-apps-widgets) · [Agent Skills](https://plugin.quartal.com/docs/skills/agent-skills) · [HTTP endpoints](https://plugin.quartal.com/docs/reference/http-endpoints).
 
-## MCP Apps Widgets: Add UI to your tools
-You can easily add custom user interface to interact with any of your tools. This has the following benefits:
-- The Tool results and further interaction UI will be rendered exactly as you specify, not something that the model vibes on-the-fly (no hallucinations).
-- User saves a lot of tokens: tokens are not used for UI rendering
-- Widget UI renders many times faster than when streamed from the model on-the-fly
-
-[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) standard is supported by the state-of-the-art chatbots, namely Anthropic Claude, OpenAI ChatGPT and M365 Copilot as well as Quartal **Hub** and Quartal **Messages** / Quartal **Harness** embeddable user interfaces. Other chat clients not supporting Widgets fall back to rendering UI by the AI model.
-
-Quartal **Plugins** is based an Astro so you can use basically any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/). See our [Plugin template repository](https://github.com/quartal-hub/plugin-template) for an example in Vue: Creating a widget is as easy as creating a Vue page in Vue / Astro project. We will be providing more examples in other frameworks later.
-
-## Everything the AI Agents need in one package
+## Everything the AI agents need in one package
 For example, if you create a plugin for integrating with an invoicing SaaS software that you provide, you might build:
 
-- A couple of  **Tools**:
+- A couple of **Tools**:
 	- One for creating an invoice
 	- Another for listing all invoices with their status
-- A **Skill** for explaining how invoices should be created with all the regulatory requirements and how they will be sent, e.g. if they need an approval (for security) in your own UI
-	- Agent Skills standard is defined in https://agentskills.io/ and supported by most advanced AI tools
-- A **Widget** for displaying the invoice as it would be shown as PDF / print-out
-- Couple of **Agents**
+- A **Skill** that explains how invoices should be created with all the regulatory requirements and how they will be sent, e.g. if they need an approval (for security) in your own UI
+	- The Agent Skills standard is defined at https://agentskills.io/ and supported by most advanced AI tools
+- A **Widget** for displaying the invoice as it would be shown as a PDF / print-out
+- A couple of **Agents**
 	- One that creates an invoice based on text or voice input in **interactive chat**
 	- Another as an **autonomous agent** that monitors invoices and sends a report for those that have not been paid by the due date
-- A **prompt** that asks the user in interactive chat the minimum questions for creating a new invoice instead of user writing the initial text without any guidance.
+- A **Prompt** that asks the user in interactive chat the minimum questions for creating a new invoice, instead of the user writing the initial text without any guidance.
 
 We make creating these artifacts very easy:
-- A **Tool** is just a **TypeScript function**, we will automatically create **Model Context Protocol Service (MCP)** and wire the function as an **MCP Tool**
-- A **Widget** is just an Single Page Application with your favourite framework: **Vue, React, Svelte** etc.
-- An **Agent** is just a markdown or JSON file.
-- A **Skill** is just a folder with markdown files with other assets.
-- A **prompt** is a very simple TypeScript function where all input parameters are just text returning the instruction text to the agent.
+- A **Tool** is just a **TypeScript function**: we automatically create the **Model Context Protocol (MCP)** server and wire the function as an **MCP Tool** — and as a REST operation with an OpenAPI description. See [Creating tools](https://plugin.quartal.com/docs/tools/creating-tools).
+- A **Widget** is just a page in your favourite framework: **Vue, React, Svelte** etc. See [MCP Apps widgets](https://plugin.quartal.com/docs/widgets/mcp-apps-widgets).
+- An **Agent** is just a markdown or JSON file. See [Agents](https://plugin.quartal.com/docs/more/agents).
+- A **Skill** is just a folder with markdown files and other assets. See [Agent Skills](https://plugin.quartal.com/docs/skills/agent-skills).
+- A **Prompt** is a very simple TypeScript function whose input parameters are text and which returns the instruction text to the agent. See [Prompts](https://plugin.quartal.com/docs/more/prompts).
 
-Basically all AI agents now consume MCP Tools, so that is all good, but support for MCP Apps widgets is still limited and even with skills, you have an issue that there is no consistent way of updating them as you make changes and fixes.
-
-We solve a lot of these issues by for example packaging Agents, Tools, Widgets and Skills as [Claude Plugins](https://code.claude.com/docs/en/plugins-reference), that you may optionally publish. This allows Claude users to connect to only one plugin and get all artifacts on one go. Also, this allows for automatic updates for all of these artifacts including the skills. [ChatGPT Plugins](https://openai.com/index/chatgpt-plugins/) provide a similar functionality, but at the moment without the Agents. You can however manually copy-paste the Agent definitions / prompts to ChatGPT as to basically any other agent framework. 
-
-In the picture below, all the blue components will be generated by Quartal **Plugins** infra from your business logic and code so you do not need to worry about it:
+In the picture below, all the blue components are generated by the Quartal **Plugins** infra from your business logic and code, so you do not need to worry about them:
 ![plugins-in-agents](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/plugins-in-agents.svg)
 
-## ... plus everything for Software devs from same source
-MCP Tools are great for AI Agents, but when you are creating an app or integration, either "vibe coded" or by professional developers, you really want to connect to a real API. For this, we automatically create an [**Open API**](https://www.openapis.org/) compatible rest API with full documentation to developers. We also expose the **UI widgets** as [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) that may be easily integrated to any web UI. 
+## MCP Apps widgets: add UI to your tools
+You can easily add a custom user interface to any of your tools. This has the following benefits:
+- The tool results and further interaction UI are rendered exactly as you specify, not something that the model vibes on-the-fly (no hallucinations).
+- The user saves a lot of tokens: tokens are not used for UI rendering.
+- Widget UI renders many times faster than UI streamed from the model on-the-fly.
+
+The [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) standard is supported by the state-of-the-art chatbots, namely Anthropic Claude, OpenAI ChatGPT and M365 Copilot. Other chat clients not supporting widgets fall back to rendering UI by the AI model.
+
+Quartal **Plugins** is based on Astro, so you can use basically any of your favourite UI frameworks such as [React, Vue, Svelte, plain JavaScript and more](https://docs.astro.build/en/guides/framework-components/). The starter kit scaffolds a widget in Vue, React or plain JavaScript; the [plugin template repository](https://github.com/quartal-hub/plugin-template) shows a Vue example. See [MCP Apps widgets](https://plugin.quartal.com/docs/widgets/mcp-apps-widgets).
+
+## ... plus everything for software developers from the same source
+MCP tools are great for AI agents, but when you are creating an app or integration — either "vibe coded" or by professional developers — you really want to connect to a real API. For this, we automatically create an [**OpenAPI**](https://www.openapis.org/)-compatible REST API with full documentation for developers. The same **UI widgets** are also available as a [Web Component](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) (`<qrtl-widget>`, served by every plugin at `/widgets.js`) and as React and Vue components, so they can be embedded in any web UI — see [Embedding widgets](https://plugin.quartal.com/docs/widgets/embedding-widgets).
 ![plugins-coding](https://github.com/quartal-hub/plugin/raw/refs/heads/main/docs/img/plugins-coding.svg)
 We generate documentation about all this as:
-- Docs for human developers
-- Integration Skill for vibe / engineering agents -- added besides business skills developed by you.
-- Swagger UI for testing the API endpoints
-- Widget tester for testing the UI widgets
+- A docs site for human developers, served by the plugin itself at `/`
+- Swagger UI and Redoc for testing and reading the REST API
+- A tool and widget tester for calling the tools over MCP and previewing their widgets
+- Embedding instructions per widget (`/widgets/<toolId>/embed.md`) with ready-made prompts for coding agents such as Claude Code, Cursor or Lovable
 
-As many Vibe coding tools (e.g. Lovable) do not support Agent Skills, we provide a separate MCP Tool endpoint for browsing skills content. Skills content is also linked to the Docs for human or agent usage.
-## Security and Authentication
-You may provide your plugin as anonymous if your tools do not require any authentication, but often you need to authenticate the user to connect to external systems. For this we provide standard OAuth2 authentication mechanisms that will then be wired through:
-- MCP Tools and Widgets
-- Open API
-- Web Component
-- Test UIs: Swagger and widget tester
+## Security and authentication
+You may provide your plugin as anonymous if your tools do not require any authentication, but often you need to authenticate the user to connect to external systems. For this we provide standard OAuth2 authentication that is wired through:
+- MCP tools (with automatic login discovery in MCP clients such as Claude)
+- The OpenAPI / REST operations
+- The embedded web component (the page supplies the token)
+- The test UIs on the docs site: Swagger and the tool tester
 
-We provide out-of-the box authentication support using our Quartal **IAM** which recognizes out-of-the-box individuals and companies in Finland from authorities so that you can truly authenticate your users as companies. But you may also use any OAuth2.1 compatible authentication solution (as specified in the MCP spec).
+We provide out-of-the-box authentication with Quartal **IAM** (`auth: "quartal-hub"`, one line of configuration), but you may also use any OAuth 2.1 / OIDC compatible authentication server as specified in the MCP spec (`auth: "custom"`). OAuth2 authentication is still marked experimental in 1.0: its configuration may change in minor releases. See [Authentication](https://plugin.quartal.com/docs/auth/authentication).
 
-Note that at least in the current version, Skills, Agents, plugin source code and documentation are always anonymous: you should place any confidential data inside Tools instead of embedding it into Skills or Agents. This is also generally the best practice.
+Note that Skills, Agents, widget pages and documentation are always served anonymously: place any confidential data inside Tools instead of embedding it into Skills or Agents. This is also generally the best practice.
+
 ## Deploy your plugin
-When you have tested your plugin, you deploy it as a [dynamic Astro web site to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). From there anyone can already use the plugin. You may optionally publish your package to [NPM](https://www.npmjs.com/) or [JSR](https://jsr.io/) package registries. This allows developers to use your Tools directly in their code without the http overhead from their server to you published server.
+When you have tested your plugin, you deploy it as a [server-rendered Astro web site to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). From there anyone can use the plugin. Vercel, Railway and Cloudflare Workers are documented step by step: see [Deploying](https://plugin.quartal.com/docs/deploying/deploying).
+
 ### Publish in Quartal **Hub**
-After deployment, you may register your plugin in Quartal **Hub** which is a registry for plugins and an easy place for:
-- Users to discover plugins
-- Test them with authentication
-- Manage plugins and authorize them to agents and users within their organization
-## Open Source and Zero Lock-in
-Quartal **Plugins** is an open source project with MIT license. It is based on [Astro](https://astro.build) (also MIT) and can be easily [deployed to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). UI Widgets can be created using any of your favourite UI framework such as [React, Vue, Svelte, Plain JavaScript, and more](https://docs.astro.build/en/guides/framework-components/).
+Quartal **Hub** is a registry for plugins where users discover plugins, test them with authentication, and manage and authorize them for the agents and users of their organization. Registering a plugin in Quartal **Hub** is currently available for partners working directly with us.
+
+## Open source and zero lock-in
+Quartal **Plugins** is an open source project with the MIT license. It is based on [Astro](https://astro.build) (also MIT) and can be [deployed to any modern hosting platform](https://docs.astro.build/en/guides/deploy/). UI widgets can be created with any of your favourite UI frameworks such as [React, Vue, Svelte, plain JavaScript and more](https://docs.astro.build/en/guides/framework-components/).
+
 ## Capabilities
 We make it as easy as possible to provide a set of business functionality in one simple package:
 
-- **Tools:** Reusable code that can be executed by agents and software via:
-    - **MCP Tools** by AI agents
-    - **Open API / REST service** by agents, vibe coded software and other services
-    - **NPM or JSR packages** in TypeScript / JavaScript code, if published to NPM/JSR.
-- **Widgets** as defined by MCP Apps standard
-    - Provide user interfaces to interactive chat agents like Claude or Chat GPT
-    - We will probably provide a way to use them from React and Vue etc. apps as well
-- **Agent Skills** that guide AI agents on how to use these tools and other business logic
-- **Agents** as defined by [Claude plugins](https://code.claude.com/docs/en/plugins-reference#agents).
-	- Currently supported for Claude and our internal Quartal **Hub** product only
-	- We try to add support for other platforms later (PRs are welcome)
+- **Tools:** reusable code that can be executed by agents and software via:
+    - **MCP tools** by AI agents
+    - **OpenAPI / REST operations** by agents, vibe-coded software and other services
+- **Widgets** as defined by the MCP Apps standard
+    - User interfaces in interactive chat agents like Claude or ChatGPT
+    - The same widgets embedded in any web page as a web component, or as React and Vue components
+- **Agent Skills** that guide AI agents on how to use these tools and other business logic
+- **Agents** as defined by [Claude plugin agents](https://code.claude.com/docs/en/plugins-reference#agents)
+	- Served from the plugin and included in the Agent Plugins package; support for other platforms is planned (PRs are welcome)
 - **Prompts** as defined in MCP
+- **An Agent Plugins package** (`/plugin.json`, `/mcp.json`, `/plugin.zip`) following the cross-vendor [Agent Plugins 1.0](https://agent-plugins.org/) standard
 
-We create extensive documentation pages for all the above services. As part of that process, we also serve all the files and folders in the `/public` folder the same way as public folder is shown in Vue apps.
+Everything above is documented by the plugin's own docs site, and the plugin serves all files and folders in its `/public` folder the way a public folder works in Vue apps. The complete list is in the [HTTP endpoints](https://plugin.quartal.com/docs/reference/http-endpoints) reference.
 ## Contributing
 See [CONTRIBUTING.md](https://github.com/quartal-hub/plugin/blob/main/CONTRIBUTING.md) for instructions if you wish to contribute to our project.
 

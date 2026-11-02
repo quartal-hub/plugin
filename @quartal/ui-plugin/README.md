@@ -15,12 +15,13 @@ In consuming apps:
 
 ```ts
 import { loadDefaultSkin } from "@quartal/ui-plugin";
-import "@quartal/ui-plugin/src/styles/ui-plugin.css"; // dev / Storybook only
 
 loadDefaultSkin();
 ```
 
-See `.cursor/rules/ui-styling.mdc` and root `AGENTS.md` for white-label skin guidelines.
+The components are styled with Bootstrap classes and Bootstrap CSS variables (`var(--bs-primary)`
+etc.), so any Bootstrap-based skin works; each component has a root `q-` class for skin overrides.
+The library's own stylesheet is built to `dist/index.css` next to the module.
 
 ## MCP tool tester
 

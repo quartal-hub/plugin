@@ -32,11 +32,9 @@ description tells the agent *when* to load the skill, the body tells it *what to
   by hand.
 - Your plugin's docs site (at `/`) lists the skills with install commands for tools that support
   them.
-- Because many vibe-coding tools don't support Agent Skills natively, the plugin also exposes an
-  MCP tool endpoint for browsing skills content.
-- Skills are also packaged into the plugin's [Claude plugin](https://code.claude.com/docs/en/plugins)
-  distribution, so Claude users get all your skills (and their updates) by connecting to one
-  plugin.
+- Skills are also packaged into the plugin's [Agent Plugins](https://agent-plugins.org) package
+  (`/plugin.zip`), so clients that read the package get all your skills (and their updates) by
+  connecting to one plugin.
 
 ## What belongs in a skill
 
