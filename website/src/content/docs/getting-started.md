@@ -7,7 +7,7 @@ order: 1
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22+
 - We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
 
 ## Create a plugin

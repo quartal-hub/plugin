@@ -28,8 +28,9 @@ and the tools it may use (which can point at your plugin's own MCP tools).
 
 - The agent catalog is published at `/agents/catalog.json`, with each definition served from your
   plugin.
-- Agents are included in the plugin's [Claude plugin](https://code.claude.com/docs/en/plugins)
-  packaging, so Claude users get them — with automatic updates — by connecting to your plugin.
+- Agents are included in the plugin's [Agent Plugins](https://agent-plugins.org) package
+  (`/plugin.zip`), so clients that read the package get them — with automatic updates — by
+  connecting to your plugin.
 - For platforms without agent support you can copy the definition text into the platform's own
   agent/prompt configuration.
 
