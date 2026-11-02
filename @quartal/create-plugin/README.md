@@ -52,8 +52,8 @@ pnpm install
 pnpm dev
 ```
 
-See [Getting started](https://plugin.quartal.com) for what runs on `http://localhost:4321` and how
-to make the plugin your own.
+See [Getting started](https://plugin.quartal.com/docs/getting-started) for what runs on
+`http://localhost:4321` and how to make the plugin your own.
 
 ## How it works
 

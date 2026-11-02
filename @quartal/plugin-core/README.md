@@ -7,7 +7,8 @@ authoring framework) and the lightweight client for connecting to a plugin publi
 its only `devDependency` is TypeScript, and it must stay that way. It sits at the bottom of the
 dependency graph for every other `@quartal` package and is consumed from server, browser, and
 bundler contexts alike, so anything added here is imposed on all of them. Quartal Hub-specific
-functionality (auth, user management, reports, …) belongs in the separate `@quartal/hub` library.
+functionality (auth, user management, reports, …) does not belong here; it will live in a separate
+Quartal Hub client library.
 
 ## Usage
 
