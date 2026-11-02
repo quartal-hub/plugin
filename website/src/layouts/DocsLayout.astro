@@ -1,5 +1,5 @@
 ---
-import { docSections } from "../lib/docSections.ts";
+import DocsNav from "../components/DocsNav.astro";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -9,52 +9,13 @@ interface Props {
   currentId?: string;
 }
 const { title, description, currentId } = Astro.props;
-
-const bySection = await docSections();
 ---
-<BaseLayout title={`${title} — Quartal Plugins`} description={description}>
+<BaseLayout title={`${title} — Quartal Plugins`} description={description} currentId={currentId}>
   <div class="container py-4">
-    <div class="row g-4 g-md-5">
-      <aside class="col-md-3">
-        <!-- Below md the section list is an offcanvas drawer opened by this button; from md up it is a sticky column. -->
-        <button
-          class="btn btn-outline-secondary d-md-none"
-          type="button"
-          data-qp-toggle="docs-nav"
-          aria-controls="docs-nav"
-          aria-expanded="false"
-        >
-          <span class="bi bi-list me-1"></span>
-          Documentation
-        </button>
-        <div id="docs-nav" class="offcanvas-md offcanvas-start qp-docs-nav" tabindex="-1" aria-labelledby="docs-nav-title">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="docs-nav-title">Documentation</h5>
-            <button type="button" class="btn-close" data-qp-toggle="docs-nav" aria-label="Close"></button>
-          </div>
-          <div class="offcanvas-body">
-            <nav class="w-100">
-              {bySection.map((section) => (
-                <div class="mb-4">
-                  <div class="text-uppercase text-secondary small fw-semibold mb-2">{section.title}</div>
-                  <ul class="nav flex-column">
-                    {section.entries.map((entry) => (
-                      <li class="nav-item">
-                        <a
-                          class:list={["nav-link px-0 py-1", entry.id === currentId ? "fw-semibold text-primary" : "link-body-emphasis"]}
-                          href={`/docs/${entry.id}/`}
-                        >
-                          {entry.data.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </nav>
-          </div>
-        </div>
-        <div class="offcanvas-backdrop fade d-md-none" data-qp-backdrop="docs-nav" data-qp-toggle="docs-nav" hidden></div>
+    <div class="row gy-4 gx-md-5">
+      <!-- Below md the top bar's drawer (BaseLayout) replaces this sidebar. -->
+      <aside class="col-md-3 d-none d-md-block">
+        <DocsNav currentId={currentId} class="qp-docs-nav" />
       </aside>
       <div class="col-md-9">
         <article class="qp-doc">

@@ -1,11 +1,14 @@
 ---
 import "../styles/site.css";
+import DocsNav from "../components/DocsNav.astro";
 
 interface Props {
   title: string;
   description?: string;
+  /** Collection id of the doc page being shown (highlighted in the drawer). */
+  currentId?: string;
 }
-const { title, description = "Quartal Plugins — packaged business functionality for AI agents." } = Astro.props;
+const { title, description = "Quartal Plugins — packaged business functionality for AI agents.", currentId } = Astro.props;
 ---
 <html lang="en">
   <head>
@@ -20,35 +23,41 @@ const { title, description = "Quartal Plugins — packaged business functionalit
     />
   </head>
   <body class="d-flex flex-column min-vh-100">
-    <!-- Matches the TopNavi component of @quartal/plugin-docs-web. -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom border-primary border-5">
+    <!-- Matches the TopNavi component of @quartal/plugin-docs-web. Below md the toggler opens the
+         documentation tree as a drawer (the site is the documentation); from md up the docs pages
+         show the same tree as a sidebar and the top bar links to it. -->
+    <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom border-primary border-5">
       <div class="container">
-        <a class="navbar-brand" href="/">
-          <img src="https://cdn.quartal.com/img/logo/quartal-logo-q.png" alt="Quartal" class="me-2" style="height: 32px;" />
-          Quartal <span class="fw-semibold">Plugins</span>
-        </a>
         <button
-          class="navbar-toggler"
+          class="navbar-toggler me-2"
           type="button"
           data-qp-toggle="site-nav"
           aria-controls="site-nav"
           aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label="Toggle documentation"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="site-nav">
-          <div class="navbar-nav gap-lg-3">
-            <a class="nav-link" href="/docs/getting-started/">Getting started</a>
-            <a class="nav-link" href="/docs/">Documentation</a>
-            <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">
-              <span class="bi bi-github me-1"></span>
-              GitHub
-            </a>
-          </div>
+        <a class="navbar-brand" href="/">
+          <img src="https://cdn.quartal.com/img/logo/quartal-logo-q.png" alt="Quartal" class="me-2" style="height: 32px;" />
+          Quartal <span class="fw-semibold">Plugins</span>
+        </a>
+        <div class="navbar-nav flex-row gap-3 d-none d-md-flex">
+          <a class="nav-link" href="/docs/getting-started/">Getting started</a>
+          <a class="nav-link" href="/docs/">Documentation</a>
         </div>
       </div>
     </nav>
+    <div id="site-nav" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="site-nav-title">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="site-nav-title">Documentation</h5>
+        <button type="button" class="btn-close" data-qp-toggle="site-nav" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <DocsNav currentId={currentId} />
+      </div>
+    </div>
+    <div class="offcanvas-backdrop fade" data-qp-backdrop="site-nav" data-qp-toggle="site-nav" hidden></div>
 
     <main class="flex-grow-1">
       <slot />
