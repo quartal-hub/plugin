@@ -20,8 +20,8 @@ qrtl-editor-url {
 
 /* --- Docs sidebar (DocsLayout) --- */
 
-/* From md up the offcanvas-md drawer is a plain block: pin it below the top of the viewport and
-   let a long section list scroll inside it instead of running off screen. */
+/* Pin the sidebar below the top of the viewport and let a long section list scroll inside it
+   instead of running off screen. */
 @media (min-width: 768px) {
   .qp-docs-nav {
     position: sticky;
