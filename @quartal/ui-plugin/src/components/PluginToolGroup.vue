@@ -23,7 +23,7 @@ defineProps<{
         class="list-group-item list-group-item-action"
         :to="{ name: 'tool', params: { className: group.className, methodName: tool.name } }"
       >
-        <div class="d-flex w-100 justify-content-between align-items-start gap-2">
+        <div class="d-flex flex-wrap w-100 justify-content-between align-items-start gap-2">
           <div>
             <code class="font-monospace">{{ tool.name }}</code>
             <span v-if="tool.summary" class="ms-2">{{ tool.summary }}</span>

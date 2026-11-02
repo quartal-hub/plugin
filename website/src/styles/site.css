@@ -18,6 +18,19 @@ qrtl-editor-url {
   height: 100%;
 }
 
+/* --- Docs sidebar (DocsLayout) --- */
+
+/* From md up the offcanvas-md drawer is a plain block: pin it below the top of the viewport and
+   let a long section list scroll inside it instead of running off screen. */
+@media (min-width: 768px) {
+  .qp-docs-nav {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
 /* Keep generated markdown tables and code readable inside Bootstrap. */
 .qp-doc table {
   width: 100%;

@@ -8,6 +8,13 @@ const props = defineProps<{
   plugin?: PluginInfo;
   /** The links to show in the navbar */
   links?: { name: string; url: string }[];
+  /** Whether the left navigation drawer is open (small screens only); drives the toggler's `aria-expanded`. */
+  naviOpen?: boolean;
+}>();
+
+const emit = defineEmits<{
+  /** The toggler (shown below the `lg` breakpoint) was pressed: open or close the left navigation. */
+  toggleNavi: [];
 }>();
 
 const auth = useDocsAuth();
@@ -24,7 +31,17 @@ const logoUrl = computed(() => {
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom border-primary border-5 mb-4">
     <div class="container-fluid">
-      <router-link class="navbar-brand" to="/">
+      <button
+        class="navbar-toggler me-2"
+        type="button"
+        aria-controls="plugin-docs-navi"
+        :aria-expanded="props.naviOpen ?? false"
+        aria-label="Toggle navigation"
+        @click="emit('toggleNavi')"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <router-link class="navbar-brand text-truncate" to="/">
         <img v-if="logoUrl" :src="logoUrl" class="navbar-logo me-2" style="height: 32px;">
         {{ plugin?.title ?? plugin?.name ?? "Unknown Plugin" }}
       </router-link>

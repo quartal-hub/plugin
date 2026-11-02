@@ -37,25 +37,27 @@ const prompts = computed(() => props.plugin?.prompts ?? []);
 
     <section v-if="mcpServers.length" class="mb-4">
       <h2 class="h5">Servers ({{ mcpServers.length }})</h2>
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr><th>Name</th><th>Endpoint</th><th>Tools</th><th>Description</th></tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in mcpServers" :key="s.name">
-            <td>
-              <code>{{ s.name }}</code>
-              <span v-if="s.external" class="badge text-bg-secondary ms-1">external</span>
-            </td>
-            <td><code>{{ s.displayUrl }}</code> <CopyButton :text="s.displayUrl" /></td>
-            <td>
-              <a v-if="s.toolsJsonUrl" :href="s.toolsJsonUrl" target="_blank" rel="noopener">{{ s.toolCount }}</a>
-              <span v-else class="text-muted">—</span>
-            </td>
-            <td class="text-muted small">{{ s.description }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr><th>Name</th><th>Endpoint</th><th>Tools</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in mcpServers" :key="s.name">
+              <td>
+                <code>{{ s.name }}</code>
+                <span v-if="s.external" class="badge text-bg-secondary ms-1">external</span>
+              </td>
+              <td><code>{{ s.displayUrl }}</code> <CopyButton :text="s.displayUrl" /></td>
+              <td>
+                <a v-if="s.toolsJsonUrl" :href="s.toolsJsonUrl" target="_blank" rel="noopener">{{ s.toolCount }}</a>
+                <span v-else class="text-muted">—</span>
+              </td>
+              <td class="text-muted small">{{ s.description }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="mb-4">

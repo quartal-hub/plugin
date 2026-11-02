@@ -27,13 +27,25 @@ const { title, description = "Quartal Plugins — packaged business functionalit
           <img src="https://cdn.quartal.com/img/logo/quartal-logo-q.png" alt="Quartal" class="me-2" style="height: 32px;" />
           Quartal <span class="fw-semibold">Plugins</span>
         </a>
-        <div class="navbar-nav flex-row gap-3">
-          <a class="nav-link" href="/docs/getting-started/">Getting started</a>
-          <a class="nav-link" href="/docs/">Documentation</a>
-          <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">
-            <span class="bi bi-github me-1"></span>
-            GitHub
-          </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-qp-toggle="site-nav"
+          aria-controls="site-nav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="site-nav">
+          <div class="navbar-nav gap-lg-3">
+            <a class="nav-link" href="/docs/getting-started/">Getting started</a>
+            <a class="nav-link" href="/docs/">Documentation</a>
+            <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">
+              <span class="bi bi-github me-1"></span>
+              GitHub
+            </a>
+          </div>
         </div>
       </div>
     </nav>
@@ -61,5 +73,10 @@ const { title, description = "Quartal Plugins — packaged business functionalit
       </div>
     </footer>
     <script type="module" src="https://code.quartal.com/qrtl-editor.js"></script>
+    <script>
+      import { initNavToggles } from "../lib/navToggle.ts";
+
+      initNavToggles();
+    </script>
   </body>
 </html>
