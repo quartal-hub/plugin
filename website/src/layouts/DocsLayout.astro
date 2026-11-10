@@ -1,5 +1,7 @@
 ---
+import { getCollection } from "astro:content";
 import DocsNav from "../components/DocsNav.astro";
+import { SECTIONS } from "../lib/sections.ts";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -9,15 +11,32 @@ interface Props {
   currentId?: string;
 }
 const { title, description, currentId } = Astro.props;
+
+// The page path above the heading: Home / Documentation / <section>.
+const entry = currentId ? (await getCollection("docs")).find((e) => e.id === currentId) : undefined;
+const section = entry && SECTIONS.find((s) => s.key === entry.data.section);
 ---
 <BaseLayout title={`${title} — Quartal Plugins`} description={description} currentId={currentId}>
-  <div class="container py-4">
-    <div class="row gy-4 gx-md-5">
+  <div class="container docs-layout">
+    <div class="row gy-4 gx-lg-5">
       <!-- Below md the top bar's drawer (BaseLayout) replaces this sidebar. -->
-      <aside class="col-md-3 d-none d-md-block">
+      <aside class="col-md-4 col-lg-3 d-none d-md-block">
         <DocsNav currentId={currentId} class="qp-docs-nav" />
       </aside>
-      <div class="col-md-9">
+      <div class="col-md-8 col-lg-9">
+        <nav aria-label="Page path" class="site-path">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            {entry ? (
+              <>
+                <li class="breadcrumb-item"><a href="/docs/">Documentation</a></li>
+                {section && <li class="breadcrumb-item active" aria-current="page">{section.title}</li>}
+              </>
+            ) : (
+              <li class="breadcrumb-item active" aria-current="page">Documentation</li>
+            )}
+          </ol>
+        </nav>
         <article class="qp-doc">
           <slot />
         </article>
@@ -70,7 +89,7 @@ const { title, description, currentId } = Astro.props;
       }
 
       const wrapper = document.createElement("div");
-      wrapper.className = "card overflow-hidden my-3";
+      wrapper.className = "qp-code-block overflow-hidden my-3";
       wrapper.style.height = `${Math.min(560, code.split("\n").length * 20 + 28)}px`;
       const editor = document.createElement("qrtl-editor");
       editor.setAttribute("type", "monaco");

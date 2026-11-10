@@ -1,4 +1,6 @@
 ---
+// The site skin (Bootstrap + the Quartal visual guidelines), compiled by Vite with the site.
+import "../styles/quartal.scss";
 import "../styles/site.css";
 import DocsNav from "../components/DocsNav.astro";
 
@@ -9,6 +11,22 @@ interface Props {
   currentId?: string;
 }
 const { title, description = "Quartal Plugins — packaged business functionality for AI agents.", currentId } = Astro.props;
+
+const { pathname } = Astro.url;
+const menu = [
+  { href: "/docs/getting-started/", label: "Getting Started" },
+  { href: "/docs/", label: "Documentation" },
+];
+/** Getting Started wins over Documentation for its own page. */
+const activeHref = menu.find((item) => pathname === item.href)?.href ?? (pathname.startsWith("/docs/") ? "/docs/" : undefined);
+const year = new Date().getFullYear();
+const standards = [
+  { href: "https://modelcontextprotocol.io/", label: "MCP" },
+  { href: "https://agentskills.io/", label: "Agent Skills" },
+  { href: "https://agent-plugins.org/", label: "Agent Plugins" },
+  { href: "https://www.openapis.org/", label: "OpenAPI" },
+  { href: "https://astro.build/", label: "Astro" },
+];
 ---
 <html lang="en">
   <head>
@@ -16,49 +34,66 @@ const { title, description = "Quartal Plugins — packaged business functionalit
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title}</title>
-    <!-- Quartal default skin (full Bootstrap build + Quartal palette), same as plugin-docs-web. -->
-    <link
-      href="https://cdn.quartal.com/skins/default.css"
-      rel="stylesheet"
-    />
+    <link rel="icon" href="https://cdn.quartal.com/img/logo/quartal-logo-q-32px.png" sizes="32x32" type="image/png" />
   </head>
   <body class="d-flex flex-column min-vh-100">
-    <!-- Matches the TopNavi component of @quartal/plugin-docs-web. Below md the toggler opens the
-         documentation tree as a drawer (the site is the documentation); from md up the docs pages
-         show the same tree as a sidebar and the top bar links to it. -->
-    <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom border-primary border-5">
+    <!-- One-line navbar: logo left, menu centred, the call to action right. Below md the toggler
+         opens the documentation tree as a drawer (the site is the documentation); from md up the
+         docs pages show the same tree as a sidebar and the top bar links to it. -->
+    <nav class="navbar navbar-expand-md site-navbar">
       <div class="container">
-        <button
-          class="navbar-toggler me-2"
-          type="button"
-          data-qp-toggle="site-nav"
-          aria-controls="site-nav"
-          aria-expanded="false"
-          aria-label="Toggle documentation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand" href="/">
-          <img src="https://cdn.quartal.com/img/logo/quartal-logo-q.png" alt="Quartal" class="me-2" style="height: 32px;" />
-          Quartal <span class="fw-semibold">Plugins</span>
+        <a class="navbar-brand site-brand" href="/" aria-label="Quartal Plugins home">
+          <span class="site-logo" aria-hidden="true"></span>
+          <span>Quartal <b>Plugins</b></span>
         </a>
-        <div class="navbar-nav flex-row gap-3 d-none d-md-flex">
-          <a class="nav-link" href="/docs/getting-started/">Getting started</a>
-          <a class="nav-link" href="/docs/">Documentation</a>
-          <a class="nav-link" href="https://github.com/quartal-hub/plugin" target="_blank">
-            <span class="bi bi-github me-1"></span>
-            GitHub
+        <ul class="navbar-nav flex-row mx-auto d-none d-md-flex">
+          {menu.map((item) => (
+            <li class="nav-item">
+              <a
+                class:list={["nav-link", { active: item.href === activeHref }]}
+                href={item.href}
+                aria-current={item.href === activeHref ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <a
+            class="btn btn-outline-emphasis btn-sm d-none d-md-inline-flex align-items-center"
+            href="https://github.com/quartal-hub/plugin"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="bi bi-github me-2"></span>GitHub
           </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-qp-toggle="site-nav"
+            aria-controls="site-nav"
+            aria-expanded="false"
+            aria-label="Toggle documentation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
         </div>
       </div>
     </nav>
     <div id="site-nav" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="site-nav-title">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="site-nav-title">Documentation</h5>
+        <span class="h5 mb-0" id="site-nav-title">Quartal <b>Plugins</b></span>
         <button type="button" class="btn-close" data-qp-toggle="site-nav" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
-        <DocsNav currentId={currentId} />
+        <nav class="side-navi" aria-label="Site">
+          <div class="list-group list-group-flush q-navi-level-2">
+            <a class:list={["list-group-item list-group-item-action", { selected: pathname === "/" }]} href="/">Home</a>
+            <a class="list-group-item list-group-item-action" href="https://github.com/quartal-hub/plugin" target="_blank" rel="noopener">GitHub</a>
+          </div>
+        </nav>
+        <DocsNav currentId={currentId} class="mt-4" />
       </div>
     </div>
     <div class="offcanvas-backdrop fade" data-qp-backdrop="site-nav" data-qp-toggle="site-nav" hidden></div>
@@ -67,22 +102,28 @@ const { title, description = "Quartal Plugins — packaged business functionalit
       <slot />
     </main>
 
-    <footer class="border-top py-4 bg-body-secondary">
-      <div class="container d-flex flex-wrap justify-content-between small">
-        <span>Quartal Plugins — open source, MIT licensed.</span>
-        <span>
-          <a class="link-body-emphasis" href="https://github.com/quartal-hub/plugin" target="_blank">GitHub</a>
-          <span> · </span>
-          <a class="link-body-emphasis" href="https://modelcontextprotocol.io/" target="_blank">MCP</a>
-          <span> · </span>
-          <a class="link-body-emphasis" href="https://agentskills.io/" target="_blank">Agent Skills</a>
-          <span> · </span>
-          <a class="link-body-emphasis" href="https://agent-plugins.org/" target="_blank">Agent Plugins</a>
-          <span> · </span>
-          <a class="link-body-emphasis" href="https://www.openapis.org/" target="_blank">OpenAPI</a>
-          <span> · </span>
-          <a class="link-body-emphasis" href="https://astro.build/" target="_blank">Astro</a>
-        </span>
+    <footer class="site-footer border-top bg-body-tertiary mt-5">
+      <div class="container py-5">
+        <div class="row gy-4">
+          <div class="col-md-5">
+            <p class="h5 mb-2">Quartal <b>Plugins</b></p>
+            <p class="small text-body-secondary mb-0">Open source, MIT licensed.</p>
+          </div>
+          <nav class="col-md-7" aria-label="Footer">
+            <ul class="list-unstyled mb-0 d-flex flex-wrap gap-3 justify-content-md-end">
+              <li><a class="link-body-emphasis text-decoration-none" href="/docs/getting-started/">Getting Started</a></li>
+              <li><a class="link-body-emphasis text-decoration-none" href="/docs/">Documentation</a></li>
+              <li><a class="link-body-emphasis text-decoration-none" href="https://github.com/quartal-hub/plugin" target="_blank" rel="noopener">GitHub</a></li>
+              <li><a class="link-body-emphasis text-decoration-none" href="https://www.quartal.com" target="_blank" rel="noopener">Quartal</a></li>
+            </ul>
+            <ul class="list-unstyled small mt-3 mb-0 d-flex flex-wrap gap-3 justify-content-md-end">
+              {standards.map((s) => (
+                <li><a class="link-secondary text-decoration-none" href={s.href} target="_blank" rel="noopener">{s.label}</a></li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+        <p class="small text-body-secondary mt-4 mb-0">© {year} Quartal Accounting Software Oy</p>
       </div>
     </footer>
     <script type="module" src="https://code.quartal.com/qrtl-editor.js"></script>

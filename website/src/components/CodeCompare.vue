@@ -51,14 +51,14 @@ const active = ref("quartal");
 </script>
 
 <template>
-  <div class="q-code-compare card shadow-sm overflow-hidden">
-    <div class="card-header p-0 bg-primary">
+  <div class="q-code-compare card overflow-hidden">
+    <div class="card-header p-0 bg-body-secondary">
       <ul class="nav nav-tabs border-0 px-2 pt-2">
         <li v-for="tab in tabs" :key="tab.key" class="nav-item">
           <button
             type="button"
             class="nav-link border-0 rounded-top"
-            :class="active === tab.key ? 'active fw-semibold' : 'text-light'"
+            :class="{ 'active fw-semibold': active === tab.key }"
             @click="active = tab.key"
           >
             {{ tab.label }}

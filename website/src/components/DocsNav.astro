@@ -10,23 +10,23 @@ const { currentId, class: className } = Astro.props;
 
 const bySection = await docSections();
 ---
-<!-- The documentation tree: the docs pages' sidebar from md up, and the top bar's drawer below it. -->
-<nav class:list={[className]}>
+<!-- The documentation tree: the docs pages' sidebar from md up, and the top bar's drawer below it.
+     A ruled list per section, the current page in ink with an arrow (styles in site.css). -->
+<nav class:list={["side-navi", className]} aria-label="Documentation">
   {bySection.map((section) => (
-    <div class="mb-4">
-      <div class="text-uppercase text-secondary small fw-semibold mb-2">{section.title}</div>
-      <ul class="nav flex-column">
+    <>
+      <div class="side-kicker">{section.title}</div>
+      <div class="list-group list-group-flush q-navi-level-2">
         {section.entries.map((entry) => (
-          <li class="nav-item">
-            <a
-              class:list={["nav-link px-0 py-1", entry.id === currentId ? "fw-semibold text-primary" : "link-body-emphasis"]}
-              href={`/docs/${entry.id}/`}
-            >
-              {entry.data.title}
-            </a>
-          </li>
+          <a
+            class:list={["list-group-item list-group-item-action", { selected: entry.id === currentId }]}
+            href={`/docs/${entry.id}/`}
+            aria-current={entry.id === currentId ? "page" : undefined}
+          >
+            {entry.data.title}
+          </a>
         ))}
-      </ul>
-    </div>
+      </div>
+    </>
   ))}
 </nav>

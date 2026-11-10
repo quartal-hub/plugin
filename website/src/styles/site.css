@@ -1,12 +1,52 @@
 /*
- * All site styles live here (imported by BaseLayout, so Astro bundles them on
- * every page). Vue components must not carry <style> blocks: components that
- * are mounted from a client <script> (DocsLayout's markdown upgrade) would
- * lose SFC styles in production builds, where Vite extracts CSS that Astro
- * only links for components rendered in a template.
+ * All site styles live here (imported by BaseLayout after the skin, src/styles/quartal.scss, so
+ * Astro bundles them on every page). Only Bootstrap CSS variables, so the rules follow the skin
+ * and the dark sections (data-bs-theme="dark"). Vue components must not carry <style> blocks:
+ * components that are mounted from a client <script> (DocsLayout's markdown upgrade) would lose
+ * SFC styles in production builds, where Vite extracts CSS that Astro only links for components
+ * rendered in a template.
  */
 
-/* --- Layout (BaseLayout) --- */
+/* --- Site chrome (BaseLayout) --- */
+
+.site-navbar {
+  min-height: 68px;
+  background: var(--site-navbar-bg, var(--bs-body-bg));
+  border-bottom: 1px solid var(--site-navbar-border, transparent);
+}
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--bs-font-sans-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+}
+.site-brand b {
+  font-weight: 700;
+}
+.site-logo {
+  display: block;
+  width: var(--site-logo-width, 41.6px);
+  height: var(--site-logo-height, 41.6px);
+  background: var(--site-logo-image) left center / contain no-repeat;
+}
+.site-footer {
+  padding-bottom: 4rem;
+}
+
+/* A secondary pill button in the text colour of the section: ink on light, ivory on dark. */
+.btn-outline-emphasis {
+  --bs-btn-color: var(--bs-emphasis-color);
+  --bs-btn-border-color: var(--bs-emphasis-color);
+  --bs-btn-hover-color: var(--bs-body-bg);
+  --bs-btn-hover-bg: var(--bs-emphasis-color);
+  --bs-btn-hover-border-color: var(--bs-emphasis-color);
+  --bs-btn-active-color: var(--bs-body-bg);
+  --bs-btn-active-bg: var(--bs-emphasis-color);
+  --bs-btn-active-border-color: var(--bs-emphasis-color);
+  --bs-btn-focus-shadow-rgb: var(--bs-emphasis-color-rgb);
+}
 
 /* The code.quartal.com editor elements render an iframe that fills the host;
    the host itself must be a sized block. */
@@ -18,7 +58,135 @@ qrtl-editor-url {
   height: 100%;
 }
 
-/* --- Docs sidebar (DocsLayout) --- */
+/* --- Page sections (index.astro): the split layout of the visual guidelines ---
+ *   .page-section  a section, usually also a .row: heading column (col-lg-5) + text (col-lg-7)
+ *   .page-intro    the first section: h1 on the left half, intro text and actions on the right
+ *   .page-text     the text column (its last child loses its bottom margin)
+ *   .page-eyebrow  the numbered label above a section heading
+ *   .page-hero-media  a full-width picture in a gray-100 frame with 8px corners
+ *   .ruled-cols    columns with a 2px rule above each, no boxes
+ *   .page-cta      the closing black section
+ */
+.page-section {
+  margin-top: 5rem;
+}
+.page-intro {
+  margin-top: 3rem;
+}
+.page-section h1,
+.page-section h2,
+.page-section h3 {
+  margin-top: 0;
+}
+.page-text > :last-child {
+  margin-bottom: 0;
+}
+.page-eyebrow {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--bs-secondary-color);
+}
+.page-hero-media {
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  border-radius: var(--bs-border-radius-lg);
+  background: var(--bs-tertiary-bg);
+  text-align: center;
+}
+.page-hero-media img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+.ruled-cols > .col::before,
+.ruled-cols > [class*="col-"]::before {
+  content: "";
+  display: block;
+  margin-bottom: 1rem;
+  border-top: 2px solid var(--bs-border-color);
+}
+.ruled-cols h3 {
+  margin-top: 0;
+}
+.ruled-cols p:last-child {
+  margin-bottom: 0;
+}
+.ruled-cols a.ruled-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.ruled-cols a.ruled-link:hover h3 {
+  text-decoration: underline;
+}
+.page-cta {
+  margin-top: 5rem;
+  padding: 3rem;
+  border-radius: var(--bs-border-radius-lg);
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+.page-cta .lead {
+  color: var(--bs-emphasis-color);
+}
+.page-cta p:not(.lead) {
+  color: #d1cfc5; /* gray-300: secondary text on dark */
+}
+@media (max-width: 575.98px) {
+  .page-cta {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* --- Docs (DocsLayout, DocsNav) --- */
+
+.docs-layout {
+  padding-block: 2.5rem;
+}
+.site-path + .qp-doc > h1 {
+  margin-top: 1rem;
+}
+
+/* The documentation tree: a ruled list per section on the page background, muted items, the
+   current page in ink and weight 600 with an arrow (the side navi of www.quartal.com). */
+.side-kicker {
+  margin-bottom: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.side-navi .q-navi-level-2 {
+  --bs-list-group-bg: transparent;
+  --bs-list-group-border-color: var(--bs-border-color);
+  --bs-list-group-item-padding-x: 0;
+  --bs-list-group-item-padding-y: 0.5rem;
+  --bs-list-group-action-color: var(--bs-secondary-color);
+  --bs-list-group-action-hover-color: var(--bs-emphasis-color);
+  --bs-list-group-action-hover-bg: transparent;
+  --bs-list-group-action-active-color: var(--bs-emphasis-color);
+  --bs-list-group-action-active-bg: transparent;
+  border-top: 2px solid var(--bs-emphasis-color);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.side-navi .q-navi-level-2 + .side-kicker {
+  margin-top: 1.75rem;
+}
+.side-navi .list-group-item {
+  text-decoration: none;
+  transition: color 0.3s cubic-bezier(0, 0.7, 0.3, 1);
+}
+.side-navi .list-group-item.selected {
+  color: var(--bs-emphasis-color);
+  font-weight: 600;
+}
+.side-navi .list-group-item.selected::after {
+  content: "→";
+  float: right;
+  margin-left: 0.5rem;
+}
 
 /* Pin the sidebar below the top of the viewport and let a long section list scroll inside it
    instead of running off screen. */
@@ -31,55 +199,84 @@ qrtl-editor-url {
   }
 }
 
-/* Keep generated markdown tables and code readable inside Bootstrap. */
+/* Generated markdown: hairline tables, code blocks on the secondary surface. */
+.qp-doc h2 {
+  margin-top: 3rem;
+}
+.qp-doc h3 {
+  margin-top: 2rem;
+}
 .qp-doc table {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
 }
 .qp-doc th,
 .qp-doc td {
-  border: 1px solid var(--bs-border-color);
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem 0.6rem 0;
+  border-bottom: 1px solid var(--bs-border-color);
   vertical-align: top;
-}
-.qp-doc th {
-  background: var(--bs-tertiary-bg);
   text-align: left;
+}
+.qp-doc thead th {
+  border-bottom: 2px solid var(--bs-emphasis-color);
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 .qp-doc pre {
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--bs-border-radius-lg);
   overflow-x: auto;
 }
+.qp-doc pre code {
+  padding: 0;
+  background: none;
+}
 .qp-doc blockquote {
-  border-left: 4px solid var(--bs-info);
   padding-left: 1rem;
+  border-left: 2px solid var(--bs-emphasis-color);
   color: var(--bs-secondary-color);
 }
-.qp-doc h2 {
-  margin-top: 2.5rem;
-}
-.qp-doc h3 {
-  margin-top: 1.75rem;
+.qp-code-block {
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-lg);
 }
 
 /* --- CommandPrompt --- */
 
+.q-command-prompt {
+  border-radius: var(--bs-border-radius-lg);
+}
 .qcp-code, .qp-doc pre.qcp-code {
   font-size: 0.85rem;
   line-height: 1.6;
   overflow-x: auto;
+  color: #d1cfc5; /* gray-300 */
   /* .qp-doc pre rounds markdown code blocks; inside the card the card's own radius applies. */
   border-radius: 0;
 }
+.qcp-code code {
+  padding: 0;
+  background: none;
+}
 .qcp-cmd {
-  color: color-mix(in srgb, var(--bs-primary) 70%, white);
+  color: #faf9f5; /* ivory */
   font-weight: 600;
 }
 
 /* --- CodeCompare --- */
 
+.q-code-compare {
+  border: 1px solid var(--bs-border-color);
+}
+.q-code-compare .nav-tabs {
+  --bs-nav-tabs-link-active-bg: var(--bs-body-bg);
+  --bs-nav-tabs-link-active-color: var(--bs-emphasis-color);
+}
+.q-code-compare .nav-link {
+  color: var(--bs-secondary-color);
+}
 .q-code-compare pre {
   min-height: 26rem;
   font-size: 0.85rem;
@@ -92,8 +289,9 @@ qrtl-editor-url {
   font-size: 0.75rem;
   line-height: 1.5;
   white-space: pre-wrap;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: var(--bs-border-radius);
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  border-radius: var(--bs-border-radius-lg);
   max-width: 44rem;
   max-height: 16rem;
   overflow-y: auto;
