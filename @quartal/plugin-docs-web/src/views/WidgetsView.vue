@@ -14,6 +14,8 @@ const auth = useDocsAuth();
 const pluginUrl = new URL(pluginClient.url("/"), window.location.origin).origin;
 const widgetsScriptUrl = `${pluginUrl}/widgets.js`;
 
+const TOOLS_JSON_PATH = "/mcp/tools.json";
+
 /** The MCP `tools/list` entries: input schemas and visibility. */
 interface ListedTool {
   name: string;
@@ -23,6 +25,7 @@ interface ListedTool {
   _meta?: { ui?: { visibility?: string[] } };
 }
 const listedTools = ref<ListedTool[]>([]);
+const toolsLoadError = ref<string | null>(null);
 const route = useRoute();
 const router = useRouter();
 /** The widget shown, from `?tool=` so other pages can link to a widget's preview. */
@@ -43,10 +46,12 @@ const appTools = computed<EmbedGuideTool[]>(() =>
 
 onMounted(async () => {
   try {
-    const res = await fetch(pluginClient.url("/mcp/tools.json"));
-    if (res.ok) listedTools.value = ((await res.json()) as { tools?: ListedTool[] }).tools ?? [];
-  } catch {
-    // Without MCP the guides show the input as an untyped object.
+    const res = await fetch(pluginClient.url(TOOLS_JSON_PATH));
+    if (!res.ok) throw new Error(`HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`);
+    listedTools.value = ((await res.json()) as { tools?: ListedTool[] }).tools ?? [];
+  } catch (e) {
+    const cause = e instanceof Error ? e.message : String(e);
+    toolsLoadError.value = `Could not load the tool list from ${TOOLS_JSON_PATH} (${cause}).`;
   }
 });
 </script>
@@ -81,6 +86,7 @@ onMounted(async () => {
           </div>
         </div>
         <div v-if="current" class="col-md-8 col-lg-9">
+          <div v-if="toolsLoadError" class="alert alert-warning py-2 small">{{ toolsLoadError }}</div>
           <h2 class="h5">{{ current.title }}</h2>
           <p>{{ current.description }}</p>
           <WidgetEmbedPanel
