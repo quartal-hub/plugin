@@ -1,5 +1,11 @@
 # @quartal/plugin-core
 
+## 1.1.0
+
+### Minor Changes
+
+- 042778d: `PluginClient.getMcpTools()` fetches `GET /mcp/tools.json`, the main MCP server's `tools/list` result, typed as `ListToolsResult`. New types: `Tool`, `ToolObjectSchema`, `ListToolsResult` and `McpToolUiMeta` (the MCP Apps `_meta.ui` of a tool). A request that the plugin answers with an error status throws a `PluginClientError`, which carries the requested `path` and the HTTP `status`.
+
 ## 1.0.1
 
 ### Patch Changes
