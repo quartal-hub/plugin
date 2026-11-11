@@ -1,5 +1,11 @@
 # @quartal/plugin-docs-web
 
+## 1.0.2
+
+### Patch Changes
+
+- 042778d: The Widgets page shows a warning when `/mcp/tools.json` can't be loaded.
+
 ## 1.0.1
 
 ### Patch Changes
