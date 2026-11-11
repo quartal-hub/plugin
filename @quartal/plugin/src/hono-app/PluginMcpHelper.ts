@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { Hono } from "hono";
+import { Hono, type MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import {
   createMcpHandler,
@@ -55,6 +55,9 @@ interface RequestContextLike {
  * the widget CSP — see `../widgets/runtimeWidgets.ts`.
  */
 export class PluginMcpHelper {
+  /** The REST mirrors of the MCP list results, served next to each server's protocol endpoint. */
+  private static readonly LIST_FILES = ["tools.json", "prompts.json", "resources.json"] as const;
+
   private readonly manifest: PluginManifest;
   private readonly toolEntries: McpToolDescriptor[];
   private readonly promptEntries: McpPromptDescriptor[];
@@ -74,6 +77,8 @@ export class PluginMcpHelper {
    * main server serves at `/mcp`; additional local servers from `mcp.servers` mount at
    * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts stay on
    * the main server). External servers are declaration-only (`mcp.json`) and are not mounted.
+   * The auth middleware guards the MCP protocol; every server's list mirrors (`GET tools.json` /
+   * `prompts.json` / `resources.json`) are public.
    * @param app Hono app to mount the MCP routes on.
    * @param helper Shared hub API helper (metadata, execution).
    * @param config Optional plugin app configuration.
@@ -93,12 +98,24 @@ export class PluginMcpHelper {
     const toolEntries = await PluginMcpHelper.loadToolEntries(helper, hubDir);
     const mcpOptions = typeof config?.mcp === "object" ? config.mcp : undefined;
 
-    if (config?.auth?.middleware) {
-      app.use("/mcp", config.auth.middleware);
-      app.use("/mcp/*", config.auth.middleware);
+    const { local } = resolveMcpServers(helper.manifest!, mcpOptions);
+
+    const authMiddleware = config?.auth?.middleware;
+    if (authMiddleware) {
+      // The list mirrors (`tools.json` / `prompts.json` / `resources.json`) only describe the
+      // plugin, and the same schemas are public through `/open-api.json` and the docs pages, so
+      // they stay open for the docs UI. The MCP protocol itself needs a login.
+      const publicPaths = new Set(
+        local.flatMap((server) => PluginMcpHelper.LIST_FILES.map((file) => `${server.path}/${file}`)),
+      );
+      const mcpAuthMiddleware: MiddlewareHandler = (c, next) =>
+        (c.req.method === "GET" || c.req.method === "HEAD") && publicPaths.has(c.req.path)
+          ? next()
+          : authMiddleware(c, next);
+      app.use("/mcp", mcpAuthMiddleware);
+      app.use("/mcp/*", mcpAuthMiddleware);
     }
 
-    const { local } = resolveMcpServers(helper.manifest!, mcpOptions);
     const mcpRoot = new Hono();
     const buildServerHelper = (server: ResolvedLocalMcpServer): PluginMcpHelper => {
       const classFilter = server.tools ? new Set(server.tools) : undefined;
