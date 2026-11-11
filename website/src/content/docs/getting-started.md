@@ -9,6 +9,7 @@ order: 1
 
 - Node.js 22+
 - We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
+  - Note that there is now a widget tester included, so this is no longer necessary for simple cases. 
 
 ## Create a plugin
 
@@ -28,9 +29,6 @@ Flags: `--description <text>`, `--auth` / `--no-auth`, `--sample-tool` / `--no-s
 `npm create @quartal/plugin -- my-plugin --yes`). There is also a ready-made prompt for your
 coding agent on the [front page](/), and the docs are indexed for agents at
 [/llms.txt](/llms.txt).
-
-Alternatively, fork the template repository at
-[quartal-hub/plugin-template](https://github.com/quartal-hub/plugin-template).
 
 ## Run it
 

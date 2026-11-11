@@ -170,4 +170,4 @@ export default defineConfig({
 
 | Option | Type | Purpose |
 |---|---|---|
-| `devToolbar` | `boolean` | Show the Astro dev toolbar in `astro dev`. We hide it by default because typically is just on the way when debugging widgets inside MCPJam etc. |
+| `devToolbar` | `boolean` | Show the Astro dev toolbar in `astro dev`. We hide it by default because typically is just on the way when debugging widgets inside iframe. |

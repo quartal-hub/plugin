@@ -34,9 +34,6 @@ two in step. `BaseLayout.astro` imports it and Vite compiles it with the site. T
 - **Docs:** `DocsNav.astro` is a ruled list per section (`side-navi`), the current page in ink with
   an arrow; `DocsLayout.astro` adds the page path (breadcrumb) above the heading.
 
-`public/img/plugins-overview.svg` is rendered from the Quartal Plugins overview drawing in the
-Quartal design colours, with a transparent background for the gray-100 hero frame.
-
 `/plugin-index` (the docs shell served by every plugin) is not styled by the site skin: it links
 the plugin skin that each plugin injects at run time.
 

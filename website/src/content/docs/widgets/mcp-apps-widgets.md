@@ -36,8 +36,7 @@ import Widget from "../../components/HelloWidget.vue";
 
 For Vue, the `@quartal/plugin-vue` package provides composables (over the framework-agnostic
 `@quartal/plugin/widget` helpers) for talking to the host: reading the tool result, calling tools,
-and sending follow-up messages. See the
-[plugin template](https://github.com/quartal-hub/plugin-template) for a complete example.
+and sending follow-up messages.
 
 ## How the widget is advertised
 
