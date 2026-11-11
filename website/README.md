@@ -17,6 +17,26 @@ pnpm --filter @quartal/website dev       # http://localhost:4321
 pnpm --filter @quartal/website build     # static site in dist/
 ```
 
+## Styling
+
+The site uses the **Quartal skin**, `src/styles/quartal.scss`: stock Bootstrap 5.3 and Bootstrap
+Icons with the Quartal visual guidelines mapped onto Bootstrap variables (warm gray ramp, cobalt
+primary buttons, Special Gothic headings over Funnel Sans from Google Fonts, pill buttons, flat
+cards, `data-bs-theme="dark"` for black sections). It is the same skin as www.quartal.com; keep the
+two in step. `BaseLayout.astro` imports it and Vite compiles it with the site. The site's own rules
+(`src/styles/site.css`) use only Bootstrap CSS variables:
+
+- **Chrome:** one-line navbar (logo, menu centred, GitHub right) and the footer, in `BaseLayout.astro`.
+- **Front page:** the split layout — `page-section` rows with the heading and numbered
+  `page-eyebrow` on the left (`col-lg-5`) and the text on the right (`col-lg-7`), `page-hero-media`
+  for the overview picture, `ruled-cols` for feature columns (a 2px rule above each, no boxes) and
+  `page-cta`, the closing black section.
+- **Docs:** `DocsNav.astro` is a ruled list per section (`side-navi`), the current page in ink with
+  an arrow; `DocsLayout.astro` adds the page path (breadcrumb) above the heading.
+
+`/plugin-index` (the docs shell served by every plugin) is not styled by the site skin: it links
+the plugin skin that each plugin injects at run time.
+
 ## Deployment
 
 Deployed to **GitHub Pages** at https://plugin.quartal.com by

@@ -1,0 +1,362 @@
+// The Quartal skin of plugin.quartal.com: stock Bootstrap 5.3 with the Quartal visual guidelines
+// (warm grays, cobalt primary buttons, Special Gothic headings over Funnel Sans, pill buttons,
+// 4/8 px corners, flat cards, the black theme as data-bs-theme="dark") mapped onto Bootstrap's own
+// variables. The same skin as www.quartal.com; keep the two in step.
+
+// Special Gothic (headlines, 87.5% width) and Funnel Sans (everything else).
+@import url("https://fonts.googleapis.com/css2?family=Special+Gothic:wdth,wght@75..125,400..700&family=Funnel+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+
+// ---------------------------------------------------------------------------
+// Design tokens
+// ---------------------------------------------------------------------------
+
+// Warm neutral ramp: every step has red >= green > blue.
+$q-ink: #141413;      // gray-950
+$q-gray-900: #1f1e1d;
+$q-gray-800: #30302e;
+$q-gray-700: #3d3d3a;
+$q-gray-600: #5e5d59;
+$q-gray-500: #87867f;
+$q-gray-400: #b0aea5;
+$q-gray-300: #d1cfc5;
+$q-gray-200: #e8e6dc;
+$q-gray-100: #f0eee6;
+$q-ivory: #faf9f5;    // gray-50: "white" surfaces are ivory
+
+// Action colour: primary buttons only.
+$q-cobalt: #0445a5;
+$q-cobalt-400: #0a66ed; // primary button on dark sections
+
+// Status pairs: 500 for fills and markers, 600 for text.
+$q-red-500: #dc3c28;
+$q-red-600: #bd3322;
+$q-green-500: #618e53;
+$q-green-600: #4f7444;
+$q-blue-200: #b0c2df;   // warning / needs review: a fill with ink text
+
+// Reserve tints and the NEW-badge highlighter.
+$q-navy: #1e2d46;
+$q-denim: #54637d;
+$q-highlighter: #4b6ca3;
+
+$q-ease-out: cubic-bezier(0, 0.7, 0.3, 1);
+
+// ---------------------------------------------------------------------------
+// Bootstrap: colour
+// ---------------------------------------------------------------------------
+
+$white: #fff;
+$black: $q-ink;
+$gray-100: $q-gray-100;
+$gray-200: $q-gray-200;
+$gray-300: $q-gray-300;
+$gray-400: $q-gray-400;
+$gray-500: $q-gray-500;
+$gray-600: $q-gray-600;
+$gray-700: $q-gray-700;
+$gray-800: $q-gray-800;
+$gray-900: $q-gray-900;
+
+$primary: $q-cobalt;
+$secondary: $q-gray-600;
+$success: $q-green-600;
+$info: $q-denim;
+$warning: $q-blue-200;   // the design system's warnings are pale blue, not yellow
+$danger: $q-red-600;
+$light: $q-gray-100;
+$dark: $q-ink;
+
+$min-contrast-ratio: 4.5;
+
+$body-bg: $q-ivory;
+$body-color: $q-ink;
+$body-emphasis-color: $q-ink;
+$body-secondary-color: $q-gray-600;   // --text-muted
+$body-tertiary-color: $q-gray-400;    // --text-disabled
+$body-secondary-bg: $q-gray-200;
+$body-tertiary-bg: $q-gray-100;       // --background-secondary
+$border-color: $q-gray-300;           // --border-primary
+
+// Value, not hue: active states (checks, pills, pagination, list groups) are ink, not cobalt.
+$component-active-color: $q-ivory;
+$component-active-bg: $q-ink;
+
+// Links in text inherit the ink colour and are underlined; never cobalt.
+$link-color: $q-ink;
+$link-decoration: underline;
+$link-hover-color: $q-gray-600;
+$link-underline-opacity: 1;
+
+$focus-ring-width: 2px;
+$focus-ring-opacity: 1;
+$focus-ring-color: $q-ink;
+
+// data-bs-theme="dark" is the design system's "black" section theme.
+$body-bg-dark: $q-ink;
+$body-color-dark: $q-ivory;
+$body-emphasis-color-dark: $q-ivory;
+$body-secondary-color-dark: $q-gray-500;
+$body-tertiary-color-dark: $q-gray-800;
+$body-secondary-bg-dark: $q-gray-800;
+$body-tertiary-bg-dark: $q-gray-900;
+$border-color-dark: $q-gray-800;
+$link-color-dark: $q-ivory;
+$link-hover-color-dark: $q-gray-300;
+$headings-color-dark: $q-ivory;
+
+// ---------------------------------------------------------------------------
+// Bootstrap: type
+// ---------------------------------------------------------------------------
+
+$font-family-sans-serif: "Funnel Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+$font-family-monospace: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+$headings-font-family: "Special Gothic", "Funnel Sans", system-ui, sans-serif;
+
+$font-size-base: 1.0625rem;   // body-2: 17px reading text
+$line-height-base: 1.55;
+$font-weight-bold: 600;       // <strong> in running text
+$font-weight-bolder: 600;
+
+// Headline scale at >= 1024px; Bootstrap's RFS scales the large ones down on small screens.
+$h1-font-size: 3.25rem;     // headline-1, 52px
+$h2-font-size: 2.75rem;     // headline-2, 44px
+$h3-font-size: 2.25rem;     // headline-3, 36px
+$h4-font-size: 2rem;        // headline-4, 32px
+$h5-font-size: 1.5625rem;   // headline-5, 25px
+$h6-font-size: 1.1875rem;   // headline-6, 19px
+$headings-font-weight: 700;
+$headings-line-height: 1.2;
+$headings-margin-bottom: 1rem;
+
+$display-font-sizes: (
+  1: 4.5rem,   // display-1, 72px
+  2: 4rem,     // display-2, 64px
+  3: 3.25rem,
+  4: 2.75rem,
+  5: 2.25rem,
+  6: 2rem,
+);
+$display-font-family: $headings-font-family;
+$display-font-weight: 700;
+$display-line-height: 1;
+
+$lead-font-size: 1.25rem;    // body-1, 20px hero lede
+$lead-font-weight: 400;
+$small-font-size: 0.875em;   // caption, 14px
+$text-muted: $q-gray-600;
+
+$code-font-size: 0.88em;
+$code-color: inherit;
+$code-color-dark: inherit;
+
+// ---------------------------------------------------------------------------
+// Bootstrap: shape, space and layout
+// ---------------------------------------------------------------------------
+
+$border-radius: 0.25rem;       // 4px: inputs and selects
+$border-radius-sm: 0.25rem;
+$border-radius-lg: 0.5rem;     // 8px: images, media, cards
+$border-radius-xl: 0.5rem;
+$border-radius-xxl: 0.5rem;    // 16px is reserved for product-UI illustrations
+$border-radius-pill: 50rem;
+
+$hr-border-color: $q-gray-300;
+$hr-opacity: 1;
+
+// Flat: the only shadow is the hover shadow.
+$box-shadow: 0 10px 15px -3px rgba($black, 0.1), 0 4px 6px -4px rgba($black, 0.1);
+$box-shadow-sm: 0 4px 6px rgba($black, 0.09);
+$box-shadow-lg: $box-shadow;
+
+$grid-gutter-width: 2rem;      // 32px column gap
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1400px,                  // content grid max width
+);
+
+$transition-base: all 0.3s $q-ease-out;
+
+// ---------------------------------------------------------------------------
+// Bootstrap: components
+// ---------------------------------------------------------------------------
+
+// Buttons: pills, 48px (32px small), 16/500.
+$btn-padding-y: 0.6875rem;
+$btn-padding-x: 1.5rem;
+$btn-font-size: 1rem;
+$btn-line-height: 1.5;
+$btn-font-weight: 500;
+$btn-padding-y-sm: 0.28125rem;
+$btn-padding-x-sm: 1rem;
+$btn-font-size-sm: 0.875rem;
+$btn-border-radius: $border-radius-pill;
+$btn-border-radius-sm: $border-radius-pill;
+$btn-border-radius-lg: $border-radius-pill;
+$btn-transition: color 0.3s $q-ease-out, background-color 0.3s $q-ease-out, border-color 0.3s $q-ease-out, box-shadow 0.3s $q-ease-out;
+$btn-focus-width: 2px;
+
+// Inputs: 63px tall, 20px padding, 1px border, 4px corners, white inset surface.
+$input-padding-y: 1.0625rem;
+$input-padding-x: 1.25rem;
+$input-line-height: 1.5;
+$input-bg: var(--q-input-bg);          // white on light sections, see :root below
+$input-border-color: $q-gray-300;
+$input-placeholder-color: $q-gray-500;
+$input-focus-border-color: var(--bs-emphasis-color);
+$input-focus-box-shadow: 0 0 0 1px var(--bs-emphasis-color);
+$input-border-radius: $border-radius;
+$input-border-radius-sm: $border-radius;
+$input-border-radius-lg: $border-radius;
+$form-label-font-weight: 700;   // data labels: bold, Title Case
+$form-check-input-checked-bg-color: $q-ink;
+$form-check-input-checked-border-color: $q-ink;
+$form-select-focus-box-shadow: $input-focus-box-shadow;
+$form-feedback-invalid-color: $q-red-600;
+$form-feedback-valid-color: $q-green-600;
+
+// Navbar and nav: 15/500, 28px between items.
+$nav-link-font-size: 0.9375rem;
+$nav-link-font-weight: 500;
+$nav-link-color: var(--bs-emphasis-color);
+$nav-link-hover-color: var(--bs-secondary-color);
+$navbar-nav-link-padding-x: 0.875rem;
+$navbar-light-color: $q-ink;
+$navbar-light-hover-color: $q-gray-600;
+$navbar-light-active-color: $q-ink;
+$navbar-toggler-border-radius: $border-radius;
+
+// Cards: no border, secondary surface, 8px corners.
+$card-border-width: 0;
+$card-border-radius: $border-radius-lg;
+$card-bg: var(--bs-tertiary-bg);
+$card-cap-bg: transparent;
+$card-spacer-y: 1.5rem;
+$card-spacer-x: 1.5rem;
+
+// Dropdowns: ivory panel, hairline edge, ink active state.
+$dropdown-bg: var(--bs-body-bg);
+$dropdown-border-color: var(--bs-secondary-bg);
+$dropdown-link-color: var(--bs-body-color);
+$dropdown-link-hover-bg: var(--bs-tertiary-bg);
+$dropdown-link-active-color: var(--bs-body-color);
+$dropdown-link-active-bg: var(--bs-secondary-bg);
+$dropdown-font-size: 0.9375rem;
+
+// Tables: ruled rows, bold headers, tabular figures (rule below).
+$table-cell-padding-y: 0.75rem;
+$table-cell-padding-x: 0.75rem;
+$table-th-font-weight: 700;
+$table-border-color: $q-gray-300;
+$table-striped-bg-factor: 0.04;
+
+// Badges: the NEW badge shape (16px, 10px uppercase 500, 3px corners).
+$badge-font-size: 0.625rem;
+$badge-font-weight: 500;
+$badge-padding-y: 0.25em;
+$badge-padding-x: 0.4em;
+$badge-border-radius: 3px;
+
+// Breadcrumb: the eyebrow (15px 700 in ink, muted "/" separators). Weight and link underline are
+// set after the Bootstrap import.
+$breadcrumb-font-size: 0.9375rem;
+$breadcrumb-margin-bottom: 0;
+$breadcrumb-item-padding-x: 0.375rem;
+$breadcrumb-divider-color: var(--bs-secondary-color);
+$breadcrumb-active-color: var(--bs-emphasis-color);
+
+$alert-border-radius: $border-radius;
+$list-group-bg: transparent;
+$list-group-border-color: $q-gray-300;
+$progress-bar-bg: $q-ink;
+$progress-border-radius: $border-radius-pill;
+$pagination-border-radius: $border-radius-pill;
+$accordion-bg: transparent;
+$accordion-border-color: $q-gray-300;
+$accordion-button-active-bg: var(--bs-tertiary-bg);
+$accordion-button-active-color: var(--bs-emphasis-color);
+$accordion-button-focus-box-shadow: 0 0 0 2px var(--bs-emphasis-color);
+$tooltip-bg: $q-ink;
+$tooltip-color: $q-ivory;
+
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+// ---------------------------------------------------------------------------
+// The few rules Bootstrap has no variable for
+// ---------------------------------------------------------------------------
+
+body {
+  font-feature-settings: "pnum", "lnum", "liga";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Special Gothic at 87.5% width; 700 for display and h1-h3, 600 for h4-h6.
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-stretch: 87.5%;
+  font-variation-settings: "wdth" 87.5;
+  text-wrap: balance;
+}
+h4, h5, h6, .h4, .h5, .h6 { font-weight: 600; }
+h2, .h2 { line-height: 1; }
+h1, .h1 { line-height: 1.1; }
+p { text-wrap: pretty; }
+
+a { text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+::selection { background: $q-gray-200; color: $q-ink; }
+
+.table { font-variant-numeric: tabular-nums; }
+.table > thead th { font-size: 0.875rem; }
+
+.badge { text-transform: uppercase; letter-spacing: 0.025em; }
+
+// Breadcrumb as the eyebrow: bold, links in ink, underlined only on hover.
+.breadcrumb { font-weight: 700; line-height: 1.4; }
+.breadcrumb a { color: var(--bs-emphasis-color); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: var(--bs-tertiary-bg);
+}
+
+// Inputs are white inset surfaces on light sections and transparent on dark ones.
+:root, [data-bs-theme="light"] { --q-input-bg: #{$white}; }
+[data-bs-theme="dark"] { --q-input-bg: transparent; }
+
+// Disabled primary: no cobalt, the secondary surface with disabled text.
+.btn-primary {
+  --bs-btn-disabled-bg: var(--bs-tertiary-bg);
+  --bs-btn-disabled-border-color: var(--bs-tertiary-bg);
+  --bs-btn-disabled-color: var(--bs-tertiary-color);
+  --bs-btn-disabled-opacity: 1;
+}
+
+// Primary buttons step up to cobalt-400 on dark sections so the edge holds against black.
+[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-bg: #{$q-cobalt-400};
+  --bs-btn-border-color: #{$q-cobalt-400};
+  --bs-btn-hover-bg: #0a69f3;
+  --bs-btn-hover-border-color: #0a69f3;
+  --bs-btn-active-bg: #0961e2;
+  --bs-btn-active-border-color: #0961e2;
+}
+
+// ---------------------------------------------------------------------------
+// Site chrome (see BaseLayout.astro)
+// ---------------------------------------------------------------------------
+
+:root {
+  --site-logo-image: url("../assets/quartal-q-logo-positive.svg");
+  --site-logo-width: 41.6px;
+  --site-logo-height: 41.6px;
+  --site-navbar-bg: #{$q-ivory};
+  --site-navbar-border: #{$q-gray-200};
+  --site-hero-bg: #{$q-navy};
+}

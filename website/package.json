@@ -20,6 +20,11 @@
     "@quartal/plugin-docs-web": "workspace:*",
     "@quartal/ui-core": "1.4.2",
     "astro": "^7.4.4",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.2",
     "vue": "^3.5.44"
+  },
+  "devDependencies": {
+    "sass": "^1.108.1"
   }
 }

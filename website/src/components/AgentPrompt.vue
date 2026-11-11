@@ -42,20 +42,20 @@ async function copy() {
 -->
 <template>
   <div class="q-agent-prompt d-flex align-items-center gap-2">
-    <button type="button" class="btn btn-lg btn-outline-light" @click="copy">
+    <button type="button" class="btn btn-outline-emphasis" @click="copy">
       <i class="bi me-1" :class="copied ? 'bi-check2' : 'bi-stars'"></i>
-      {{ copied ? "Copied — paste it to your agent" : "Copy for coding agent" }}
+      {{ copied ? "Copied — paste it to your agent" : "Copy for Coding Agent" }}
     </button>
     <button
       type="button"
-      class="btn btn-sm text-light border-0 opacity-75"
+      class="btn btn-sm btn-link link-secondary border-0"
       :aria-expanded="open"
       @click="open = !open"
     >
       {{ open ? "hide" : "view" }}
     </button>
   </div>
-  <pre v-if="open" class="qap-prompt order-last w-100 text-start text-light mt-2 p-3 mb-0">{{ PROMPT }}</pre>
+  <pre v-if="open" class="qap-prompt order-last w-100 text-start mt-2 p-3 mb-0">{{ PROMPT }}</pre>
 </template>
 
 <!-- Styles live in src/styles/site.css (site convention: no SFC style blocks). -->
