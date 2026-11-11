@@ -16,12 +16,14 @@ import type {
   PluginManifest,
   ExecuteFn,
   FetchWidgetHtml,
+  ListToolsResult,
   McpPromptDescriptor,
   McpServerOptions,
   McpToolDescriptor,
   PluginAppConfig,
   PromptMessage,
   PromptResult,
+  ToolObjectSchema,
   WidgetEntry,
 } from "../model/index.ts";
 import { Helpers } from "../helpers/Helpers.ts";
@@ -204,11 +206,10 @@ export class PluginMcpHelper {
   }
 
   /** The MCP `tools/list` result — one source for the protocol handler and `GET tools.json`. */
-  private listToolsResult() {
+  private listToolsResult(): ListToolsResult {
     // The generator always emits `type: "object"` schemas (see buildToolInputSchema /
     // buildToolOutputSchema), which the SDK's Tool type requires but our JSON-level
     // McpToolDescriptor cannot express — hence the cast.
-    type ObjectSchema = { type: "object"; [key: string]: unknown };
     return {
       tools: this.toolEntries.map(({ id, title, description, inputSchema, outputSchema, visibility, annotations }) => {
         const widgetEntry = this.widgetsByToolId.get(id);
@@ -221,8 +222,8 @@ export class PluginMcpHelper {
           name: id,
           ...(title ? { title } : {}),
           description,
-          inputSchema: inputSchema as ObjectSchema,
-          ...(outputSchema ? { outputSchema: outputSchema as ObjectSchema } : {}),
+          inputSchema: inputSchema as ToolObjectSchema,
+          ...(outputSchema ? { outputSchema: outputSchema as ToolObjectSchema } : {}),
           ...(annotations ? { annotations } : {}),
           ...(Object.keys(ui).length > 0 ? { _meta: { ui } } : {}),
         };

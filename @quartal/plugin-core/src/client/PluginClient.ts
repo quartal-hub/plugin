@@ -2,10 +2,12 @@ import type {
   AgentPluginManifest,
   AgentsCatalogResponse,
   CodeType,
+  ListToolsResult,
   McpServersConfig,
   PluginInfo,
   SkillsCatalogResponse,
 } from "../model/index.ts";
+import { PluginClientError } from "./PluginClientError.ts";
 
 /** Options for {@link PluginClient}. */
 export interface PluginClientOptions {
@@ -44,13 +46,13 @@ export class PluginClient {
 
   async #fetchJson<T>(path: string): Promise<T> {
     const res = await this.#fetch(this.url(path));
-    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    if (!res.ok) throw new PluginClientError(path, res.status);
     return (await res.json()) as T;
   }
 
   async #fetchText(path: string): Promise<string> {
     const res = await this.#fetch(this.url(path));
-    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+    if (!res.ok) throw new PluginClientError(path, res.status);
     return await res.text();
   }
 
@@ -67,6 +69,11 @@ export class PluginClient {
   /** Fetches `GET /mcp.json` (the standard MCP server configuration). */
   getMcpConfig(): Promise<McpServersConfig> {
     return this.#fetchJson<McpServersConfig>("/mcp.json");
+  }
+
+  /** Fetches `GET /mcp/tools.json` (the main MCP server's `tools/list` result). */
+  getMcpTools(): Promise<ListToolsResult> {
+    return this.#fetchJson<ListToolsResult>("/mcp/tools.json");
   }
 
   /** Fetches `GET /readme.md`. */
@@ -100,7 +107,7 @@ export class PluginClient {
   fetchFile(url: string): Promise<string> {
     const path = url.startsWith("http") ? url : this.url(url);
     return this.#fetch(path).then((res) => {
-      if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+      if (!res.ok) throw new PluginClientError(url, res.status);
       return res.text();
     });
   }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { PluginInfo } from "@quartal/plugin-core";
-import type { EmbedGuideTool, JsonSchema } from "@quartal/plugin-embed/guide";
+import { PluginClientError, type PluginInfo, type Tool } from "@quartal/plugin-core";
+import type { EmbedGuideTool } from "@quartal/plugin-embed/guide";
 import { useDocsAuth } from "../lib/docsAuth.ts";
 import { pluginClient } from "../lib/pluginClient.ts";
 import CopyButton from "../components/CopyButton.vue";
@@ -14,17 +14,7 @@ const auth = useDocsAuth();
 const pluginUrl = new URL(pluginClient.url("/"), window.location.origin).origin;
 const widgetsScriptUrl = `${pluginUrl}/widgets.js`;
 
-const TOOLS_JSON_PATH = "/mcp/tools.json";
-
-/** The MCP `tools/list` entries: input schemas and visibility. */
-interface ListedTool {
-  name: string;
-  title?: string;
-  description?: string;
-  inputSchema?: JsonSchema;
-  _meta?: { ui?: { visibility?: string[] } };
-}
-const listedTools = ref<ListedTool[]>([]);
+const listedTools = ref<Tool[]>([]);
 const toolsLoadError = ref<string | null>(null);
 const route = useRoute();
 const router = useRouter();
@@ -46,12 +36,13 @@ const appTools = computed<EmbedGuideTool[]>(() =>
 
 onMounted(async () => {
   try {
-    const res = await fetch(pluginClient.url(TOOLS_JSON_PATH));
-    if (!res.ok) throw new Error(`HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`);
-    listedTools.value = ((await res.json()) as { tools?: ListedTool[] }).tools ?? [];
+    listedTools.value = (await pluginClient.getMcpTools()).tools;
   } catch (e) {
+    // A plugin with MCP turned off (`mcp: false`) has no tool list: the guides show the input
+    // as an untyped object.
+    if (e instanceof PluginClientError && e.status === 404) return;
     const cause = e instanceof Error ? e.message : String(e);
-    toolsLoadError.value = `Could not load the tool list from ${TOOLS_JSON_PATH} (${cause}).`;
+    toolsLoadError.value = `Could not load the tool list (${cause}).`;
   }
 });
 </script>
