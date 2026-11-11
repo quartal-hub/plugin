@@ -35,7 +35,7 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 |---|---|
 | `ALL /mcp` | The main MCP server over streamable HTTP. Capabilities: `tools` always; `prompts` when the plugin defines prompts; `resources` when the plugin has widgets (each widget is a `ui://widgets/<toolId>.html` resource). |
 | `ALL /mcp/<server>` | Additional named MCP servers, when the plugin defines a `mcp.servers` map in `qrtl.config.ts`. Each serves its own subset of tool classes; widgets follow their tools, prompts stay on the main server. |
-| `GET /mcp/tools.json` | REST mirror of the MCP `tools/list` result — the exact same JSON, readable with a plain GET. Also per server: `GET /mcp/<server>/tools.json`. |
+| `GET /mcp/tools.json` | REST mirror of the MCP `tools/list` result — the exact same JSON, readable with a plain GET. Also per server: `GET /mcp/<server>/tools.json`. The mirrors are public even when the plugin requires a login. |
 | `GET /mcp/prompts.json` | REST mirror of `prompts/list`. |
 | `GET /mcp/resources.json` | REST mirror of `resources/list`. |
 

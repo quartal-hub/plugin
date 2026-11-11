@@ -11,8 +11,8 @@ order: 7
 
 A plugin has one authentication mode, set with `auth` in `qrtl.config.ts`. It applies to the
 whole server app — both the REST API (`/api/*`) and the MCP server(s) (`/mcp`). Documentation
-pages, widget pages and static assets always stay public (the sandboxed widget iframe carries no
-credentials).
+pages, the MCP list mirrors (`/mcp/tools.json` and the like), widget pages and static assets
+always stay public (the sandboxed widget iframe carries no credentials).
 
 ## Anonymous by default
 
@@ -212,6 +212,7 @@ environment variables do, plus overrides such as `algorithms`, `additionalScopes
 |---|---|
 | `POST /api/<Class>/<method>` | Bearer token required. |
 | `ALL /mcp`, `/mcp/<server>` | Bearer token required; unauthenticated calls get the RFC 9728 challenge. |
+| `GET /mcp/tools.json`, `/mcp/prompts.json`, `/mcp/resources.json` (also under `/mcp/<server>/`) | Public. These list mirrors only describe the plugin, like `/open-api.json`; calling a tool, getting a prompt or reading a resource needs the token. |
 | `GET /.well-known/oauth-protected-resource` | Public (this is how clients find your auth server). |
 | `GET /.well-known/oauth/client-metadata.json`, `/oauth/login`, `/oauth/callback` | Public (the docs-site login flow — how a browser session obtains a token). |
 | Docs site, `/widgets/*`, `/widget-assets/*`, `public/` | Public. |
