@@ -1,5 +1,13 @@
 # @quartal/plugin
 
+## 1.0.1
+
+### Patch Changes
+
+- 849fde1: README updates for the 1.0 release: the package README describes what 1.0 ships, points to plugin.quartal.com for the full documentation, and notes that generating a Claude plugin and a ChatGPT plugin is planned for 1.1; other package READMEs no longer reference unpublished paths or packages.
+- Updated dependencies [849fde1]
+  - @quartal/plugin-core@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
