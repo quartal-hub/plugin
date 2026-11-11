@@ -15,7 +15,7 @@ This page is a short overview. The full documentation — guides, reference and 
 
 > [!NOTE]
 > **Release 1.0**
-> This is the first production release of Quartal **Plugins**. The generation of a ready-to-install **Claude plugin** and **ChatGPT plugin** from your plugin project is not part of the 1.0 release: it is planned for the 1.1 release before 10.11.2026. Until then, connect Claude, ChatGPT and other clients to the plugin's MCP server and skills directly.
+> This is the first production release of Quartal **Plugins**. The generation of a ready-to-install **Claude plugin** and **ChatGPT plugin** from your plugin project is not part of the 1.0 release: it is planned before 1.12.2026. Until then, connect Claude, ChatGPT and other clients to the plugin's MCP server and skills directly.
 
 ## Getting started
 Requirements: Node.js 22+. We recommend [MCPJam](https://www.mcpjam.com/) for local testing, especially for widgets.
