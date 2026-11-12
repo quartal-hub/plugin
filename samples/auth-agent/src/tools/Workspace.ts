@@ -25,9 +25,9 @@ export interface WorkspaceFile {
 }
 
 /**
- * A working proof of concept of the experimental Quartal Hub context: unlike the other tools of
- * this sample, these call the real Quartal IAM API and Quartal Files as the signed-in user. Pick
- * the company to work in, then browse its files, read them and save notes.
+ * A working proof of concept of the experimental Quartal Hub context: these tools call the real
+ * Quartal IAM API and Quartal Files as the signed-in user. Pick the company to work in, then
+ * browse its files, read them and save notes.
  */
 export class Workspace {
   /**

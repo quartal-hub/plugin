@@ -44,7 +44,7 @@ export class Reports {
 }
 ```
 
-The `Workspace` tools of the `samples/iam-api` sample are a working example: they list and select
+The `Workspace` tools of the `samples/auth-agent` sample are a working example: they list and select
 the user's companies, browse and read the selected company's files, and save notes.
 
 `getExperimentalHubContext` throws when the plugin does not run with `auth: "quartal-hub"` or the
