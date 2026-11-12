@@ -36,6 +36,9 @@ describe("getAnonApp — full route assembly", () => {
     expect(html).toContain(`href="${new URL("/_astro/shell.css", docsShellUrl).href}"`);
     // The skin link marker survives (re-)injection.
     expect(html).toContain('id="plugin-docs-web-skin"');
+    // The page title names the plugin (qrtl.config `title`).
+    expect(html).toContain("<title>Test 1 - Quartal Plugin</title>");
+    expect(html.match(/<title>/g)).toHaveLength(1);
   });
 
   it("executes a REST tool call", async () => {
