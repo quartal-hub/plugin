@@ -1,3 +1,4 @@
+import { FsError } from "@quartal/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   EXPERIMENTAL_HUB_SERVICE_URLS,
@@ -182,9 +183,74 @@ describe("HubFiles", () => {
     expect(calls[1]).toMatchObject({ method: "POST", body: { owner: "c2", query: "ALV", caseInsensitive: true } });
   });
 
+  it("writes text and bytes, and edits files", async () => {
+    respond = (call) => json(call.method === "DELETE" ? { deleted: true } : { entry: { path: "/data/x" } });
+    const { files } = getExperimentalHubContext(ctx);
+    await files.write("/data/a.md", "# A", { owner: "c1", ifMatch: null, message: "first" });
+    await files.write("/data/b.bin", new Uint8Array([1, 2, 255]), { owner: "c1" });
+    await files.mkdir("/data/notes", { owner: "c1" });
+    await files.move("/data/a.md", "/data/notes/a.md", { owner: "c1" });
+    await files.setProps("/data/notes/a.md", { status: "draft" }, { owner: "c1" });
+    await files.delete("/data/b.bin", { owner: "c1", force: true });
+
+    expect(calls.map((c) => `${c.method} ${c.url.pathname}`)).toEqual([
+      "POST /api/files/write",
+      "POST /api/files/write",
+      "POST /api/files/mkdir",
+      "POST /api/files/move",
+      "POST /api/files/set-props",
+      "DELETE /api/files",
+    ]);
+    expect(calls[0].body).toEqual({
+      owner: "c1", path: "/data/a.md", content: "# A", encoding: "utf8", ifMatch: null, message: "first",
+    });
+    expect(calls[1].body).toMatchObject({ content: Buffer.from([1, 2, 255]).toString("base64"), encoding: "base64" });
+    expect(calls[3].body).toEqual({ owner: "c1", from: "/data/a.md", to: "/data/notes/a.md" });
+    expect(Object.fromEntries(calls[5].url.searchParams)).toEqual({ owner: "c1", path: "/data/b.bin", force: "true" });
+  });
+
+  it("reads the change feed after a cursor", async () => {
+    respond = () => json({ changes: [{ seq: 8, op: "changed", path: "/a.md" }], cursor: 8, hasMore: false });
+    const page = await getExperimentalHubContext(ctx).files.listChanges({ owner: "c1", since: 7, drive: "data" });
+    expect(page.cursor).toBe(8);
+    expect(calls[0].url.pathname).toBe("/api/sync/changes");
+    expect(Object.fromEntries(calls[0].url.searchParams)).toEqual({ owner: "c1", since: "7", drive: "data" });
+  });
+
   it("asks for an owner when no company is selected", async () => {
     const { files } = getExperimentalHubContext(ctx);
     await expect(files.listDrives()).rejects.toThrow(/No company selected/);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("fsSource (QFsSource)", () => {
+  it("works on one company's files at /{drive}/{path} addresses", async () => {
+    respond = () => json({ entry: { path: "/notes/a.md" }, created: true, unchanged: false, deduped: false });
+    const fs = getExperimentalHubContext(ctx).fsSource("c1");
+    const result = await fs.write("/data/notes/a.md", "# A", { ifMatch: "v1" });
+    expect(result.unchanged).toBe(false);
+    expect(calls[0].body).toMatchObject({ owner: "c1", path: "/data/notes/a.md", content: "# A", ifMatch: "v1" });
+  });
+
+  it("rejects with FsError codes, from the service's code or else the status", async () => {
+    const fs = getExperimentalHubContext(ctx).fsSource("c1");
+
+    respond = () => json({ error: "version mismatch", code: "ECONFLICT" }, 409);
+    const conflict = await fs.write("/data/a.md", "x", { ifMatch: "old" }).catch((e: unknown) => e);
+    expect(conflict).toBeInstanceOf(FsError);
+    expect(conflict).toMatchObject({ code: "ECONFLICT", address: "/data/a.md" });
+
+    respond = () => json({ error: "not found" }, 404);
+    expect(await fs.stat("/data/missing.md").catch((e: unknown) => e)).toMatchObject({ code: "ENOENT" });
+
+    respond = () => json({ error: "forbidden" }, 403);
+    expect(FsError.is(await fs.list("/").catch((e: unknown) => e), "EPERM")).toBe(true);
+  });
+
+  it("rejects with an FsError when no company is selected", async () => {
+    const err = await getExperimentalHubContext(ctx).fsSource().list("/").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(FsError);
+    expect(err).toMatchObject({ code: "EUNKNOWN" });
   });
 });

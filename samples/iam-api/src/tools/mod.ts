@@ -8,3 +8,4 @@ export * from "./Salaxy.ts";
 export * from "./Secrets.ts";
 export * from "./Teams.ts";
 export * from "./TestData.ts";
+export * from "./Workspace.ts";

@@ -17,7 +17,8 @@ signed-in user:
 | --- | --- |
 | `companies` | The companies the user is linked to, an Advisory's customers, and the company the user has selected to work in |
 | `secrets` | The user's own secrets for integrations: passwords, API keys, certificates |
-| `files` | A company's drives, folders, file contents, versions and search (read only) |
+| `files` | A company's drives, folders and files: reading, writing, versions, search and the change feed |
+| `fsSource()` | The same files as a `QFsSource` of `@quartal/core` |
 
 The services accept the user's Quartal Hub access token as it is: the context forwards the token
 of the tool call, so there is nothing to configure. In any other auth mode the context is not
@@ -42,6 +43,9 @@ export class Reports {
   }
 }
 ```
+
+The `Workspace` tools of the `samples/iam-api` sample are a working example: they list and select
+the user's companies, browse and read the selected company's files, and save notes.
 
 `getExperimentalHubContext` throws when the plugin does not run with `auth: "quartal-hub"` or the
 call has no signed-in user. Get a new context in each tool call: it carries that call's user and
@@ -113,26 +117,85 @@ Never return a secret's value in a tool result: everything a tool returns reache
 
 ## Files
 
-Reads one company's files. Paths start with the drive, e.g. `/data/raportit/2026.md`; `/` lists the
-drives. Every method takes an `owner` option — the company's Quartal IAM id — that defaults to the
-selected company; with neither, the call throws.
+One company's files in Quartal Files. Paths start with the drive, e.g. `/data/raportit/2026.md`;
+`/` lists the drives. Every method takes an `owner` option — the company's Quartal IAM id — that
+defaults to the selected company; with neither, the call throws. Every change is kept as a version,
+with the user (or the agent acting for them) as its author.
+
+**Reading**
 
 | Method | Returns |
 | --- | --- |
-| `listDrives({ owner? })` | The company's drives |
-| `list(path, { owner?, recursive?, limit? })` | The children of a folder, folders first |
-| `getEntry(path, { owner? })` | One file or folder, without its content |
-| `getContent(path, { owner?, version? })` | The content: text as `utf8`, anything else as `base64` |
-| `getText(path, { owner?, version? })` | The content as text |
-| `getDownloadUrl(path, { owner?, version?, expiresInSeconds? })` | A short-lived URL for large files or browser downloads |
-| `listVersions(path, { owner?, limit? })` | The file's history, newest first |
-| `glob(pattern, { owner?, drive?, cwd?, limit? })` | Files whose path matches a glob pattern |
-| `grep(query, { owner?, drive?, cwd?, include?, caseInsensitive?, maxMatches? })` | Lines of text files that contain the text |
+| `listDrives()` | The company's drives |
+| `list(path, { recursive?, limit? })` | The children of a folder, folders first |
+| `getEntry(path)` | One file or folder, without its content |
+| `getContent(path, { version? })` | The content: text as `utf8`, anything else as `base64` |
+| `getText(path, { version? })` | The content as text |
+| `getDownloadUrl(path, { version?, expiresInSeconds? })` | A short-lived URL for large files or browser downloads |
+| `listVersions(path, { limit? })` | The file's history, newest first |
+
+**Writing**
+
+| Method | Does |
+| --- | --- |
+| `write(path, content, { ifMatch?, mimeType?, type?, message?, mkdirp? })` | Writes text or bytes, creating missing folders; identical content changes nothing |
+| `mkdir(path, { recursive?, ifNotExists? })` | Creates a folder |
+| `delete(path, { recursive?, force? })` | Deletes a file, or a folder with `recursive` |
+| `move(from, to, { overwrite? })` | Renames or moves within a drive |
+| `copy(from, to, { overwrite?, recursive? })` | Copies a file or folder |
+| `setProps(path, props, { merge?, ifMatch? })` | Sets searchable properties on an entry |
+| `restore(path, version)` | Makes an earlier version current again |
+| `createDrive(id, { name? })` | Creates a drive |
+| `upload(path, bytes, { … })` | Writes a file of any size through an upload URL (`getUploadUrl` + `commitUpload`) |
+
+Guard an edit against concurrent changes with `ifMatch`: pass the `version` you read, and the
+write is refused when someone changed the file since. `ifMatch: null` creates a file only if it
+does not exist yet.
+
+```ts
+const hub = getExperimentalHubContext(ctx);
+const { entry, content } = await hub.files.getContent("/data/notes/today.md");
+await hub.files.write("/data/notes/today.md", content + "\n- done", { ifMatch: entry.version });
+```
+
+**Search and the change feed**
+
+| Method | Returns |
+| --- | --- |
+| `glob(pattern, { drive?, cwd?, limit? })` | Files whose path matches a glob pattern |
+| `grep(query, { drive?, cwd?, include?, caseInsensitive?, maxMatches? })` | Lines of text files that contain the text |
+| `search({ types?, pathPrefix?, props?, … })` | Entries by `type`, path prefix and properties |
+| `getSnapshot({ drive?, inlineMax? })` | A whole drive and the change cursor it matches |
+| `listChanges({ since?, drive?, limit? })` | Every change after a cursor — including other users' and agents' |
+
+### As a `QFsSource`
+
+`hub.fsSource(owner?)` returns the same files as a `QFsSource` of `@quartal/core` — the filesystem
+interface the file components of `@quartal/ui-core` and `MemoryFs` share. Code written against it
+runs unchanged on Quartal Files, and every failure is an `FsError` with a code (`ENOENT`, `EEXIST`,
+`ECONFLICT`, `EPERM`, …) instead of an HTTP status:
+
+```ts
+import { FsError } from "@quartal/core";
+
+const fs = getExperimentalHubContext(ctx).fsSource();
+try {
+  await fs.write("/data/notes/today.md", "# Notes", { ifMatch: null });
+} catch (e) {
+  if (FsError.is(e, "EEXIST")) { /* the note exists already */ }
+}
+```
+
+The source has no `watch` (read the change feed with `listChanges` instead) and no `glob`. It runs
+on the server, inside a tool: a widget's iframe carries no user token, so a widget does not call
+Quartal Files directly — it calls the plugin's tools.
 
 ## Errors
 
 A service that refuses a call throws a `HubApiError` with the HTTP `status` (for example 403 when
-the user has no access to the company), the `method`, the `url` and the service's own message.
+the user has no access to the company), the `method`, the `url`, the service's own message, and
+its error `code` when it sends one (Quartal Files: `ENOENT`, `EEXIST`, `ECONFLICT`, …). The
+`fsSource()` methods throw an `FsError` instead.
 
 ## Service URLs
 

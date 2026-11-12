@@ -10,6 +10,20 @@ Every method's `@summary` is its path in the original API (`/api/Companies/mine`
 the docs site show the old and the new route side by side. The types the tools used to import from the
 API's `lib/` folder live in `src/tools/model/`, one per file.
 
+## The Workspace tools: a working proof of concept
+
+`Workspace` is the exception to "signatures only": its tools use the experimental Quartal Hub
+context (`getExperimentalHubContext` from `@quartal/plugin/hub`) to call the real Quartal IAM API
+and Quartal Files as the signed-in user.
+
+| Tool | What it does |
+|---|---|
+| `listMyCompanies` | The caller's companies and the selected one |
+| `selectCompany` | Selects the company the other tools work in (kept per user) |
+| `listFiles` | A folder of the selected company's files; `/` lists the drives |
+| `getFile` | A text file's content |
+| `saveNote` | Saves a Markdown note to `/data/notes/`, through the `QFsSource` interface of `@quartal/core` |
+
 ## Run locally
 
 ```sh

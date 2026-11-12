@@ -37,21 +37,27 @@ export class HubApiClient {
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     if (!res.ok) {
-      throw new HubApiError(res.status, method, url.toString(), await errorMessage(res));
+      const { message, code } = await errorDetails(res);
+      throw new HubApiError(res.status, method, url.toString(), message, code);
     }
     return (await res.json()) as T;
   }
 }
 
-/** The service's own error message (`{ error }` / `{ message }` JSON or plain text), else the status text. */
-async function errorMessage(res: Response): Promise<string> {
+/**
+ * The service's own error message and code (`{ error | message, code }` JSON, or plain text),
+ * else the status text.
+ */
+async function errorDetails(res: Response): Promise<{ message: string; code?: string }> {
   const text = await res.text().catch(() => "");
   try {
-    const body = JSON.parse(text) as { error?: unknown; message?: unknown };
+    const body = JSON.parse(text) as { error?: unknown; message?: unknown; code?: unknown };
     const message = body.message ?? body.error;
-    if (typeof message === "string" && message) return message;
+    const code = typeof body.code === "string" ? body.code : undefined;
+    if (typeof message === "string" && message) return { message, code };
+    if (code) return { message: text.slice(0, 500), code };
   } catch {
     // Not JSON: fall through to the raw text.
   }
-  return text.slice(0, 500) || res.statusText || "request failed";
+  return { message: text.slice(0, 500) || res.statusText || "request failed" };
 }

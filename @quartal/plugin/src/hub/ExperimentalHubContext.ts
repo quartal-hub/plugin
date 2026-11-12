@@ -1,8 +1,11 @@
+import type { QFsSource } from "@quartal/core";
+
 import type { QuartalPluginContext } from "../model/index.ts";
 import { EXPERIMENTAL_HUB_SERVICE_URLS, isExperimentalHubEnabled } from "./experimentalHubServices.ts";
 import { HubApiClient } from "./HubApiClient.ts";
 import { HubCompanies } from "./HubCompanies.ts";
 import { HubFiles } from "./HubFiles.ts";
+import { HubFsSource } from "./HubFsSource.ts";
 import { HubSecrets } from "./HubSecrets.ts";
 
 /**
@@ -30,7 +33,7 @@ export class ExperimentalHubContext {
   readonly companies: HubCompanies;
   /** The user's own secrets. */
   readonly secrets: HubSecrets;
-  /** The files of a company: by default the selected one. */
+  /** The files of a company — reading, writing, search and the change feed: by default the selected company. */
   readonly files: HubFiles;
 
   /**
@@ -48,5 +51,20 @@ export class ExperimentalHubContext {
     this.companies = new HubCompanies(iam, ctx.uid);
     this.secrets = new HubSecrets(iam);
     this.files = new HubFiles(new HubApiClient(EXPERIMENTAL_HUB_SERVICE_URLS.files, ctx.token), this.companies);
+  }
+
+  /**
+   * The files of one company as a `QFsSource` (`@quartal/core`), for code written against that
+   * interface: every failure is an `FsError` with a code (`ENOENT`, `EEXIST`, `ECONFLICT`, …).
+   * @param owner The company: its Quartal IAM id. Defaults to the selected company, read on each call.
+   * @returns The source.
+   * @example
+   * ```ts
+   * const fs = getExperimentalHubContext(ctx).fsSource();
+   * await fs.write("/data/notes/today.md", "# Notes");
+   * ```
+   */
+  fsSource(owner?: string): QFsSource {
+    return new HubFsSource(this.files, owner);
   }
 }

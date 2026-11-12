@@ -107,7 +107,8 @@ export { EXPERIMENTAL_HUB_SERVICE_URLS, isExperimentalHubEnabled } from "./hub/e
 export { HubApiError } from "./hub/HubApiError.ts";
 export { HubCompanies } from "./hub/HubCompanies.ts";
 export { HubFiles } from "./hub/HubFiles.ts";
-export type { HubFilesOwnerOption } from "./hub/HubFiles.ts";
+export type { HubFilesOwnerOption, HubFileWriteOptions } from "./hub/HubFiles.ts";
+export { HubFsSource } from "./hub/HubFsSource.ts";
 export { HubSecrets } from "./hub/HubSecrets.ts";
 export type {
   HubCompany,
@@ -117,11 +118,16 @@ export type {
   HubCustomerList,
   HubDrive,
   HubFileAuthor,
+  HubFileChange,
+  HubFileChangePage,
   HubFileContent,
   HubFileEntry,
   HubFileGrepMatch,
+  HubFileItem,
+  HubFileSnapshot,
   HubFileTransfer,
   HubFileVersion,
+  HubFileWriteResult,
   HubSecret,
   HubSecretInfo,
   HubSelectedCompany,

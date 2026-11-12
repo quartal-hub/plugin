@@ -8,12 +8,14 @@ export class HubApiError extends Error {
    * @param method HTTP method of the request.
    * @param url URL of the request.
    * @param message The error message from the service, or the status text.
+   * @param code The service's own error code, when it sent one (Quartal Files: `ENOENT`, `EEXIST`, `ECONFLICT`, …).
    */
   constructor(
     public readonly status: number,
     public readonly method: string,
     public readonly url: string,
     message: string,
+    public readonly code?: string,
   ) {
     super(`${method} ${url} failed (${status}): ${message}`);
     this.name = "HubApiError";
