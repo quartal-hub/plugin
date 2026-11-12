@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import type { OpenAPIHono } from "@hono/zod-openapi";
+import { HTTPException } from "hono/http-exception";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -358,7 +359,17 @@ describe("serving the routes (fixture plugin with the Invoices class)", () => {
     create = record("create");
     update = record("update");
     delete = record("delete");
-    approve = record("approve");
+    /** Returns or throws by the given id, to test how results and failures reach the HTTP status. */
+    approve = (input: { id: string }) => {
+      switch (input.id) {
+        case "error-undefined": return { status: "ok", error: undefined };
+        case "error-defined": return { status: "failed", error: "Timed out" };
+        case "error-validation": return { error: "Validation failed" };
+        case "throw": throw new Error("boom");
+        case "throw-http": throw new HTTPException(401, { message: "Unauthorized" });
+        default: return record("approve")(input);
+      }
+    };
     listArchive = record("listArchive");
   }
   let app: OpenAPIHono;
@@ -398,6 +409,27 @@ describe("serving the routes (fixture plugin with the Invoices class)", () => {
   it("custom method stays POST at its own name", async () => {
     const res = await app.request("/api/invoices/approve", { method: "POST", ...json({ id: "inv-4" }) });
     expect((await res.json()).input).toEqual({ id: "inv-4" });
+  });
+
+  it("answers 200 for a result with an `error` key, whatever its value", async () => {
+    const approve = (id: string) => app.request("/api/invoices/approve", { method: "POST", ...json({ id }) });
+    const undef = await approve("error-undefined");
+    expect(undef.status).toBe(200);
+    expect(await undef.text()).toBe('{"status":"ok"}');
+    const defined = await approve("error-defined");
+    expect(defined.status).toBe(200);
+    expect(await defined.json()).toEqual({ status: "failed", error: "Timed out" });
+    const validation = await approve("error-validation");
+    expect(validation.status).toBe(200);
+    expect(await validation.json()).toEqual({ error: "Validation failed" });
+  });
+
+  it("answers 500 with `{ error }` for a thrown error, and keeps the status of an HTTPException", async () => {
+    const thrown = await app.request("/api/invoices/approve", { method: "POST", ...json({ id: "throw" }) });
+    expect(thrown.status).toBe(500);
+    expect(await thrown.json()).toEqual({ error: "boom" });
+    const http = await app.request("/api/invoices/approve", { method: "POST", ...json({ id: "throw-http" }) });
+    expect(http.status).toBe(401);
   });
 
   it("tagged relative path with a numeric path parameter and a query parameter", async () => {
