@@ -204,5 +204,5 @@ in to. The URLs are exported as `EXPERIMENTAL_HUB_SERVICE_URLS`:
 
 | Service | URL |
 | --- | --- |
-| Quartal IAM API (companies, secrets) | `https://iam-api-test.up.railway.app` |
-| Quartal Files | `https://quartal-files-nine.vercel.app` |
+| Quartal IAM API (companies, secrets) | `https://iam-api.test.qrtl.com` |
+| Quartal Files | `https://files-plugin.quartal.site` |

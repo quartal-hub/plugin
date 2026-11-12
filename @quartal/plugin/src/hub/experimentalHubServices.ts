@@ -6,9 +6,9 @@
  */
 export const EXPERIMENTAL_HUB_SERVICE_URLS = {
   /** Quartal IAM API: the user's companies, their customers and the user's secrets. */
-  iam: "https://iam-api-test.up.railway.app",
+  iam: "https://iam-api.test.qrtl.com",
   /** Quartal Files: a company's drives, folders and files. */
-  files: "https://quartal-files-nine.vercel.app",
+  files: "https://files-plugin.quartal.site",
 } as const;
 
 /** Process-wide switch, kept on `globalThis` so it holds even when the package is loaded twice (dev SSR). */
