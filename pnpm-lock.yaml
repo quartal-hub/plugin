@@ -54,6 +54,9 @@ importers:
       '@modelcontextprotocol/server':
         specifier: ^2.4.0
         version: 2.4.0
+      '@quartal/core':
+        specifier: ^1.5.1
+        version: 1.5.1
       '@quartal/plugin-core':
         specifier: workspace:*
         version: link:../plugin-core
@@ -254,7 +257,7 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@22.20.1)(esbuild@0.28.2)(sass@1.108.1)(yaml@2.9.1)
 
-  samples/iam-api:
+  samples/iam-api-naming-tester:
     dependencies:
       '@astrojs/node':
         specifier: ^11.1.9
@@ -1971,6 +1974,9 @@ packages:
 
   '@quartal/core@1.4.0':
     resolution: {integrity: sha512-z+A5Zq6XsXYBx3EVXKeJL+Jj+w2hRDP89aKzscL9tHmZsmQ0x1nO8fIK+j7PYJakAFKYJTb5xWIKEOhI4PR+rg==}
+
+  '@quartal/core@1.5.1':
+    resolution: {integrity: sha512-2w0VkT7sqUSMzNb8qaD87n0DuIPc40jZQwUCRyvq4ba9IKe18Q7Bf4dRm2Gk4P3oijTCfvV8KP/HB8yWvjkZDA==}
 
   '@quartal/ui-core@1.4.2':
     resolution: {integrity: sha512-mEVoh1doA/w4I+c/XV+mpRlXCuLsMz6XHOUq2YF6Mb3wzmVkuWSfL3f47PuJ1hpov2HVIKFY8KrB4KfBJLesZg==}
@@ -6620,6 +6626,12 @@ snapshots:
   '@poppinss/exception@1.2.3': {}
 
   '@quartal/core@1.4.0':
+    dependencies:
+      dayjs: 1.11.23
+      dayjs-business-time: 1.0.4
+      snarkdown: 2.0.0
+
+  '@quartal/core@1.5.1':
     dependencies:
       dayjs: 1.11.23
       dayjs-business-time: 1.0.4

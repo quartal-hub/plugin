@@ -1,5 +1,5 @@
 {
-  "name": "@samples/iam-api",
+  "name": "@samples/iam-api-naming-tester",
   "type": "module",
   "version": "0.1.0",
   "description": "The Quartal IAM API as a plugin: tool signatures only, for trying out the REST and MCP naming conventions on a real API.",
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/quartal-hub/plugin.git",
-    "directory": "samples/iam-api"
+    "directory": "samples/iam-api-naming-tester"
   },
   "scripts": {
     "dev": "astro dev",
