@@ -1,5 +1,15 @@
 # @quartal/plugin
 
+## 1.1.0
+
+### Minor Changes
+
+- 420d9a5: Experimental Quartal Hub context for tools (`@quartal/plugin/hub`): with `auth: "quartal-hub"`, `getExperimentalHubContext(ctx)` calls the Quartal Hub services as the signed-in user — the user's companies and an Advisory's customers, a per-user selected company, the user's secrets, and a company's files in Quartal Files (reading, writing, versions, search and the change feed), also as a `QFsSource` of `@quartal/core` (`hub.fsSource()`). For testing and prototypes only; it may change in any release.
+
+### Patch Changes
+
+- 420d9a5: The docs page served at `/` is titled after the plugin, e.g. `Auth Agent - Quartal Plugin`, instead of `Quartal Plugin` for every plugin.
+
 ## 1.0.2
 
 ### Patch Changes
