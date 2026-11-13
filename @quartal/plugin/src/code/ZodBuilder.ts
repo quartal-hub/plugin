@@ -1,7 +1,7 @@
 import { z } from "@hono/zod-openapi";
 import type { CodeArrayType, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType } from "../model/index.ts";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
-import { parseStringLiteralUnionParts } from "./parseStringLiteralUnionParts.ts";
+import { parseStringLiteral, parseStringLiteralUnion } from "./parseStringLiteral.ts";
 
 /** Zod schema for a function: input (single object body) and output. */
 export interface FunctionZodDefinition {
@@ -354,7 +354,7 @@ export class ZodBuilder {
 
     if (trimmed.includes(" | ")) {
       const parts = trimmed.split("|").map((p) => p.trim());
-      const stringEnum = parseStringLiteralUnionParts(parts);
+      const stringEnum = parseStringLiteralUnion(parts);
       if (stringEnum) {
         return z.enum(stringEnum as [string, ...string[]]);
       }
@@ -365,7 +365,7 @@ export class ZodBuilder {
           if (p === "false") return z.literal(false);
           if (p === "null") return z.null();
           if (/^-?\d+$/.test(p)) return z.literal(Number(p));
-          return z.literal(p.replace(/^["']|["']$/g, ""));
+          return z.literal(parseStringLiteral(p) ?? p);
         });
         return z.union(schemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
       }

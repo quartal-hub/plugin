@@ -19,6 +19,7 @@ import {
 import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
 import { parseMcpTag } from "./parseMcpTag.ts";
 import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
+import { quoteStringLiteral } from "./parseStringLiteral.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -299,14 +300,14 @@ export class TsMorphAnalyzer {
     if (Node.isUnionTypeNode(typeNode)) {
       const members = unionNonNullMembers(typeNode.getTypeNodes());
       if (members.length === 1) return this.typeNodeToCode(members[0], fileTypes, opts);
-      const enumValues = stringLiteralUnionValues(members);
-      if (enumValues) return enumValues.join(" | ");
+      const literalValues = stringLiteralUnionValues(members);
+      if (literalValues) return literalValues.map(quoteStringLiteral).join(" | ");
       const parts = members.map((m) => this.typeNodeToCode(m, fileTypes));
       return parts.every((p) => typeof p === "string") ? parts.join(" | ") : "any";
     }
     if (Node.isLiteralTypeNode(typeNode)) {
       const lit = typeNode.getLiteral();
-      if (Node.isStringLiteral(lit)) return lit.getLiteralValue();
+      if (Node.isStringLiteral(lit)) return quoteStringLiteral(lit.getLiteralValue());
     }
     if (Node.isTypeLiteral(typeNode)) {
       const props = typeNode.getProperties().map((p) => this.parseProperty(p, fileTypes));

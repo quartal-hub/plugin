@@ -459,7 +459,7 @@
             },
             {
               "name": "status",
-              "type": "open | paid",
+              "type": "\"open\" | \"paid\"",
               "description": "Only invoices in this state.",
               "optional": true,
               "nullable": false
@@ -603,7 +603,7 @@
             },
             {
               "name": "gender",
-              "type": "male | female",
+              "type": "\"male\" | \"female\"",
               "description": "Example of a enum: The gender of the person to greet.",
               "optional": false,
               "nullable": false
@@ -1070,7 +1070,7 @@
           "properties": [
             {
               "name": "kind",
-              "type": "alpha | beta | gamma",
+              "type": "\"alpha\" | \"beta\" | \"gamma\"",
               "description": "One of the allowed values.",
               "optional": false,
               "nullable": false
