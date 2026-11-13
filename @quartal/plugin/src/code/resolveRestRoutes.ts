@@ -1,12 +1,10 @@
 import type { CodeClass, CodeFile, CodeFunction, CodePropOrParam, CodeType, RestMethod, RestRoute } from "../model/index.ts";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
 import { CRUD_VERBS, namesClass, splitLeadingVerb } from "./crudVerbs.ts";
+import { parseStringLiteralUnionParts } from "./parseStringLiteralUnionParts.ts";
 
 /** Methods whose convention route takes a required `id` input property as the `{id}` path parameter. */
 const ID_IN_PATH: ReadonlySet<RestMethod> = new Set<RestMethod>(["GET", "PUT", "DELETE"]);
-
-/** TypeScript keywords that can appear in a union and are never enum members. */
-const TYPE_KEYWORDS = new Set(["string", "number", "boolean", "null", "undefined", "void", "any", "unknown", "never", "object", "symbol", "bigint"]);
 
 /**
  * The system wrapper types the analyzer assigns to a parameter typed `void`, `null`, `undefined`,
@@ -199,10 +197,7 @@ function isPrimitive(prop: CodePropOrParam, typeIndex: Map<string, CodeType>): b
   if (t === "string" || t === "number" || t === "boolean") return true;
   if (t.includes(" | ")) {
     // The analyzer writes a string-literal union as its members joined by " | " (quotes dropped).
-    return t
-      .split("|")
-      .map((p) => p.trim())
-      .every((p) => /^["'].*["']$/.test(p) || (/^[A-Za-z_][A-Za-z0-9_]*$/.test(p) && !TYPE_KEYWORDS.has(p)));
+    return parseStringLiteralUnionParts(t.split("|").map((p) => p.trim())) !== null;
   }
   const named = typeIndex.get(t);
   return !!named?.enum?.length;

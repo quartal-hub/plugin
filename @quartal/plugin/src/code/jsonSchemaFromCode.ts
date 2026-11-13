@@ -1,19 +1,5 @@
 import type { CodeArrayType, CodeOrSystemType, CodePropOrParam, CodeType, SystemType } from "../model/index.ts";
-
-const TYPE_KEYWORDS = new Set([
-  "string",
-  "number",
-  "boolean",
-  "null",
-  "undefined",
-  "void",
-  "any",
-  "unknown",
-  "never",
-  "object",
-  "symbol",
-  "bigint",
-]);
+import { parseStringLiteralUnionParts } from "./parseStringLiteralUnionParts.ts";
 
 const SYSTEM_TYPES = new Set<SystemType>([
   "string",
@@ -36,23 +22,6 @@ const SYSTEM_TYPES = new Set<SystemType>([
   "symbol",
   "bigint",
 ]);
-
-function parseStringLiteralUnionParts(parts: string[]): string[] | null {
-  const values: string[] = [];
-  for (const part of parts) {
-    if (TYPE_KEYWORDS.has(part)) return null;
-    if (/^["'].*["']$/.test(part)) {
-      values.push(part.replace(/^["']|["']$/g, ""));
-      continue;
-    }
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(part)) {
-      values.push(part);
-      continue;
-    }
-    return null;
-  }
-  return values.length > 0 ? values : null;
-}
 
 function systemTypeToJsonSchema(t: SystemType): Record<string, unknown> {
   if (t === "string") return { type: "string" };
