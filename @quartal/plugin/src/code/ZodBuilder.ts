@@ -373,6 +373,9 @@ export class ZodBuilder {
       return z.union(typeSchemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
     }
 
+    const literal = parseStringLiteral(trimmed);
+    if (literal !== undefined) return z.literal(literal);
+
     return this.getZodForType(trimmed);
   }
 }

@@ -1,5 +1,5 @@
 import type { CodeArrayType, CodeOrSystemType, CodePropOrParam, CodeType, SystemType } from "../model/index.ts";
-import { parseStringLiteralUnion } from "./parseStringLiteral.ts";
+import { parseStringLiteral, parseStringLiteralUnion } from "./parseStringLiteral.ts";
 
 const SYSTEM_TYPES = new Set<SystemType>([
   "string",
@@ -98,6 +98,9 @@ export function codeOrSystemTypeToJsonSchema(
         oneOf: parts.map((p) => codeOrSystemTypeToJsonSchema(p, typeIndex, seen)),
       };
     }
+
+    const literal = parseStringLiteral(trimmed);
+    if (literal !== undefined) return { type: "string", enum: [literal] };
 
     if (SYSTEM_TYPES.has(trimmed as SystemType)) {
       return systemTypeToJsonSchema(trimmed as SystemType);

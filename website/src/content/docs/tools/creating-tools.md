@@ -95,7 +95,7 @@ export interface CreateUserInput {
 | `string`, `number`, `boolean` | `{ "type": "string" \| "number" \| "boolean" }` |
 | `Foo[]`, `Array<Foo>` | `{ "type": "array", "items": … }` |
 | Named interface / type alias | Inlined object schema with all its properties; `extends` chains are flattened in. |
-| `"a" \| "b" \| "c"` (string literal union) | `{ "type": "string", "enum": ["a", "b", "c"] }` |
+| `"a" \| "b" \| "c"` (union of string literals) or `"a"` (string literal, inline) | `{ "type": "string", "enum": ["a", "b", "c"] }` |
 | Other unions (`Foo \| Bar`) | `{ "oneOf": [ …, … ] }` |
 | `name?: string` (optional) | Property present, but omitted from `required`. |
 | `string \| null` | Treated as `string`; the property is still required unless also optional. |
@@ -274,7 +274,7 @@ Query and path values arrive as text, so `number` and `boolean` properties accep
 The build fails with a message naming the method when:
 
 - a path parameter is optional, nullable, or not a `string`, `number` or `boolean`
-  (string-literal unions and enum aliases count as strings);
+  (string-literal unions, string literals and enum aliases count as strings);
 - a `GET` or `DELETE` input has a property that is an array, an object, a `Date` or nullable —
   add `@rest POST` to such a method, or move it off the `get` / `list` / `find` / `delete` verbs;
 - two methods resolve to the same method and path.
