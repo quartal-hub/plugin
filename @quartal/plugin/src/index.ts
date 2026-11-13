@@ -100,6 +100,39 @@ export {
 } from "./oauth/oauthAuth.ts";
 export type { OAuthOptions, QuartalAuthMode, ResolvedOAuthOptions } from "./oauth/oauthAuth.ts";
 
+// EXPERIMENTAL Quartal Hub services for tools (also the `@quartal/plugin/hub` subpath).
+export { getExperimentalHubContext } from "./hub/getExperimentalHubContext.ts";
+export { ExperimentalHubContext } from "./hub/ExperimentalHubContext.ts";
+export { EXPERIMENTAL_HUB_SERVICE_URLS, isExperimentalHubEnabled } from "./hub/experimentalHubServices.ts";
+export { HubApiError } from "./hub/HubApiError.ts";
+export { HubCompanies } from "./hub/HubCompanies.ts";
+export { HubFiles } from "./hub/HubFiles.ts";
+export type { HubFilesOwnerOption, HubFileWriteOptions } from "./hub/HubFiles.ts";
+export { HubFsSource } from "./hub/HubFsSource.ts";
+export { HubSecrets } from "./hub/HubSecrets.ts";
+export type {
+  HubCompany,
+  HubCompanyAvatar,
+  HubCompanyDetails,
+  HubCustomer,
+  HubCustomerList,
+  HubDrive,
+  HubFileAuthor,
+  HubFileChange,
+  HubFileChangePage,
+  HubFileContent,
+  HubFileEntry,
+  HubFileGrepMatch,
+  HubFileItem,
+  HubFileSnapshot,
+  HubFileTransfer,
+  HubFileVersion,
+  HubFileWriteResult,
+  HubSecret,
+  HubSecretInfo,
+  HubSelectedCompany,
+} from "./model/index.ts";
+
 // Runtime request serving (Hono API app + MCP)
 export { PluginApiHelper } from "./hono-app/PluginApiHelper.ts";
 export { PluginMcpHelper } from "./hono-app/PluginMcpHelper.ts";
