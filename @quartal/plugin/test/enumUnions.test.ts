@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { ZodBuilder } from "../src/index.ts";
+import { buildMcpTools, loadCodeFiles, ZodBuilder } from "../src/index.ts";
 import { analyzeSource } from "./helpers/analyzeSource.ts";
 
 const SOURCES = {
@@ -32,7 +32,7 @@ describe("string literal unions", () => {
     const files = analyzeSource(SOURCES);
     const lang = files.flatMap((f) => f.types).find((t) => t.name === "ReportInput")
       ?.properties.find((p) => p.name === "lang");
-    expect(lang?.type).toBe("fi | sv | en");
+    expect(lang?.type).toBe('"fi" | "sv" | "en"');
   });
 
   it("parses a string-literal type alias (imported) as enum members", () => {
@@ -66,5 +66,61 @@ describe("ZodBuilder string literal unions", () => {
       ?.ReportInput?.properties;
     expect(props?.lang?.enum).toEqual(["fi", "sv", "en"]);
     expect(props?.reportType?.enum).toEqual(["salarySlip", "employerReport"]);
+  });
+});
+
+// String literal values that are also type keywords, such as "unknown", are values, not types
+const KEYWORD_SOURCES = {
+  "/tools/model/FooBar.ts": `
+    export interface Foo { a: boolean; }
+    export interface Bar { b: boolean; }
+  `,
+  "/tools/FooTools.ts": `
+    import type { Foo, Bar } from "./model/FooBar.ts";
+    export interface Result {
+      keywordUnion: "foobar" | "unknown" | "string";
+      nullableKeyword: "unknown" | null;
+      namedUnion?: Foo | Bar;
+    }
+    export class FooTools {
+      foo(input: { keywordUnion: "object" | "null" }): Result {
+        return { keywordUnion: "unknown", nullableKeyword: null };
+      }
+    }
+  `,
+};
+
+describe("string literal values that are also type keywords", () => {
+  const codeFiles = () => loadCodeFiles({ files: analyzeSource(KEYWORD_SOURCES) });
+  const mcpTool = () => buildMcpTools(codeFiles()).find((t) => t.methodName === "foo")!;
+  type Schema = { properties: Record<string, Record<string, unknown>> };
+
+  it("are quoted in the analyzer output, unlike type names", () => {
+    const result = codeFiles().flatMap((f) => f.types).find((t) => t.name === "Result");
+    expect(result?.properties.find((p) => p.name === "keywordUnion")?.type).toBe('"foobar" | "unknown" | "string"');
+    expect(result?.properties.find((p) => p.name === "nullableKeyword")?.type).toBe('"unknown"');
+    expect(result?.properties.find((p) => p.name === "namedUnion")?.type).toBe("Foo | Bar");
+  });
+
+  it("become an enum in the output schema", () => {
+    const props = (mcpTool().outputSchema as Schema).properties;
+    expect(props.keywordUnion).toMatchObject({ enum: ["foobar", "unknown", "string", null] });
+  });
+
+  it("do not affect a union of named types, which becomes a oneOf of object schemas", () => {
+    const namedUnion = (mcpTool().outputSchema as Schema).properties.namedUnion as { oneOf: Record<string, unknown>[] };
+    expect(namedUnion.oneOf.slice(0, 2).map((s) => Object.keys((s.properties ?? {}) as object))).toEqual([["a"], ["b"]]);
+  });
+
+  it("become an enum in the input schema", () => {
+    const props = (mcpTool().inputSchema as Schema).properties;
+    expect(props.keywordUnion).toMatchObject({ type: "string", enum: ["object", "null"] });
+  });
+
+  it("are validated as values in tool inputs", () => {
+    const fn = new ZodBuilder(codeFiles()).getZodsForAllFunctions().find((f) => f.fn.name === "foo")!;
+    expect(fn.input.safeParse({ keywordUnion: "null" }).success).toBe(true);
+    expect(fn.input.safeParse({ keywordUnion: "object" }).success).toBe(true);
+    expect(fn.input.safeParse({ keywordUnion: "string" }).success).toBe(false);
   });
 });
