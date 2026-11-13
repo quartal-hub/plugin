@@ -1,7 +1,7 @@
 import type { CodeClass, CodeFile, CodeFunction, CodePropOrParam, CodeType, RestMethod, RestRoute } from "../model/index.ts";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
 import { CRUD_VERBS, namesClass, splitLeadingVerb } from "./crudVerbs.ts";
-import { parseStringLiteralUnionParts } from "./parseStringLiteralUnionParts.ts";
+import { parseStringLiteralUnion } from "./parseStringLiteral.ts";
 
 /** Methods whose convention route takes a required `id` input property as the `{id}` path parameter. */
 const ID_IN_PATH: ReadonlySet<RestMethod> = new Set<RestMethod>(["GET", "PUT", "DELETE"]);
@@ -196,8 +196,7 @@ function isPrimitive(prop: CodePropOrParam, typeIndex: Map<string, CodeType>): b
   const t = prop.type.trim();
   if (t === "string" || t === "number" || t === "boolean") return true;
   if (t.includes(" | ")) {
-    // The analyzer writes a string-literal union as its members joined by " | " (quotes dropped).
-    return parseStringLiteralUnionParts(t.split("|").map((p) => p.trim())) !== null;
+    return parseStringLiteralUnion(t.split("|")) !== null;
   }
   const named = typeIndex.get(t);
   return !!named?.enum?.length;
