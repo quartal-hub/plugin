@@ -368,7 +368,7 @@ export class ZodBuilder {
         });
         return z.union(schemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
       }
-      const typeSchemas = parts.map((p) => this.getZodForType(p));
+      const typeSchemas = parts.map((p) => this.stringTypeToZod(p, fromText));
       return z.union(typeSchemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
     }
 
