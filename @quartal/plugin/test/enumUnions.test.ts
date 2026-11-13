@@ -124,3 +124,31 @@ describe("string literal values that are also type keywords", () => {
     expect(fn.input.safeParse({ keywordUnion: "string" }).success).toBe(false);
   });
 });
+
+const SINGLE_LITERAL_SOURCES = {
+  "/tools/FooTools.ts": `
+    export class FooTools {
+      foo(input: { singleLiteral: "lorem"; literalOrNumber: "ipsum" | number }): { singleLiteral: "lorem" } {
+        return { singleLiteral: "lorem" };
+      }
+    }
+  `,
+};
+
+describe("a single string literal type", () => {
+  const codeFiles = () => loadCodeFiles({ files: analyzeSource(SINGLE_LITERAL_SOURCES) });
+
+  it("becomes a one-value enum in the output schema", () => {
+    const mcpTool = buildMcpTools(codeFiles()).find((t) => t.methodName === "foo")!;
+    const props = (mcpTool.outputSchema as { properties: Record<string, unknown> }).properties;
+    expect(props.singleLiteral).toMatchObject({ enum: ["lorem", null] });
+  });
+
+  it("allows only its value in tool inputs, also in a union with other types", () => {
+    const fn = new ZodBuilder(codeFiles()).getZodsForAllFunctions().find((f) => f.fn.name === "foo")!;
+    expect(fn.input.safeParse({ singleLiteral: "lorem", literalOrNumber: "ipsum" }).success).toBe(true);
+    expect(fn.input.safeParse({ singleLiteral: "lorem", literalOrNumber: 42 }).success).toBe(true);
+    expect(fn.input.safeParse({ singleLiteral: "other", literalOrNumber: "ipsum" }).success).toBe(false);
+    expect(fn.input.safeParse({ singleLiteral: "lorem", literalOrNumber: "other" }).success).toBe(false);
+  });
+});
