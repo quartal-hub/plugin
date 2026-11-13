@@ -358,14 +358,14 @@ export class ZodBuilder {
       if (stringEnum) {
         return z.enum(stringEnum as [string, ...string[]]);
       }
-      const literals = parts.every((p) => /^["'].*["']$/.test(p) || /^-?\d+$/.test(p) || /^(true|false)$/.test(p));
+      const literals = parts.every((p) => parseStringLiteral(p) !== undefined || /^-?\d+$/.test(p) || /^(true|false)$/.test(p));
       if (literals) {
         const schemas = parts.map((p) => {
           if (p === "true") return z.literal(true);
           if (p === "false") return z.literal(false);
           if (p === "null") return z.null();
           if (/^-?\d+$/.test(p)) return z.literal(Number(p));
-          return z.literal(parseStringLiteral(p) ?? p);
+          return z.literal(parseStringLiteral(p)!);
         });
         return z.union(schemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
       }
