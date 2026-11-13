@@ -1,19 +1,5 @@
 import type { CodeArrayType, CodeOrSystemType, CodePropOrParam, CodeType, SystemType } from "../model/index.ts";
-
-const TYPE_KEYWORDS = new Set([
-  "string",
-  "number",
-  "boolean",
-  "null",
-  "undefined",
-  "void",
-  "any",
-  "unknown",
-  "never",
-  "object",
-  "symbol",
-  "bigint",
-]);
+import { parseStringLiteral, parseStringLiteralUnion } from "./parseStringLiteral.ts";
 
 const SYSTEM_TYPES = new Set<SystemType>([
   "string",
@@ -36,23 +22,6 @@ const SYSTEM_TYPES = new Set<SystemType>([
   "symbol",
   "bigint",
 ]);
-
-function parseStringLiteralUnionParts(parts: string[]): string[] | null {
-  const values: string[] = [];
-  for (const part of parts) {
-    if (TYPE_KEYWORDS.has(part)) return null;
-    if (/^["'].*["']$/.test(part)) {
-      values.push(part.replace(/^["']|["']$/g, ""));
-      continue;
-    }
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(part)) {
-      values.push(part);
-      continue;
-    }
-    return null;
-  }
-  return values.length > 0 ? values : null;
-}
 
 function systemTypeToJsonSchema(t: SystemType): Record<string, unknown> {
   if (t === "string") return { type: "string" };
@@ -122,13 +91,16 @@ export function codeOrSystemTypeToJsonSchema(
     const trimmed = t.trim();
 
     if (trimmed.includes(" | ")) {
-      const parts = trimmed.split("|").map((p) => p.trim()).filter(Boolean);
-      const enumVals = parseStringLiteralUnionParts(parts);
+      const parts = trimmed.split(" | ").map((p) => p.trim()).filter(Boolean);
+      const enumVals = parseStringLiteralUnion(parts);
       if (enumVals) return { type: "string", enum: enumVals };
       return {
         oneOf: parts.map((p) => codeOrSystemTypeToJsonSchema(p, typeIndex, seen)),
       };
     }
+
+    const literal = parseStringLiteral(trimmed);
+    if (literal !== undefined) return { type: "string", enum: [literal] };
 
     if (SYSTEM_TYPES.has(trimmed as SystemType)) {
       return systemTypeToJsonSchema(trimmed as SystemType);

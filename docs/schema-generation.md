@@ -24,7 +24,7 @@ Design your tool method to take a single input object — its properties become 
 | `string`, `number`, `boolean` | `{ "type": "string" \| "number" \| "boolean" }` |
 | `Foo[]`, `Array<Foo>` | `{ "type": "array", "items": … }` |
 | Named interface / type alias | Inlined object schema with all its properties; `extends` chains are flattened in. |
-| `"a" \| "b" \| "c"` (string literal union, inline or as a type alias) | `{ "type": "string", "enum": ["a", "b", "c"] }` |
+| `"a" \| "b" \| "c"` (union of string literals, inline or as a type alias) or `"a"` (string literal, inline) | `{ "type": "string", "enum": ["a", "b", "c"] }` |
 | Other unions (`Foo \| Bar`) | `{ "oneOf": [ …, … ] }` |
 | `name?: string` (optional) | Property present, but omitted from `required`. |
 | `string \| null` | Treated as `string`; the property is still required unless also optional. |
