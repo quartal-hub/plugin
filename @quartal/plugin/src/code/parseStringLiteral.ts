@@ -1,12 +1,9 @@
 // The value of a string literal written by {@link quoteStringLiteral}, or `undefined` when the text is not a string literal
 export function parseStringLiteral(typeText: string): string | undefined {
   const t = typeText.trim();
-  if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
-    // JSON.parse instead of slicing off the quotes, because the value must also be unescaped
-    return JSON.parse(t) as string;
-  }
-  if (t.length >= 2 && t.startsWith("'") && t.endsWith("'")) return t.slice(1, -1);
-  return undefined;
+  if (t.length < 2 || !t.startsWith('"') || !t.endsWith('"')) return undefined;
+  // JSON.parse instead of slicing off the quotes, because the value must also be unescaped
+  return JSON.parse(t) as string;
 }
 
 // The values of a union of string literals, or `null` if any member is not a string literal
