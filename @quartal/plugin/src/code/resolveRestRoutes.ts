@@ -195,7 +195,7 @@ function isPrimitive(prop: CodePropOrParam, typeIndex: Map<string, CodeType>): b
   if (typeof prop.type !== "string") return false;
   const t = prop.type.trim();
   if (t === "string" || t === "number" || t === "boolean") return true;
-  if (parseStringLiteralUnion(t.split("|"))) return true;
+  if (parseStringLiteralUnion(t.split(" | "))) return true;
   const named = typeIndex.get(t);
   return !!named?.enum?.length;
 }

@@ -91,7 +91,7 @@ export function codeOrSystemTypeToJsonSchema(
     const trimmed = t.trim();
 
     if (trimmed.includes(" | ")) {
-      const parts = trimmed.split("|").map((p) => p.trim()).filter(Boolean);
+      const parts = trimmed.split(" | ").map((p) => p.trim()).filter(Boolean);
       const enumVals = parseStringLiteralUnion(parts);
       if (enumVals) return { type: "string", enum: enumVals };
       return {
