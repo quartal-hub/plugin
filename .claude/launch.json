@@ -26,9 +26,9 @@
       "port": 4323
     },
     {
-      "name": "iam-api-4322",
+      "name": "iam-api-naming-tester-4322",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "samples/iam-api", "run", "preview", "--", "--port", "4322"],
+      "runtimeArgs": ["--prefix", "samples/iam-api-naming-tester", "run", "preview", "--", "--port", "4322"],
       "port": 4322
     },
     {

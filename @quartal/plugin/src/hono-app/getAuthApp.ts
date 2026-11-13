@@ -26,6 +26,7 @@ import {
   unauthorized,
 } from "../oauth/oauthAuth.ts";
 import { registerOAuthLoginRoutes } from "./oauthLoginRoutes.ts";
+import { setExperimentalHubEnabled } from "../hub/experimentalHubServices.ts";
 import { type QrtlAuthConfig, toQrtlAuthConfig } from "../model/index.ts";
 
 /** Maps a qrtl.config `auth` mode to the OAuth default-resolution mode. */
@@ -62,6 +63,8 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   // (issuer, scope, audience, resource) that sit below the `OAUTH_*` env vars.
   const authConfig: QrtlAuthConfig = toQrtlAuthConfig(artifacts ? artifacts.auth : qrtlConfig?.auth);
   const mode = toAuthMode(authConfig.mode);
+  // The experimental Hub services accept only Quartal Hub tokens: on for "quartal-hub", off otherwise.
+  setExperimentalHubEnabled(mode === "quartal-hub");
   const manifest = artifacts?.manifest ?? await Helpers.getPluginManifest(config.pluginRootFolder);
   let resolved: ResolvedOAuthOptions | undefined;
 
@@ -113,7 +116,11 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
 
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
   const fileMap = artifacts?.files;
-  registerDocsSpaRoutes(app as Hono, { skinUrl: helper.manifest!.style.skin, docsWebUrl: config.docsWebUrl });
+  registerDocsSpaRoutes(app as Hono, {
+    skinUrl: helper.manifest!.style.skin,
+    docsWebUrl: config.docsWebUrl,
+    title: helper.manifest!.title,
+  });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),

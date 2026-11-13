@@ -7,6 +7,28 @@ function escapeHtmlAttr(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
 }
 
+function escapeHtmlText(value: string): string {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+/** Suffix of every plugin docs page title: `Auth Agent - Quartal Plugin`. */
+export const DOCS_TITLE_SUFFIX = "Quartal Plugin";
+
+/**
+ * Sets the docs page `<title>` to the plugin's title, e.g. `Auth Agent - Quartal Plugin`, so a
+ * browser tab, bookmark or history entry names the plugin rather than the shared shell.
+ * @param html The docs SPA index.html.
+ * @param pluginTitle The plugin's title (`qrtl.config` `title`, or derived from its name).
+ */
+export function injectDocsSpaTitle(html: string, pluginTitle: string | undefined): string {
+  const name = pluginTitle?.trim();
+  const titleTag = `<title>${escapeHtmlText(name ? `${name} - ${DOCS_TITLE_SUFFIX}` : DOCS_TITLE_SUFFIX)}</title>`;
+  if (/<title[^>]*>[\s\S]*?<\/title>/i.test(html)) {
+    return html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, () => titleTag);
+  }
+  return html.replace("</head>", `    ${titleTag}\n  </head>`);
+}
+
 function skinLinkTag(skinUrl: string): string {
   return `<link rel="stylesheet" id="${SKIN_LINK_ID}" href="${escapeHtmlAttr(skinUrl)}" />`;
 }

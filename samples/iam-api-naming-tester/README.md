@@ -1,4 +1,4 @@
-# @samples/iam-api
+# @samples/iam-api-naming-tester
 
 The tool classes of the Quartal IAM API (`quartal-accounting/iam`, `apps/iam-api`), ported with their
 signatures and documentation only: every method throws `not implemented`. The sample shows how a real,
@@ -13,7 +13,7 @@ API's `lib/` folder live in `src/tools/model/`, one per file.
 ## Run locally
 
 ```sh
-cd samples/iam-api
+cd samples/iam-api-naming-tester
 pnpm dev
 ```
 
