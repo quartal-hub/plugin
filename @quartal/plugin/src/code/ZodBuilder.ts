@@ -353,7 +353,7 @@ export class ZodBuilder {
     if (trimmed === "bigint") return z.bigint();
 
     if (trimmed.includes(" | ")) {
-      const parts = trimmed.split("|").map((p) => p.trim());
+      const parts = trimmed.split(" | ").map((p) => p.trim());
       const stringEnum = parseStringLiteralUnion(parts);
       if (stringEnum) {
         return z.enum(stringEnum as [string, ...string[]]);
