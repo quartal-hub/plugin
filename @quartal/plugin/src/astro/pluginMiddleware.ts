@@ -1,8 +1,14 @@
 import type { Hono } from "hono";
 
+import { isForbiddenCrossOriginRequest } from "./isForbiddenCrossOriginRequest.ts";
+
 /** Minimal structural subset of Astro's middleware context (only what this middleware reads). */
 export interface AstroMiddlewareContext {
   request: Request;
+  /** The request URL as Astro resolved it; defaults to `request.url`. */
+  url?: URL;
+  /** Whether the matched route is prerendered (static) — such routes are never origin-checked. */
+  isPrerendered?: boolean;
 }
 
 /** Astro's middleware `next()` — renders the matched Astro route and resolves to its Response. */
@@ -84,6 +90,13 @@ export interface PluginMiddlewareOptions {
    * redirects) instead of the docs shell. Ignored when `isServerPath` is given.
    */
   ownIndexPage?: boolean;
+  /**
+   * Reject cross-site form-style submissions (403) to the requests left to Astro — the plugin's
+   * own pages, endpoints and actions. The Hono-served routes are never checked: they are a
+   * cross-origin API authorized by bearer tokens, not cookies. The integration enables this in
+   * place of Astro's `security.checkOrigin`, which it turns off.
+   */
+  checkOrigin?: boolean;
 }
 
 /**
@@ -104,8 +117,13 @@ export function createPluginMiddleware(
   };
 
   return async (context, next) => {
-    const { pathname } = new URL(context.request.url);
-    if (!matches(pathname)) return next();
+    const url = context.url ?? new URL(context.request.url);
+    if (!matches(url.pathname)) {
+      if (options?.checkOrigin && !context.isPrerendered && isForbiddenCrossOriginRequest(context.request, url)) {
+        return new Response(`Cross-site ${context.request.method} form submissions are forbidden`, { status: 403 });
+      }
+      return next();
+    }
     const honoApp = await getApp();
     return honoApp.fetch(context.request);
   };

@@ -89,6 +89,41 @@ describe("createPluginMiddleware", () => {
     const machine = await mw({ request: new Request("http://x/plugin.json") }, nextResponse);
     expect(machine.status).toBe(200);
   });
+
+  it("never origin-checks the Hono routes: a cross-site body-less DELETE reaches the app", async () => {
+    const mw = createPluginMiddleware(app, { checkOrigin: true });
+    const res = await mw(
+      { request: new Request("http://x/api/calculator/add", { method: "DELETE", headers: { "Sec-Fetch-Site": "cross-site", Origin: "http://evil" } }) },
+      nextResponse,
+    );
+    // Whatever the app answers, it is the app answering — not the origin check's 403.
+    expect(await res.text()).not.toContain("form submissions are forbidden");
+  });
+
+  it("with checkOrigin, rejects cross-site form-style submissions to Astro-rendered paths", async () => {
+    const mw = createPluginMiddleware(app, { checkOrigin: true });
+    const post = (headers: Record<string, string>, extra?: { isPrerendered?: boolean }) =>
+      mw({ request: new Request("http://x/contact", { method: "POST", headers }), ...extra }, nextResponse);
+
+    expect((await post({ "Sec-Fetch-Site": "cross-site" })).status).toBe(403);
+    expect((await post({ Origin: "http://evil", "Content-Type": "application/x-www-form-urlencoded" })).status).toBe(403);
+    // Same-origin, non-form content types, prerendered routes and safe methods pass.
+    expect((await post({ "Sec-Fetch-Site": "same-origin" })).status).toBe(299);
+    expect((await post({ Origin: "http://x" })).status).toBe(299);
+    expect((await post({ Origin: "http://evil", "Content-Type": "application/json" })).status).toBe(299);
+    expect((await post({ "Sec-Fetch-Site": "cross-site" }, { isPrerendered: true })).status).toBe(299);
+    const get = await mw({ request: new Request("http://x/contact", { headers: { "Sec-Fetch-Site": "cross-site" } }) }, nextResponse);
+    expect(get.status).toBe(299);
+  });
+
+  it("without checkOrigin, cross-site submissions fall through to Astro", async () => {
+    const mw = createPluginMiddleware(app);
+    const res = await mw(
+      { request: new Request("http://x/contact", { method: "POST", headers: { "Sec-Fetch-Site": "cross-site" } }) },
+      nextResponse,
+    );
+    expect(res.status).toBe(299);
+  });
 });
 
 describe("qrtlPlugin integration", () => {
@@ -103,7 +138,12 @@ describe("qrtlPlugin integration", () => {
     await Promise.all(tempDirs.splice(0).map((d) => rm(d, { recursive: true, force: true })));
   });
 
-  async function runSetup(output: string, options?: Parameters<typeof qrtlPlugin>[0], root = "/proj") {
+  async function runSetup(
+    output: string,
+    options?: Parameters<typeof qrtlPlugin>[0],
+    root = "/proj",
+    astroConfig?: Partial<AstroConfigSetupOptions["config"]>,
+  ) {
     const integ = qrtlPlugin(options);
     let vitePlugins: { name: string }[] = [];
     let updatedConfig: Record<string, unknown> = {};
@@ -112,7 +152,7 @@ describe("qrtlPlugin integration", () => {
     const warnings: string[] = [];
     const watched: (string | URL)[] = [];
     const opts: AstroConfigSetupOptions = {
-      config: { output, root },
+      config: { output, root, ...astroConfig },
       updateConfig: (c) => {
         updatedConfig = c;
         vitePlugins = ((c as { vite?: { plugins?: { name: string }[] } }).vite?.plugins) ?? [];
@@ -185,6 +225,15 @@ describe("qrtlPlugin integration", () => {
     expect((await runSetup("server", { devToolbar: true })).updatedConfig.devToolbar).toBeUndefined();
   });
 
+  it("turns Astro's origin check off and applies it in the middleware to Astro-rendered requests", async () => {
+    const setup = await runSetup("server");
+    expect(setup.updatedConfig.security).toEqual({ checkOrigin: false });
+    expect(middlewareSource(setup.vitePlugins)).toContain("{ checkOrigin: true }");
+    // A project that disabled the check keeps it disabled everywhere.
+    const disabled = await runSetup("server", undefined, "/proj", { security: { checkOrigin: false } });
+    expect(middlewareSource(disabled.vitePlugins)).not.toContain("checkOrigin");
+  });
+
   it("virtual-middleware plugin resolves/loads generated server source", async () => {
     const { vitePlugins } = await runSetup("server");
     const src = middlewareSource(vitePlugins);
@@ -200,7 +249,7 @@ describe("qrtlPlugin integration", () => {
     await mkdir(join(withIndex, "src", "pages"), { recursive: true });
     await writeFile(join(withIndex, "src", "pages", "index.astro"), "<h1>My landing page</h1>");
     expect(middlewareSource((await runSetup("server", undefined, withIndex)).vitePlugins))
-      .toContain("{ ownIndexPage: true }");
+      .toContain("{ ownIndexPage: true, checkOrigin: true }");
 
     const withoutIndex = await tempPlugin({});
     expect(middlewareSource((await runSetup("server", undefined, withoutIndex)).vitePlugins))
