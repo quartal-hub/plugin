@@ -206,13 +206,16 @@ export class PluginApiHelper {
           ...(route.inputIn === "query" ? (c.req as any).valid("query") : {}),
           ...(route.inputIn === "body" ? (c.req as any).valid("json") : {}),
         };
-        const result = await this.execute(fileName, className, methodName, params, {
-          headers: { Authorization: c.req.header("Authorization") ?? "" },
-        });
-
-        if ("error" in result) {
-          if (result.error === "Validation failed") return c.json(result, 422);
-          return c.json(result, 500);
+        // A failure is a thrown error, never the shape of the result: a tool may return an `error` field.
+        // `HTTPException`s pass through so auth failures keep their HTTP semantics (e.g. 401 + WWW-Authenticate).
+        let result: Record<string, unknown>;
+        try {
+          result = await this.executeStrict(fileName, className, methodName, params, {
+            headers: { Authorization: c.req.header("Authorization") ?? "" },
+          });
+        } catch (error: unknown) {
+          if (error instanceof HTTPException) throw error;
+          return c.json({ error: error instanceof Error ? error.message : "Unknown error" }, 500);
         }
         return c.json(result);
       },
@@ -243,8 +246,8 @@ export class PluginApiHelper {
   /**
    * Executes a class method, resolving the class from the injected tool-module registry
    * (`config.toolModules`, generated as `tools.registry.ts`). Failures throw — resolution problems
-   * and errors thrown by the tool method alike. The MCP `tools/call` handler uses this directly so
-   * it can report execution errors per the MCP spec (`isError: true`).
+   * and errors thrown by the tool method alike. The REST handler answers them with HTTP 500 and the
+   * MCP `tools/call` handler reports them per the MCP spec (`isError: true`).
    * @param fileName File name without extension (letters, numbers, underscores, dashes).
    * @param className Class name within the file.
    * @param methodName Method name (static first, then instance).
@@ -303,35 +306,9 @@ export class PluginApiHelper {
   };
 
   /**
-   * Executes a class method like {@link executeStrict}, but wraps failures as an `{ error }` object
-   * (the REST API contract). `HTTPException`s pass through so auth failures keep their HTTP
-   * semantics (e.g. 401 + WWW-Authenticate).
-   * @param fileName File name without extension (letters, numbers, underscores, dashes).
-   * @param className Class name within the file.
-   * @param methodName Method name (static first, then instance).
-   * @param input Validated input parameters.
-   * @param authContext Authentication context carrier for the execute wrapper.
-   * @returns Always an object; a non-object result is wrapped as `{ value }`.
-   */
-  execute: ExecuteFn = async (
-    fileName: string,
-    className: string,
-    methodName: string,
-    input: Record<string, unknown>,
-    authContext?: AuthContext,
-  ): Promise<Record<string, unknown>> => {
-    try {
-      return await this.executeStrict(fileName, className, methodName, input, authContext);
-    } catch (error: unknown) {
-      if (error instanceof HTTPException) throw error;
-      return { error: error instanceof Error ? error.message : "Unknown error" };
-    }
-  };
-
-  /**
    * Executes a prompt function, resolving the class from the injected prompt-module registry
-   * (`config.promptModules`, generated as `prompts.registry.ts`). Unlike {@link execute}, the raw
-   * return value is preserved (a `string` or a `PromptResponse`) and failures throw — the MCP
+   * (`config.promptModules`, generated as `prompts.registry.ts`). Unlike {@link executeStrict}, the raw
+   * return value is preserved (a `string` or a `PromptResponse`). Failures throw — the MCP
    * `prompts/get` handler turns them into protocol errors.
    * @param fileName File name without extension (letters, numbers, underscores, dashes).
    * @param className Class name within the file.
