@@ -1,6 +1,7 @@
 import { z } from "@hono/zod-openapi";
 import type { CodeArrayType, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType } from "../model/index.ts";
 import { buildTypeIndex } from "./buildTypeIndex.ts";
+import { parseStringLiteral, parseStringLiteralUnion } from "./parseStringLiteral.ts";
 
 /** Zod schema for a function: input (single object body) and output. */
 export interface FunctionZodDefinition {
@@ -352,19 +353,19 @@ export class ZodBuilder {
     if (trimmed === "bigint") return z.bigint();
 
     if (trimmed.includes(" | ")) {
-      const parts = trimmed.split("|").map((p) => p.trim());
-      const stringEnum = this.parseStringLiteralUnionParts(parts);
+      const parts = trimmed.split(" | ").map((p) => p.trim());
+      const stringEnum = parseStringLiteralUnion(parts);
       if (stringEnum) {
-        return z.enum(stringEnum);
+        return z.enum(stringEnum as [string, ...string[]]);
       }
-      const literals = parts.every((p) => /^["'].*["']$/.test(p) || /^-?\d+$/.test(p) || /^(true|false)$/.test(p));
+      const literals = parts.every((p) => parseStringLiteral(p) !== undefined || /^-?\d+$/.test(p) || /^(true|false)$/.test(p));
       if (literals) {
         const schemas = parts.map((p) => {
           if (p === "true") return z.literal(true);
           if (p === "false") return z.literal(false);
           if (p === "null") return z.null();
           if (/^-?\d+$/.test(p)) return z.literal(Number(p));
-          return z.literal(p.replace(/^["']|["']$/g, ""));
+          return z.literal(parseStringLiteral(p)!);
         });
         return z.union(schemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
       }
@@ -372,39 +373,9 @@ export class ZodBuilder {
       return z.union(typeSchemas as unknown as [z.ZodType<unknown>, z.ZodType<unknown>, ...z.ZodType<unknown>[]]);
     }
 
+    const literal = parseStringLiteral(trimmed);
+    if (literal !== undefined) return z.literal(literal);
+
     return this.getZodForType(trimmed);
-  }
-
-  private static readonly TYPE_KEYWORDS = new Set([
-    "string",
-    "number",
-    "boolean",
-    "null",
-    "undefined",
-    "void",
-    "any",
-    "unknown",
-    "never",
-    "object",
-    "symbol",
-    "bigint",
-  ]);
-
-  /** Unquoted/quoted string literal union parts → tuple for z.enum. */
-  private parseStringLiteralUnionParts(parts: string[]): [string, ...string[]] | null {
-    const values: string[] = [];
-    for (const part of parts) {
-      if (ZodBuilder.TYPE_KEYWORDS.has(part)) return null;
-      if (/^["'].*["']$/.test(part)) {
-        values.push(part.replace(/^["']|["']$/g, ""));
-        continue;
-      }
-      if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(part)) {
-        values.push(part);
-        continue;
-      }
-      return null;
-    }
-    return values.length > 0 ? (values as [string, ...string[]]) : null;
   }
 }
