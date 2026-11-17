@@ -171,3 +171,19 @@ export default defineConfig({
 | Option | Type | Purpose |
 |---|---|---|
 | `devToolbar` | `boolean` | Show the Astro dev toolbar in `astro dev`. We hide it by default because typically is just on the way when debugging widgets inside iframe. |
+
+### Cross-origin requests and `security.checkOrigin`
+
+A plugin's API is cross-origin by design: agents, other servers and pages embedding its widgets
+call `/api/*` and `/mcp` from anywhere, authorized by bearer tokens rather than cookies. Astro's
+built-in CSRF protection ([`security.checkOrigin`](https://docs.astro.build/en/reference/configuration-reference/#securitycheckorigin))
+would answer `403` to some of those calls — for example a `DELETE` without a body — so
+`qrtlPlugin()` sets `security.checkOrigin: false` and applies the same protection itself, only
+where it is useful:
+
+- **Plugin routes** (`/api/*`, `/mcp`, `/oauth/*`, …) are never origin-checked.
+- **Your own Astro pages, endpoints and actions** rendered on demand keep the protection: a
+  cross-site `POST`, `PUT`, `PATCH` or `DELETE` with a form content type (or none) gets a `403`.
+
+You do not need to set `security.checkOrigin` in `astro.config.mjs`. Setting it to `false`
+yourself also removes the protection from your own pages.
