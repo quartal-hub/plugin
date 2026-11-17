@@ -1,5 +1,17 @@
 # @quartal/plugin
 
+## 1.1.1
+
+### Patch Changes
+
+- b126ce4: String literal values that are also TypeScript type keywords, such as `"unknown"` or `"string"`, are now treated as values. Previously, for a tool returning a field typed `"foobar" | "unknown"`, every result containing that field was rejected by MCP clients.
+- 0f710a4: Tool input fields with a union of built-in types, such as `string | number`, are now type-checked. Previously such fields accepted any value.
+- d920226: Cross-origin calls to the plugin routes (e.g. a body-less `DELETE /api/...`) are no longer rejected with `403` by Astro's CSRF protection in deployed plugins: the integration sets `security.checkOrigin: false` and applies the same origin check itself to the requests Astro renders (your own pages, endpoints and actions), so `security.checkOrigin: false` is not needed in `astro.config.mjs`.
+- 5aca590: REST routes answer HTTP 200 when a tool succeeds and its result has an `error` property. A failure is
+  detected from the thrown error, not from the shape of the result: a thrown error is answered with
+  HTTP 500 and `{ "error": "<message>" }`, and an `HTTPException` keeps its own status.
+- b126ce4: A field typed with a single string literal, such as `kind: "only"`, gets a one-value enum. Previously its schema and validation incorrectly allowed any value.
+
 ## 1.1.0
 
 ### Minor Changes
