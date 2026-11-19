@@ -244,6 +244,21 @@ importers:
         specifier: ^7.4.4
         version: 7.4.4(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.22.0))(esbuild@0.28.2)(sass@1.108.1)(yaml@2.9.1)
 
+  samples/email-inbox:
+    dependencies:
+      '@astrojs/node':
+        specifier: ^11.1.9
+        version: 11.1.9(astro@7.4.4(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.22.0))(esbuild@0.28.2)(sass@1.108.1)(yaml@2.9.1))
+      '@quartal/plugin':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin
+      '@quartal/plugin-core':
+        specifier: workspace:*
+        version: link:../../@quartal/plugin-core
+      astro:
+        specifier: ^7.4.4
+        version: 7.4.4(@types/node@22.20.1)(@vercel/functions@3.9.8(ws@8.22.0))(esbuild@0.28.2)(sass@1.108.1)(yaml@2.9.1)
+
   samples/embed-page:
     dependencies:
       '@quartal/plugin-embed':

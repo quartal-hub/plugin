@@ -1,0 +1,24 @@
+{
+  "name": "@samples/email-inbox",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Sketch of an ingress plugin: receives email for a company and delivers it to other plugins as tool calls.",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartal-hub/plugin.git",
+    "directory": "samples/email-inbox"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.9",
+    "@quartal/plugin": "workspace:*",
+    "@quartal/plugin-core": "workspace:*",
+    "astro": "^7.4.4"
+  }
+}

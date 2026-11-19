@@ -141,6 +141,8 @@ Each ingress plugin owns:
 
 Anyone can write an ingress plugin. Quartal provides the three above.
 
+A runnable sketch of the Email Inbox is in [`samples/email-inbox`](../samples/email-inbox/).
+
 ### Worked example: supplier invoice by email
 
 1. The company routes `com.quartal.email.received` with `to = invoices@acme.<domain>` →
