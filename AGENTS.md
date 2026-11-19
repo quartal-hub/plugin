@@ -35,7 +35,8 @@ The detailed documentation of the plugin project's features lives in the `websit
 (`website/src/content/docs/`). It documents **existing** features with language and presentation
 that make sense to an outside person looking to create plugins — never narrate history or
 decisions ("this was changed because…"); describe the present state only. Internal plans and
-design documents live in `docs/` (e.g. [docs/agent-plugins-alignment.md](./docs/agent-plugins-alignment.md)).
+design documents live in `docs/` (e.g. [docs/agent-plugins-alignment.md](./docs/agent-plugins-alignment.md),
+[docs/events.md](./docs/events.md)).
 Distribution/marketplace planning continues in the separate Quartal Hub project.
 
 ## No backward compatibility (pre-production)
