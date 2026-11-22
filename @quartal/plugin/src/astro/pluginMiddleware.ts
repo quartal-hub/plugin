@@ -9,6 +9,8 @@ export interface AstroMiddlewareContext {
   url?: URL;
   /** Whether the matched route is prerendered (static) — such routes are never origin-checked. */
   isPrerendered?: boolean;
+  /** Astro's per-request locals; the page session goes to `locals.qrtlSession`. */
+  locals?: Record<string, unknown>;
 }
 
 /** Astro's middleware `next()` — renders the matched Astro route and resolves to its Response. */
@@ -70,8 +72,27 @@ const DOCS_SHELL_PATHS = new Set(["/", "/mcp.html", "/swagger.html", "/docs.html
  * @param pathname URL pathname.
  */
 export function isServerPath(pathname: string): boolean {
-  if (SERVER_EXACT.has(pathname) || WIDGET_EMBED_GUIDE.test(pathname)) return true;
+  if (SERVER_EXACT.has(pathname) || WIDGET_EMBED_GUIDE.test(pathname) || EXTENSION_FILE.test(pathname)) return true;
   return SERVER_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+/** A file of an extension directory: `/<reverse-domain namespace>/<path>`. */
+const EXTENSION_FILE = /^\/[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+\/./;
+
+/** Astro's own assets and the widget pages: never behind the page sign-in. */
+const ALWAYS_OPEN = [/^\/_astro\//, /^\/_image(\/|$)/, /^\/widgets(\/|$)/];
+
+/**
+ * Turns a path glob into a matcher: `**` matches across segments, `*` within one.
+ * @param glob A path glob such as `/register/**`.
+ */
+export function pathGlobMatcher(glob: string): (pathname: string) => boolean {
+  const source = glob
+    .split(/(\*\*\/?|\*)/)
+    .map((part) => (part.startsWith("**") ? "(?:.*)" : part === "*" ? "[^/]*" : part.replace(/[.+?^${}()|[\]\\]/g, "\\$&")))
+    .join("");
+  const re = new RegExp(`^${source}$`);
+  return (pathname) => re.test(pathname);
 }
 
 /** {@link isServerPath} minus the docs shell paths — the matcher for a plugin with its own index page.
@@ -97,6 +118,13 @@ export interface PluginMiddlewareOptions {
    * place of Astro's `security.checkOrigin`, which it turns off.
    */
   checkOrigin?: boolean;
+  /**
+   * `qrtl.config` `site.access: "user"`: the plugin's own pages need a sign-in. A request without
+   * a valid page session is redirected to `/oauth/login?return_to=<page>`; with one, the session
+   * (the person and their token, from `/oauth/session`) is put in `locals.qrtlSession`. The
+   * `public` globs, widget pages and Astro's assets stay open.
+   */
+  pageAccess?: { public?: string[] };
 }
 
 /**
@@ -116,11 +144,27 @@ export function createPluginMiddleware(
     return appPromise;
   };
 
+  const publicPages = (options?.pageAccess?.public ?? []).map(pathGlobMatcher);
+  const isOpenPage = (pathname: string) =>
+    ALWAYS_OPEN.some((re) => re.test(pathname)) || publicPages.some((m) => m(pathname));
+
   return async (context, next) => {
     const url = context.url ?? new URL(context.request.url);
     if (!matches(url.pathname)) {
       if (options?.checkOrigin && !context.isPrerendered && isForbiddenCrossOriginRequest(context.request, url)) {
         return new Response(`Cross-site ${context.request.method} form submissions are forbidden`, { status: 403 });
+      }
+      if (options?.pageAccess && !context.isPrerendered && !isOpenPage(url.pathname)) {
+        const honoApp = await getApp();
+        const session = await honoApp.fetch(new Request(new URL("/oauth/session", url), {
+          headers: { cookie: context.request.headers.get("cookie") ?? "" },
+        }));
+        if (!session.ok) {
+          const login = new URL("/oauth/login", url);
+          login.searchParams.set("return_to", url.pathname + url.search);
+          return Response.redirect(login.toString(), 302);
+        }
+        if (context.locals) context.locals.qrtlSession = await session.json();
       }
       return next();
     }

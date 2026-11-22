@@ -8,6 +8,13 @@ import {
 } from "../agent-plugin/buildAgentPluginManifest.ts";
 import { buildMcpServersConfig } from "../agent-plugin/buildMcpServersConfig.ts";
 import { buildAgentPluginZip } from "../agent-plugin/buildAgentPluginZip.ts";
+import {
+  extensionDirectoryBlocks,
+  listExtensionDirectories,
+  readExtensionFile,
+} from "../agent-plugin/extensionDirectories.ts";
+import { fileMapBytes } from "../helpers/fileMap.ts";
+import { guessStaticMime } from "./staticFileUtils.ts";
 
 /** Dependencies of the plugin-info routes beyond the shared helper. */
 export interface PluginInfoRouteOptions {
@@ -39,9 +46,11 @@ export function registerPluginInfoRoutes(
   const widgetToolIds = () => helper.widgetCatalog.map((w) => w.toolId);
 
   // The Agent Plugins 1.0 manifest — the same document as the packaged `plugin.json`.
-  app.get("/plugin.json", (c) => {
+  const rootFolder = options.pluginRootFolder ?? process.cwd();
+  app.get("/plugin.json", async (c) => {
     const origin = new URL(c.req.url).origin;
-    return c.json(buildAgentPluginManifest(manifest, origin, buildQuartalExtension(widgetToolIds())));
+    const dirs = extensionDirectoryBlocks(await listExtensionDirectories(rootFolder, options.fileMap));
+    return c.json(buildAgentPluginManifest(manifest, origin, buildQuartalExtension(widgetToolIds()), dirs));
   });
 
   // The standard `mcp.json`: hosted servers on this origin plus declared external servers.
@@ -66,7 +75,7 @@ export function registerPluginInfoRoutes(
       mcpOptions: options.mcpOptions,
       origin,
       pluginInfo: await helper.getPluginInfo(origin),
-      pluginRootFolder: options.pluginRootFolder ?? process.cwd(),
+      pluginRootFolder: rootFolder,
       widgetToolIds: widgetToolIds(),
       ...(options.fileMap ? { fileMap: options.fileMap } : {}),
       ...(options.readme !== undefined ? { readme: options.readme } : {}),
@@ -75,5 +84,14 @@ export function registerPluginInfoRoutes(
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="${manifest.name.split("/").pop()?.replace(/^@/, "") ?? "plugin"}.zip"`,
     });
+  });
+
+  // Extension directories (`/<reverse-domain namespace>/<path>`), read per request so an edited
+  // file shows at once. Any other path falls through to the routes registered after these.
+  app.get("/:namespace/:path{.+}", async (c, next) => {
+    const path = decodeURIComponent(c.req.param("path"));
+    const file = await readExtensionFile(rootFolder, c.req.param("namespace"), path, options.fileMap);
+    if (!file) return next();
+    return c.body(new Uint8Array(fileMapBytes(file)), 200, { "Content-Type": guessStaticMime(path) });
   });
 }

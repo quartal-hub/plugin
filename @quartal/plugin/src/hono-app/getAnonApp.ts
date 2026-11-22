@@ -8,7 +8,7 @@ import type { PluginAppConfig } from "../model/index.ts";
 import { registerSkillRoutes } from "./skillRoutes.ts";
 import { registerAgentRoutes } from "../agents/agentRoutes.ts";
 import { registerPluginInfoRoutes } from "./pluginInfoRoutes.ts";
-import { registerDocsSpaRoutes } from "./docsSpaRoutes.ts";
+import { registerDocsSpaRoutes, siteRedirectOptions } from "./docsSpaRoutes.ts";
 import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
 import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
@@ -30,10 +30,10 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
   // The `mcp` options (server name, multi-server map) are authored in `qrtl.config`; direct
   // callers (tests, non-Astro hosts) may pass them explicitly instead. An injected artifacts
   // snapshot is authoritative — with one present, `qrtl.config` is never loaded from disk.
-  if (config.mcp === undefined) {
-    config.mcp = config.artifacts
-      ? config.artifacts.mcp
-      : (await Helpers.loadQrtlConfig(config.pluginRootFolder))?.mcp;
+  if (config.mcp === undefined || config.site === undefined) {
+    const qrtlConfig = config.artifacts ? undefined : await Helpers.loadQrtlConfig(config.pluginRootFolder);
+    if (config.mcp === undefined) config.mcp = config.artifacts ? config.artifacts.mcp : qrtlConfig?.mcp;
+    if (config.site === undefined) config.site = config.artifacts ? config.artifacts.site : qrtlConfig?.site;
   }
   const helper = new PluginApiHelper("/api", config);
   await helper.init();
@@ -45,6 +45,7 @@ export async function getAnonApp(config?: PluginAppConfig): Promise<Hono> {
     skinUrl: helper.manifest!.style.skin,
     docsWebUrl: config.docsWebUrl,
     title: helper.manifest!.title,
+    ...siteRedirectOptions(config.site, helper.manifest!.name),
   });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {

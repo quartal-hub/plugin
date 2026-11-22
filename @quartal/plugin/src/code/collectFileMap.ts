@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import type { PluginFileMapEntry } from "../model/index.ts";
+import { discoverExtensionDirectories } from "../agent-plugin/extensionDirectories.ts";
 
 /** Extensions stored as UTF-8 text in the file map; everything else is base64. */
 const TEXT_EXTENSIONS = new Set([
@@ -28,19 +29,22 @@ async function* walkFiles(dir: string): AsyncGenerator<string> {
 }
 
 /**
- * Collects the plugin's `skills/` and `agents/` trees into the build-time file map that codegen
- * inlines into the artifacts module (dotfiles skipped, deterministic order). Text files are stored
- * as UTF-8 strings, others base64. Missing directories contribute nothing — the map is emitted
- * even when empty, so the runtime knows "no skills" from the build rather than probing disk.
+ * Collects the plugin's `skills/` and `agents/` trees and its extension directories into the
+ * build-time file map that codegen inlines into the artifacts module (dotfiles skipped,
+ * deterministic order). Text files are stored as UTF-8 strings, others base64. Missing directories
+ * contribute nothing — the map is emitted even when empty, so the runtime knows "no skills" from
+ * the build rather than probing disk.
  * @param cwd Plugin root directory.
- * @param dirs Top-level directories to capture. Default `["skills", "agents"]`.
+ * @param dirs Top-level directories to capture. Default: `skills`, `agents` and the extension
+ *   directories (`<reverse-domain namespace>/`).
  * @param onWarning Sink for large-file warnings. Defaults to `console.warn`.
  */
 export async function collectPluginFileMap(
   cwd: string,
-  dirs: readonly string[] = ["skills", "agents"],
+  dirs?: readonly string[],
   onWarning: (message: string) => void = (m) => console.warn(`[qrtl-plugin-codegen] ${m}`),
 ): Promise<PluginFileMapEntry[]> {
+  dirs ??= ["skills", "agents", ...(await discoverExtensionDirectories(cwd))];
   const entries: PluginFileMapEntry[] = [];
   for (const dir of dirs) {
     const root = join(cwd, dir);

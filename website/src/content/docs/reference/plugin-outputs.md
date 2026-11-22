@@ -22,6 +22,7 @@ tool metadata for you. This page lists exactly what you author and exactly what 
 | `skills/<name>/SKILL.md` | Markdown + YAML frontmatter ([Agent Skills](https://agentskills.io) standard) | Optional. Skills can include extra folders such as `assets/`, `scripts/` and `references/`. |
 | `agents/<name>.md` or `.json` | Claude agent format | Optional. Ready-made agent definitions that use the plugin's tools and skills. |
 | `public/**` | Any static files | Served at the site root. |
+| `<namespace>/**` (e.g. `com.example.product/`) | Any files | Optional. An **extension directory**: content for an [Agent Plugins](https://agent-plugins.org/specification) extension, named after its reverse-domain namespace. Served at the same path, packaged into `/plugin.zip` and listed in `plugin.json` as `extensions["<namespace>"]: { path, files }`. Clients that do not know the extension ignore it. `com.quartal.plugin` is reserved. |
 | `README.md` | Markdown | Served at `/readme.md` and shown in the built-in docs site. |
 
 ## Generated files

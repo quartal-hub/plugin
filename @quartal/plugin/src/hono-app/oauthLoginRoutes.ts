@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Context, Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
+import type { QuartalPluginContext } from "@quartal/plugin-core";
 import {
   getAuthorizationEndpoint,
   getTokenEndpoint,
@@ -19,7 +20,11 @@ import {
  *   and redirects the browser to the authorization endpoint.
  * - `GET /oauth/callback` — exchanges the code for a token **server-side** (no CORS dependency on
  *   the authorization server) and hands the token to the docs SPA in the URL fragment, which is
- *   never sent to a server.
+ *   never sent to a server. A login started by a page (`/oauth/login?return_to=/path`) instead
+ *   keeps the token in the HttpOnly page-session cookie and returns the browser to that page.
+ * - `GET /oauth/session` — the page session's person and token (401 without one); same-origin
+ *   pages read it to call the plugin's API or embed its widgets.
+ * - `GET /oauth/logout` — ends the page session.
  *
  * The client_id: a pre-registered `clientId` (custom mode / `OAUTH_CLIENT_ID`) wins when set —
  * Auth0 and Entra ID have no CIMD. Otherwise the plugin's own metadata URL is used, except on
@@ -32,6 +37,18 @@ const LOCALHOST_CLIENT_METADATA_URL = "https://plugin.quartal.com/.well-known/oa
 
 /** Cookie carrying the pending login's PKCE verifier, state and redirect parameters. */
 const LOGIN_COOKIE = "qrtl_oauth_login";
+
+/** HttpOnly cookie carrying the page session's access token (`site.access: "user"`). */
+export const SESSION_COOKIE = "qrtl_session";
+
+/**
+ * A safe `return_to` for a page login: a same-origin absolute path, never `//host` or a URL.
+ * @param value The requested path.
+ */
+export function safeReturnPath(value: string | undefined): string | undefined {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return undefined;
+  return value;
+}
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
@@ -63,6 +80,8 @@ interface PendingLogin {
   verifier: string;
   clientId: string;
   redirectUri: string;
+  /** Set for a login started by a page: where to return, with the token in the session cookie. */
+  returnTo?: string;
 }
 
 /** Redirects to the docs SPA root with values in the URL fragment (kept out of server logs). */
@@ -77,8 +96,15 @@ function fragmentRedirect(c: Context, params: Record<string, string>): Response 
  * @param app The Hono app.
  * @param resolved Resolved OAuth options (issuer, scopes, optional pre-registered clientId).
  * @param clientName Human-readable client name advertised in the CIMD document (the plugin title).
+ * @param verifyToken Verifies the page session's token (see `createTokenVerifier`); without it
+ *   `/oauth/session` answers 401.
  */
-export function registerOAuthLoginRoutes(app: Hono, resolved: ResolvedOAuthOptions, clientName: string): void {
+export function registerOAuthLoginRoutes(
+  app: Hono,
+  resolved: ResolvedOAuthOptions,
+  clientName: string,
+  verifyToken?: (token: string) => Promise<QuartalPluginContext | undefined>,
+): void {
   app.get("/.well-known/oauth/client-metadata.json", (c) => {
     const origin = originOf(c);
     return c.json({
@@ -101,6 +127,7 @@ export function registerOAuthLoginRoutes(app: Hono, resolved: ResolvedOAuthOptio
       verifier: base64url(randomBytes(48)),
       clientId: clientIdFor(resolved, origin),
       redirectUri: `${origin}/oauth/callback`,
+      ...(safeReturnPath(c.req.query("return_to")) ? { returnTo: safeReturnPath(c.req.query("return_to")) } : {}),
     };
     setCookie(c, LOGIN_COOKIE, base64url(Buffer.from(JSON.stringify(pending))), {
       httpOnly: true,
@@ -174,9 +201,31 @@ export function registerOAuthLoginRoutes(app: Hono, resolved: ResolvedOAuthOptio
       return fragmentRedirect(c, { auth_error: message });
     }
     const token = await res.json() as { access_token: string; token_type?: string; expires_in?: number };
+    if (pending.returnTo) {
+      setCookie(c, SESSION_COOKIE, token.access_token, {
+        httpOnly: true,
+        sameSite: "Lax",
+        secure: originOf(c).startsWith("https:"),
+        path: "/",
+        ...(token.expires_in ? { maxAge: token.expires_in } : {}),
+      });
+      return c.redirect(pending.returnTo, 302);
+    }
     return fragmentRedirect(c, {
       access_token: token.access_token,
       ...(token.expires_in ? { expires_in: String(token.expires_in) } : {}),
     });
+  });
+
+  app.get("/oauth/session", async (c) => {
+    const token = getCookie(c, SESSION_COOKIE);
+    const context = token && verifyToken ? await verifyToken(token) : undefined;
+    if (!context) return c.json({ error: "no session" }, 401);
+    return c.json(context, 200, { "Cache-Control": "no-store" });
+  });
+
+  app.get("/oauth/logout", (c) => {
+    deleteCookie(c, SESSION_COOKIE, { path: "/" });
+    return c.redirect(safeReturnPath(c.req.query("return_to")) ?? "/", 302);
   });
 }

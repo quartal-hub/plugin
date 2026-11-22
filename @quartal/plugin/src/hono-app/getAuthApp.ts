@@ -9,12 +9,13 @@ import type { AuthContext, PluginAppConfig, QuartalPluginContext } from "../mode
 import { registerSkillRoutes } from "./skillRoutes.ts";
 import { registerAgentRoutes } from "../agents/agentRoutes.ts";
 import { registerPluginInfoRoutes } from "./pluginInfoRoutes.ts";
-import { registerDocsSpaRoutes } from "./docsSpaRoutes.ts";
+import { registerDocsSpaRoutes, siteRedirectOptions } from "./docsSpaRoutes.ts";
 import { registerPublicFolderRoutes } from "./publicFolderRoutes.ts";
 import { mcpServerDisplayName } from "./pluginMetadata.ts";
 import { registerWidgetAssetRoutes, resolveWidgetEntries } from "../widgets/runtimeWidgets.ts";
 import { registerWidgetEmbedRoutes } from "../widgets/widgetEmbedRoutes.ts";
 import {
+  createTokenVerifier,
   getOAuthContextFromKv,
   getProtectedResourceMetadataDoc,
   getProtectedResourceMetadataUrl,
@@ -58,6 +59,9 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
   const qrtlConfig = artifacts ? undefined : await Helpers.loadQrtlConfig(config.pluginRootFolder);
   if (config.mcp === undefined) {
     config.mcp = artifacts ? artifacts.mcp : qrtlConfig?.mcp;
+  }
+  if (config.site === undefined) {
+    config.site = artifacts ? artifacts.site : qrtlConfig?.site;
   }
   // The `auth` value is the mode string or the object form carrying app-default OAuth values
   // (issuer, scope, audience, resource) that sit below the `OAUTH_*` env vars.
@@ -111,7 +115,8 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     app.get("/.well-known/oauth-protected-resource", (c) => c.json(metadata(c.req.url)));
     app.get("/.well-known/oauth-protected-resource/:path{.+}", (c) => c.json(metadata(c.req.url)));
     // Browser login for the docs site (CIMD client metadata + /oauth/login + /oauth/callback).
-    registerOAuthLoginRoutes(app as Hono, oauthResolved, manifest.title ?? manifest.name);
+    // ...and the page session of `site.access: "user"` (the token in an HttpOnly cookie).
+    registerOAuthLoginRoutes(app as Hono, oauthResolved, manifest.title ?? manifest.name, createTokenVerifier(oauthResolved));
   }
 
   const mcpOptions = typeof config.mcp === "object" ? config.mcp : undefined;
@@ -120,6 +125,7 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     skinUrl: helper.manifest!.style.skin,
     docsWebUrl: config.docsWebUrl,
     title: helper.manifest!.title,
+    ...siteRedirectOptions(config.site, helper.manifest!.name),
   });
   registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {

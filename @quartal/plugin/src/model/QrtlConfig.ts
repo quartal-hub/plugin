@@ -28,6 +28,31 @@ export interface QrtlAuthConfig {
 }
 
 /**
+ * What the plugin's web site serves to browsers: its start page and who may open its pages.
+ * The machine routes (`/mcp`, `/api/*`, `/plugin.json`, …) are not affected.
+ */
+export interface QrtlSiteConfig {
+  /**
+   * What `/` serves: `"docs"` (default) the docs site; `"pages"` the plugin's own pages
+   * (`src/pages/index.*`), with no docs site; or `{ redirect }` a redirect to a page elsewhere,
+   * e.g. the plugin's page in a catalog. `{name}` in the URL is replaced with the plugin's name
+   * and `{origin}` with its origin, both URL-encoded.
+   */
+  root?: "docs" | "pages" | { redirect: string };
+  /**
+   * Who may open the plugin's own pages (`src/pages/**`): `"anon"` (default) anyone; `"user"` a
+   * person signed in with the plugin's `auth`. Requires an `auth` mode other than `"anon"`. A page
+   * reads the signed-in person from `Astro.locals.qrtlSession`.
+   */
+  access?: "anon" | "user";
+  /**
+   * With `access: "user"`, the pages anyone may open: path globs, `*` within one segment and `**`
+   * across segments (e.g. `["/register/**"]`). Widget pages are always open: MCP clients load them.
+   */
+  public?: string[];
+}
+
+/**
  * Quartal Plugin configuration (`qrtl.config.ts` / `.js` / `.mjs` / `.json`) — the single place to
  * configure a plugin: identity, visual style, MCP options, auth mode, deploy target, and widget CSP.
  * Every identity field defaults from the corresponding `package.json` field; a value here takes
@@ -75,6 +100,8 @@ export interface QrtlConfig {
    * resource). `OAUTH_*` env vars override the object's values at runtime.
    */
   auth?: QrtlAuthMode | QrtlAuthConfig;
+  /** The web site: start page and page access ({@link QrtlSiteConfig}). */
+  site?: QrtlSiteConfig;
   /** Deployment target metadata (org/app), used by deploy tooling. */
   deploy?: { org?: string; app?: string };
   /** Shared and per-widget CSP for the sandboxed MCP Apps iframes. */
