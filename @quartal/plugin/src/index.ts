@@ -74,7 +74,7 @@ export { Helpers } from "./helpers/Helpers.ts";
 export { parseFrontmatter } from "./helpers/parseFrontmatter.ts";
 export type { Frontmatter } from "./helpers/parseFrontmatter.ts";
 export { defineQrtlConfig, toQrtlAuthConfig } from "./model/QrtlConfig.ts";
-export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig } from "./model/QrtlConfig.ts";
+export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig, QrtlSiteConfig } from "./model/QrtlConfig.ts";
 
 // Cache + plugin cache helper
 export { getPluginCache, MemoryCache, setPluginCache } from "./cache/PluginCache.ts";
@@ -149,6 +149,14 @@ export { buildMcpServerEntries, buildMcpServersConfig } from "./agent-plugin/bui
 export { buildAgentPluginZip } from "./agent-plugin/buildAgentPluginZip.ts";
 export type { BuildAgentPluginZipInput } from "./agent-plugin/buildAgentPluginZip.ts";
 export { resolveMcpServers } from "./agent-plugin/resolveMcpServers.ts";
+export {
+  discoverExtensionDirectories,
+  extensionDirectoryBlocks,
+  isExtensionNamespace,
+  listExtensionDirectories,
+  readExtensionFile,
+} from "./agent-plugin/extensionDirectories.ts";
+export type { ExtensionDirectoryBlock } from "./agent-plugin/extensionDirectories.ts";
 export type {
   ResolvedExternalMcpServer,
   ResolvedLocalMcpServer,

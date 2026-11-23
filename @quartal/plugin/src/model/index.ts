@@ -24,7 +24,7 @@ export type {
   HubSelectedCompany,
 } from "./hub/index.ts";
 export { defineQrtlConfig, toQrtlAuthConfig } from "./QrtlConfig.ts";
-export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig } from "./QrtlConfig.ts";
+export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig, QrtlSiteConfig } from "./QrtlConfig.ts";
 export type {
   ExecuteFn,
   FetchWidgetHtml,

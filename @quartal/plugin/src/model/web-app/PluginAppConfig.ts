@@ -4,6 +4,7 @@ import type { AuthContext } from "../AuthContext.ts";
 import type { FetchWidgetHtml } from "./FetchWidgetHtml.ts";
 import type { PluginRuntimeArtifacts } from "./PluginRuntimeArtifacts.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
+import type { QrtlSiteConfig } from "../QrtlConfig.ts";
 
 /**
  * A static registry of tool modules keyed by file name (basename without extension). Generated as
@@ -80,6 +81,12 @@ export interface PluginAppConfig {
    * May be set to `false` to disable the MCP server. `true`/unset enables it.
    */
   mcp?: McpServerOptions | boolean;
+
+  /**
+   * The web site's start page and page access (the `qrtl.config` `site` options). When unset, read
+   * from the artifacts snapshot or `qrtl.config`.
+   */
+  site?: QrtlSiteConfig;
 
   /** Defines the authentication scheme for the API. */
   auth?: {

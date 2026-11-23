@@ -8,6 +8,7 @@ import { Helpers } from "../helpers/Helpers.ts";
 import { buildFilesZip, collectZipEntries, type ZipFileEntry } from "../hono-app/skillZip.ts";
 import { buildAgentPluginManifest, buildClaudePluginManifest, buildQuartalExtension } from "./buildAgentPluginManifest.ts";
 import { buildMcpServersConfig } from "./buildMcpServersConfig.ts";
+import { extensionDirectoryBlocks, listExtensionDirectories } from "./extensionDirectories.ts";
 
 const encoder = new TextEncoder();
 
@@ -54,9 +55,10 @@ export interface BuildAgentPluginZipInput {
 export async function buildAgentPluginZip(input: BuildAgentPluginZipInput): Promise<Uint8Array> {
   const { manifest, mcpOptions, origin, pluginRootFolder } = input;
   const extension = buildQuartalExtension(input.widgetToolIds);
+  const extensionDirs = await listExtensionDirectories(pluginRootFolder, input.fileMap);
 
   const entries: ZipFileEntry[] = [
-    jsonEntry("plugin.json", buildAgentPluginManifest(manifest, origin, extension)),
+    jsonEntry("plugin.json", buildAgentPluginManifest(manifest, origin, extension, extensionDirectoryBlocks(extensionDirs))),
     jsonEntry("mcp.json", buildMcpServersConfig(manifest, mcpOptions, origin, "standard")),
     jsonEntry(".claude-plugin/plugin.json", buildClaudePluginManifest(manifest, origin)),
     jsonEntry(".mcp.json", buildMcpServersConfig(manifest, mcpOptions, origin, "claude")),
@@ -64,10 +66,10 @@ export async function buildAgentPluginZip(input: BuildAgentPluginZipInput): Prom
   ];
 
   if (input.fileMap) {
-    // The map holds exactly the skills/ and agents/ trees, already root-relative — the zip layout.
+    // The map holds the skills/, agents/ and extension directory trees, root-relative — the zip layout.
     entries.push(...input.fileMap.map((f) => ({ path: f.path, data: fileMapBytes(f) })));
   } else {
-    for (const dir of ["skills", "agents"]) {
+    for (const dir of ["skills", "agents", ...Object.keys(extensionDirs)]) {
       const abs = join(pluginRootFolder, dir);
       if (await isDirectory(abs)) {
         entries.push(...(await collectZipEntries(abs, dir)));

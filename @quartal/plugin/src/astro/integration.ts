@@ -91,6 +91,8 @@ export function buildPluginMiddlewareSource(
     qrtlPluginDir?: string;
     ownIndexPage?: boolean;
     checkOrigin?: boolean;
+    /** `site.access: "user"`: the pages need a sign-in, except these public globs. */
+    pageAccess?: { public?: string[] };
   },
 ): string {
   // Any non-anon mode gets the auth app; getAuthApp reads the exact mode (quartal-hub / custom)
@@ -109,6 +111,7 @@ export function buildPluginMiddlewareSource(
   const middlewareFlags = [
     ...(opts.ownIndexPage ? ["ownIndexPage: true"] : []),
     ...(opts.checkOrigin ? ["checkOrigin: true"] : []),
+    ...(opts.pageAccess ? [`pageAccess: ${JSON.stringify(opts.pageAccess)}`] : []),
   ];
   const middlewareOpts = middlewareFlags.length ? `, { ${middlewareFlags.join(", ")} }` : "";
   return [
@@ -212,8 +215,14 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
         // A plugin's own src/pages/index.* overrides the docs shell at "/": Astro renders it, and
         // only the machine routes stay with the Hono app. Checked at config time, like the auth
         // mode — adding or removing the page needs a dev-server restart.
-        const ownIndexPage = root ? hasOwnIndexPage(root) : false;
+        // `site.root` decides first: "pages" always gives "/" to Astro, a redirect keeps it with Hono.
+        const site = qrtlConfig?.site;
+        const ownIndexPage = site?.root === "pages" || (typeof site?.root !== "object" && (root ? hasOwnIndexPage(root) : false));
         if (ownIndexPage) logger?.info("src/pages/index.* found — it overrides the plugin docs page at /.");
+        if (site?.access === "user" && auth === "anon") {
+          throw new Error('qrtl.config `site.access: "user"` needs an `auth` mode other than "anon".');
+        }
+        const pageAccess = site?.access === "user" ? { public: site.public ?? [] } : undefined;
 
         const source = buildPluginMiddlewareSource({
           auth,
@@ -223,6 +232,7 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
           artifactsImport,
           qrtlPluginDir: QRTL_PLUGIN_DIR,
           ownIndexPage,
+          pageAccess,
           // Astro's own origin check is turned off below; the middleware keeps it for the
           // requests Astro renders unless the project disabled it.
           checkOrigin: config.security?.checkOrigin !== false,

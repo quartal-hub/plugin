@@ -6,7 +6,7 @@ import type {
   PluginManifest,
 } from "@quartal/plugin-core";
 import type { McpServerOptions } from "./McpServerOptions.ts";
-import type { QrtlAuthConfig, QrtlAuthMode } from "../QrtlConfig.ts";
+import type { QrtlAuthConfig, QrtlAuthMode, QrtlSiteConfig } from "../QrtlConfig.ts";
 import type { PluginFileMapEntry } from "./PluginFileMapEntry.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
 
@@ -44,6 +44,8 @@ export interface PluginRuntimeArtifacts {
   auth?: QrtlAuthMode | QrtlAuthConfig;
   /** The `qrtl.config` `mcp` options (absent when not configured). */
   mcp?: McpServerOptions | boolean;
+  /** The `qrtl.config` `site` options (absent when not configured). */
+  site?: QrtlSiteConfig;
   /** Widget entries resolved at build time (`src/pages/widgets/` + the `qrtl.config` `widgets` section). */
   widgetResources?: WidgetEntry[];
   /** The `skills/` and `agents/` trees captured at build time (contents inlined). */

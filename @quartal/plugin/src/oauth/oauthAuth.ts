@@ -440,6 +440,34 @@ function computeExpireIn(claims: JWTPayload, cacheTtlMs: number): number {
 }
 
 /**
+ * Creates a verifier of access tokens against the resolved issuer, audience and JWKS: resolves to
+ * the caller's context, or to undefined when the token is not valid (expired, wrong issuer or
+ * audience, bad signature). Verified contexts are cached in the plugin cache keyed by the token.
+ * Used for the page session, where the token travels in a cookie instead of a header.
+ * @param resolved Resolved OAuth options.
+ */
+export function createTokenVerifier(resolved: ResolvedOAuthOptions): (token: string) => Promise<QuartalPluginContext | undefined> {
+  return async (token) => {
+    const cache = getPluginCache();
+    const cached = await cache.get<QuartalPluginContext>(kvKey(token));
+    if (cached) return cached;
+    try {
+      const { payload } = await jwtVerify(token, await getJwks(resolved), {
+        issuer: resolved.issuer,
+        audience: resolved.audience,
+        algorithms: resolved.algorithms,
+      });
+      const context = resolved.claimsToContext(payload, token);
+      const expireIn = computeExpireIn(payload, resolved.cacheTtlMs);
+      if (expireIn > 0) await cache.set(kvKey(token), context, { ttlMs: expireIn });
+      return context;
+    } catch {
+      return undefined;
+    }
+  };
+}
+
+/**
  * Creates a Hono middleware that verifies OAuth JWT bearer tokens using the issuer's JWKS.
  *
  * On success the middleware sets `c.var.context` to a QuartalPluginContext and caches it in the plugin cache keyed by the token.

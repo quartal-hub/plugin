@@ -127,6 +127,30 @@ In multi-server mode each local server is mounted at `/mcp/<name>`; the server n
 also served at `/mcp`. Prompts are served on `main` (or the first local server); each widget is
 served by the server that owns its tool.
 
+### `site`
+
+What the plugin's web site serves to browsers. The machine routes (`/mcp`, `/api/*`,
+`/plugin.json`, …) are not affected.
+
+| Option | Type | Purpose |
+|---|---|---|
+| `site.root` | `"docs"` \| `"pages"` \| `{ redirect }` | What `/` serves. `"docs"` (default): the built-in docs site. `"pages"`: your own `src/pages/index.*`, with no docs site. `{ redirect: "https://…" }`: a redirect, e.g. to the plugin's page in a catalog; `{name}` and `{origin}` in the URL are replaced with the plugin's name and origin. |
+| `site.access` | `"anon"` \| `"user"` | Who may open your own pages (`src/pages/**`). `"user"` needs a sign-in with the plugin's `auth` (which must not be `"anon"`): a visitor without a session is sent through `/oauth/login` and back. |
+| `site.public` | `string[]` | With `access: "user"`, the pages open to anyone, as path globs (`*` within a segment, `**` across segments), e.g. `["/register/**"]`. Widget pages are always open. |
+
+With `access: "user"`, a page reads the signed-in person from `Astro.locals.qrtlSession` (the
+same context tools receive, including the access token for calling the plugin's API or embedding
+its widgets). In the browser, `GET /oauth/session` returns the same and `GET /oauth/logout` ends
+the session. The token is kept in an HttpOnly cookie for its lifetime; after it expires the next
+page load signs in again.
+
+```ts
+export default defineQrtlConfig({
+  auth: "quartal-hub",
+  site: { root: "pages", access: "user", public: ["/register/**"] },
+});
+```
+
 ### `deploy`
 
 Deployment target metadata used by deploy tooling: `{ org?: string, app?: string }` — the Quartal

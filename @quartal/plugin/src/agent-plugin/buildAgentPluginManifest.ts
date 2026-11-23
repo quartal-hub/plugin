@@ -48,17 +48,23 @@ function manifestIdentity(manifest: PluginManifest, origin?: string): Partial<Ag
  * @param manifest Resolved plugin manifest.
  * @param origin Request origin (homepage fallback).
  * @param extension The `com.quartal.plugin` extension block (see {@link buildQuartalExtension}).
+ * @param otherExtensions Further `extensions` entries: the plugin's extension directories.
  */
 export function buildAgentPluginManifest(
   manifest: PluginManifest,
   origin?: string,
   extension?: QuartalPluginExtension,
+  otherExtensions: Record<string, object> = {},
 ): AgentPluginManifest {
+  const extensions: Record<string, Record<string, unknown>> = {
+    ...(otherExtensions as Record<string, Record<string, unknown>>),
+    ...(extension ? { [QUARTAL_EXTENSION_NAMESPACE]: extension as Record<string, unknown> } : {}),
+  };
   return {
     $schema: AGENT_PLUGIN_MANIFEST_SCHEMA,
     name: agentPluginName(manifest.name),
     ...manifestIdentity(manifest, origin),
-    ...(extension ? { extensions: { [QUARTAL_EXTENSION_NAMESPACE]: extension as Record<string, unknown> } } : {}),
+    ...(Object.keys(extensions).length ? { extensions } : {}),
   };
 }
 
