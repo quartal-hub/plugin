@@ -1,5 +1,12 @@
 # @quartal/plugin-vue
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [620f12d]
+  - @quartal/plugin@1.2.0
+
 ## 1.0.4
 
 ### Patch Changes
