@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { registerOAuthLoginRoutes } from "../src/hono-app/oauthLoginRoutes.ts";
 import { resolveOAuthOptions } from "../src/index.ts";
+import { stubAuthServer } from "./helpers/authServer.ts";
 
 function appWithLoginRoutes(opts?: { clientId?: string; issuer?: string }) {
   const app = new Hono();
@@ -23,6 +24,7 @@ function stubDiscovery(issuer: string, tokenResponse?: Record<string, unknown>) 
     calls.push({ url: u, body: typeof init?.body === "object" && init.body instanceof URLSearchParams ? init.body : undefined });
     if (u.includes("/.well-known/openid-configuration")) {
       return new Response(JSON.stringify({
+        issuer,
         authorization_endpoint: `${issuer}/auth`,
         token_endpoint: `${issuer}/token`,
         jwks_uri: `${issuer}/certs`,
@@ -36,7 +38,10 @@ function stubDiscovery(issuer: string, tokenResponse?: Record<string, unknown>) 
   return calls;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("client metadata document (CIMD)", () => {
   it("serves the plugin's own metadata with the request origin", async () => {
@@ -148,5 +153,33 @@ describe("/oauth/callback", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("auth_error=");
+  });
+});
+
+describe("authorization-server discovery", () => {
+  it("refuses discovery metadata naming another issuer", async () => {
+    const issuer = "https://iss-mismatch.example.com";
+    stubAuthServer(issuer, { metadata: { issuer: "https://evil.example.com" } });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await appWithLoginRoutes({ issuer }).request("https://my-plugin.example.com/oauth/login");
+    expect(res.status).toBe(500);
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({
+      cause: expect.objectContaining({ code: "OAUTH_JSON_ATTRIBUTE_COMPARISON_FAILED" }),
+    }));
+  });
+
+  it("allows plain HTTP only for a loopback issuer", async () => {
+    const remote = "http://iss-plain.example.com";
+    const remoteRequests = stubAuthServer(remote);
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect((await appWithLoginRoutes({ issuer: remote }).request("https://my-plugin.example.com/oauth/login")).status).toBe(500);
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({
+      cause: expect.objectContaining({ code: "OAUTH_HTTP_REQUEST_FORBIDDEN" }),
+    }));
+    expect(remoteRequests).toEqual([]);
+
+    const local = "http://localhost:8080/realms/dev";
+    stubAuthServer(local);
+    expect((await appWithLoginRoutes({ issuer: local }).request("http://localhost:4321/oauth/login")).status).toBe(302);
   });
 });

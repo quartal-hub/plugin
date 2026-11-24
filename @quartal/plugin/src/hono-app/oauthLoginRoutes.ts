@@ -6,6 +6,7 @@ import type { QuartalPluginContext } from "@quartal/plugin-core";
 import {
   getAuthorizationEndpoint,
   getTokenEndpoint,
+  isLoopbackUrl,
   type ResolvedOAuthOptions,
 } from "../oauth/oauthAuth.ts";
 
@@ -50,18 +51,12 @@ export function safeReturnPath(value: string | undefined): string | undefined {
   return value;
 }
 
-const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
-
 function base64url(buf: Buffer): string {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function originOf(c: Context): string {
   return new URL(c.req.url).origin;
-}
-
-function isLocalOrigin(origin: string): boolean {
-  return LOCAL_HOSTNAMES.has(new URL(origin).hostname);
 }
 
 function clientMetadataUrl(origin: string): string {
@@ -71,7 +66,7 @@ function clientMetadataUrl(origin: string): string {
 /** The client_id for a login started from `origin` — see the module doc for the selection rules. */
 function clientIdFor(resolved: ResolvedOAuthOptions, origin: string): string {
   if (resolved.clientId) return resolved.clientId;
-  return isLocalOrigin(origin) ? LOCALHOST_CLIENT_METADATA_URL : clientMetadataUrl(origin);
+  return isLoopbackUrl(origin) ? LOCALHOST_CLIENT_METADATA_URL : clientMetadataUrl(origin);
 }
 
 /** State stored in the login cookie between /oauth/login and /oauth/callback. */

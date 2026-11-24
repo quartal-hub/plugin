@@ -168,7 +168,12 @@ Notes:
 Any standards-compliant OAuth2 / OIDC server works, as long as it can:
 
 1. **Serve OIDC discovery** at `<issuer>/.well-known/openid-configuration` with a `jwks_uri` and
-   `token_endpoint` (or you set `OAUTH_JWKS_URI` / `OAUTH_TOKEN_URL` explicitly).
+   `token_endpoint` (or you set `OAUTH_JWKS_URI` / `OAUTH_TOKEN_URL` explicitly). The document's
+   `issuer` must equal the configured issuer exactly, including any trailing slash, and the
+   issuer must use HTTPS — plain HTTP is accepted only for `localhost`, `127.0.0.1` and `[::1]`.
+   A development server under any other host name, such as `http://keycloak:8080` on a Docker
+   network or a LAN address, must use HTTPS too, or be reached through one of those loopback
+   addresses.
 2. **Issue JWT access tokens** signed with `RS256` or `ES256`, with the `iss` claim matching the
    issuer and the `aud` claim matching your configured audience/resource.
 3. Ideally include the standard user-info claims — `sub`, `email`, `name` /
