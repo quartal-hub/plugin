@@ -1,5 +1,12 @@
 # @quartal/plugin
 
+## 1.3.0
+
+### Minor Changes
+
+- 308cd27: OIDC discovery requires the discovery document's `issuer` to equal the configured issuer exactly (including any trailing slash) and HTTPS, except for `localhost`, `127.0.0.1` and `[::1]`. A plugin whose issuer fails these checks rejects every bearer token with 401, unless `jwksUri` / `OAUTH_JWKS_URI` is set.
+- 308cd27: The docs-site login rejects a callback whose `iss` parameter isn't the configured issuer (RFC 9207).
+
 ## 1.2.0
 
 ### Minor Changes
