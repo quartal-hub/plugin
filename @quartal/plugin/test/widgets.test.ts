@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
@@ -19,6 +18,7 @@ import {
   type WidgetEntry,
   withWidgetOrigin,
 } from "../src/index.ts";
+import { serveForTest, type TestServer } from "./helpers/serveForTest.ts";
 
 const test1Dir = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
 
@@ -167,7 +167,7 @@ describe("resolveWidgetEntries (runtime discovery + qrtl.config merge)", () => {
 });
 
 describe("widget-assets passthrough (CORS for cross-origin module loads)", () => {
-  let server: { close: () => void };
+  let server: TestServer;
   let baseUrl = "";
 
   beforeAll(async () => {
@@ -175,12 +175,7 @@ describe("widget-assets passthrough (CORS for cross-origin module loads)", () =>
     // Stand-in for the adapter's static /_astro serving (no CORS headers of its own).
     app.get("/_astro/chunk.js", (c) => c.text("export const v = 1;", 200, { "content-type": "text/javascript" }));
     registerWidgetAssetRoutes(app);
-    await new Promise<void>((resolve) => {
-      server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info: { port: number }) => {
-        baseUrl = `http://127.0.0.1:${info.port}`;
-        resolve();
-      }) as unknown as { close: () => void };
-    });
+    ({ server, baseUrl } = await serveForTest(app));
   });
   afterAll(() => server?.close());
 
@@ -215,7 +210,7 @@ describe("buildPluginMiddlewareSource", () => {
 });
 
 describe("widget MCP resources served live (runtime)", () => {
-  let server: { close: () => void };
+  let server: TestServer;
   let baseUrl = "";
   const fetchedWith: { toolId?: string; origin?: string } = {};
   const widget: WidgetEntry = {
@@ -245,12 +240,7 @@ describe("widget MCP resources served live (runtime)", () => {
         return pageHtml;
       },
     });
-    await new Promise<void>((resolve) => {
-      server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info: { port: number }) => {
-        baseUrl = `http://127.0.0.1:${info.port}`;
-        resolve();
-      }) as unknown as { close: () => void };
-    });
+    ({ server, baseUrl } = await serveForTest(app));
   });
   afterAll(() => server?.close());
 

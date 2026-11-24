@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { INVALID_PARAMS, ProtocolError } from "@modelcontextprotocol/server";
 import { PluginApiHelper, PluginMcpHelper } from "../src/index.ts";
 import type { PluginAppConfig } from "../src/index.ts";
+import { serveForTest, type TestServer } from "./helpers/serveForTest.ts";
 
 // MCP error semantics end-to-end (spec: https://modelcontextprotocol.io — Tools, "Error Handling"):
 // - unknown tool and invalid arguments are PROTOCOL errors (JSON-RPC -32602 Invalid params);
@@ -33,7 +33,7 @@ const mcpTools = JSON.parse(readFileSync(join(test1Dir, "qrtl-plugin/mcp-tools.j
 const addToolId = mcpTools.tools.find((t) => t.className === "Calculator" && t.methodName === "add")!.id;
 const multiplyToolId = mcpTools.tools.find((t) => t.className === "Calculator" && t.methodName === "multiply")!.id;
 
-let server: { close: () => void };
+let server: TestServer;
 let baseUrl = "";
 
 beforeAll(async () => {
@@ -46,12 +46,7 @@ beforeAll(async () => {
   const app = helper.getApiApp();
   await PluginMcpHelper.applyToApp(app as unknown as Hono, helper, config);
 
-  await new Promise<void>((resolve) => {
-    server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info: { port: number }) => {
-      baseUrl = `http://127.0.0.1:${info.port}`;
-      resolve();
-    }) as unknown as { close: () => void };
-  });
+  ({ server, baseUrl } = await serveForTest(app));
 });
 
 afterAll(() => server?.close());
