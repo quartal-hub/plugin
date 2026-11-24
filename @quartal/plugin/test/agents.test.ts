@@ -11,13 +11,13 @@ import {
   getAnonApp,
   parseAgentFile,
   parseFrontmatter,
-  type PluginInfo,
   resolveAgent,
   resolveAgentColor,
   resolveAgentModel,
   resolveAgentTools,
   toAgentMarkdown,
 } from "../src/index.ts";
+import type { PluginInfo } from "../src/model/index.ts";
 
 // Agents are discovered from `<plugin>/agents/*.md|json`, resolved into the host-neutral
 // AgentDefinition (provider-qualified model, multi-notation color, classified tool references) and

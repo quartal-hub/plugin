@@ -46,7 +46,7 @@ describe("client metadata document (CIMD)", () => {
   it("serves the plugin's own metadata with the request origin", async () => {
     const res = await appWithLoginRoutes().request("https://my-plugin.example.com/.well-known/oauth/client-metadata.json");
     expect(res.status).toBe(200);
-    const doc = await res.json();
+    const doc = await res.json() as Record<string, unknown>;
     expect(doc.client_id).toBe("https://my-plugin.example.com/.well-known/oauth/client-metadata.json");
     expect(doc.client_name).toBe("Test Plugin");
     expect(doc.redirect_uris).toEqual(["https://my-plugin.example.com/oauth/callback"]);
