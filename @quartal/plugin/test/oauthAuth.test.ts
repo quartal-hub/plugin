@@ -1,10 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
+import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import {
   getPluginCache,
   getOAuthContextFromKv,
   getProtectedResourceMetadataDoc,
   getProtectedResourceMetadataUrl,
+  getTokenEndpoint,
   MemoryCache,
   oauthAuthMiddleware,
   resolveOAuthOptions,
@@ -12,6 +14,7 @@ import {
   unauthorized,
 } from "../src/index.ts";
 import type { QuartalPluginContext } from "../src/index.ts";
+import { stubAuthServer } from "./helpers/authServer.ts";
 
 const OAUTH_ENV = ["OAUTH_ISSUER", "OAUTH_AUDIENCE", "OAUTH_JWKS_URI", "OAUTH_RESOURCE", "OAUTH_SCOPE", "OAUTH_TOKEN_URL", "OAUTH_CLIENT_ID"];
 const saved: Record<string, string | undefined> = {};
@@ -28,6 +31,8 @@ afterEach(() => {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
   }
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("resolveOAuthOptions — quartal-hub mode (default)", () => {
@@ -187,5 +192,106 @@ describe("getOAuthContextFromKv", () => {
     expect(await getOAuthContextFromKv({ headers: { Authorization: "Bearer abc" } })).toEqual(ctx);
     expect(await getOAuthContextFromKv({ headers: { Authorization: "Bearer nope" } })).toBeUndefined();
     expect(await getOAuthContextFromKv(undefined)).toBeUndefined();
+  });
+});
+
+/** A discovery failure caused by an oauth4webapi error with the given code. */
+const discoveryFailure = (issuer: string, code: string) => expect.objectContaining({
+  message: expect.stringContaining(`OIDC discovery failed for ${issuer}`),
+  cause: expect.objectContaining({ code }),
+});
+
+describe("OIDC discovery", () => {
+  it("resolves the token endpoint from discovery, and caches the metadata per issuer", async () => {
+    const issuer = "https://disc-cache.example.com";
+    const requests = stubAuthServer(issuer);
+    expect(await getTokenEndpoint({ issuer })).toBe(`${issuer}/token`);
+    expect(await getTokenEndpoint({ issuer })).toBe(`${issuer}/token`);
+    expect(requests.map((r) => r.url)).toEqual([`${issuer}/.well-known/openid-configuration`]);
+  });
+
+  it("prefers an explicit tokenUrl, then OAUTH_TOKEN_URL, over discovery", async () => {
+    const issuer = "https://disc-explicit.example.com";
+    const requests = stubAuthServer(issuer);
+    process.env.OAUTH_TOKEN_URL = "https://env.example.com/token";
+    expect(await getTokenEndpoint({ issuer, tokenUrl: "https://explicit.example.com/token" })).toBe("https://explicit.example.com/token");
+    expect(await getTokenEndpoint({ issuer })).toBe("https://env.example.com/token");
+    expect(requests).toEqual([]);
+  });
+
+  it("retries discovery after a failure instead of caching it", async () => {
+    const issuer = "https://disc-retry.example.com";
+    const requests = stubAuthServer(issuer, { discoveryStatuses: [503] });
+    await expect(getTokenEndpoint({ issuer })).rejects.toThrow(`OIDC discovery failed for ${issuer}`);
+    expect(await getTokenEndpoint({ issuer })).toBe(`${issuer}/token`);
+    expect(requests).toHaveLength(2);
+  });
+
+  it("requires the metadata to name the configured issuer exactly, including a trailing slash", async () => {
+    const withSlash = "https://disc-slash.example.com/realms/a/";
+    stubAuthServer(withSlash, { metadata: { issuer: "https://disc-slash.example.com/realms/a" } });
+    await expect(getTokenEndpoint({ issuer: withSlash }))
+      .rejects.toEqual(discoveryFailure(withSlash, "OAUTH_JSON_ATTRIBUTE_COMPARISON_FAILED"));
+
+    const matching = "https://disc-slash-ok.example.com/realms/a/";
+    stubAuthServer(matching);
+    expect(await getTokenEndpoint({ issuer: matching })).toBe("https://disc-slash-ok.example.com/realms/a/token");
+  });
+
+  it("allows plain HTTP only for a loopback issuer", async () => {
+    for (const issuer of ["http://localhost:8081/realms/dev", "http://127.0.0.1:8081/realms/dev", "http://[::1]:8081/realms/dev"]) {
+      stubAuthServer(issuer);
+      expect(await getTokenEndpoint({ issuer })).toBe(`${issuer}/token`);
+    }
+    const remote = "http://disc-plain.example.com";
+    const requests = stubAuthServer(remote);
+    await expect(getTokenEndpoint({ issuer: remote })).rejects.toEqual(discoveryFailure(remote, "OAUTH_HTTP_REQUEST_FORBIDDEN"));
+    expect(requests).toEqual([]);
+  });
+});
+
+describe("oauthAuthMiddleware with a discovered JWKS", () => {
+  async function signedToken(issuer: string) {
+    const { publicKey, privateKey } = await generateKeyPair("RS256");
+    const jwk = { ...await exportJWK(publicKey), kid: "k1", alg: "RS256" };
+    const token = await new SignJWT({ email: "u@example.com" })
+      .setProtectedHeader({ alg: "RS256", kid: "k1" })
+      .setIssuer(issuer)
+      .setAudience("aud")
+      .setSubject("user-1")
+      .setExpirationTime("5m")
+      .sign(privateKey);
+    return { token, jwks: () => Response.json({ keys: [jwk] }) };
+  }
+
+  function appWithAuth(issuer: string) {
+    const app = new Hono<{ Variables: { context: QuartalPluginContext } }>();
+    app.use("/me", oauthAuthMiddleware({ issuer, audience: "aud" }));
+    app.get("/me", (c) => c.json(c.var.context));
+    return app;
+  }
+
+  it("verifies a token against the jwks_uri from discovery", async () => {
+    const issuer = "https://mw-jwks.example.com";
+    const { token, jwks } = await signedToken(issuer);
+    const requests = stubAuthServer(issuer, { routes: { [`${issuer}/certs`]: jwks } });
+    const res = await appWithAuth(issuer).request("/me", { headers: { Authorization: `Bearer ${token}` } });
+    expect(res.status).toBe(200);
+    expect((await res.json() as QuartalPluginContext).uid).toBe("user-1");
+    expect(requests.map((r) => r.url)).toContain(`${issuer}/certs`);
+  });
+
+  it("rejects tokens without fetching keys when discovery names another issuer", async () => {
+    const issuer = "https://mw-mismatch.example.com";
+    const { token, jwks } = await signedToken(issuer);
+    const requests = stubAuthServer(issuer, { metadata: { issuer: "https://evil.example.com" }, routes: { [`${issuer}/certs`]: jwks } });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await appWithAuth(issuer).request("/me", { headers: { Authorization: `Bearer ${token}` } });
+    expect(res.status).toBe(401);
+    expect(logged).toHaveBeenCalledWith(
+      "OAuth token verification failed",
+      discoveryFailure(issuer, "OAUTH_JSON_ATTRIBUTE_COMPARISON_FAILED"),
+    );
+    expect(requests.map((r) => r.url)).not.toContain(`${issuer}/certs`);
   });
 });
