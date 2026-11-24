@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { generateTools } from "../src/index.ts";
-import type { WidgetCatalogEntry } from "../src/index.ts";
+import type { WidgetCatalogEntry } from "../src/model/index.ts";
 
 // End-to-end orchestration test: run generateTools against the committed `test1` fixture (real source)
 // and assert the full chain (TsMorphAnalyzer → buildPluginArtifacts → writePluginArtifacts → registry →

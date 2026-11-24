@@ -11,8 +11,12 @@ import {
   splitLeadingVerb,
   toKebabCase,
 } from "../src/index.ts";
-import type { CodeFile, PluginManifest, RestRoute } from "../src/index.ts";
+import type { CodeFile, PluginManifest } from "../src/index.ts";
+import type { RestRoute } from "../src/model/index.ts";
 import { analyzeSource } from "./helpers/analyzeSource.ts";
+
+/** The JSON body of a tool route's response. */
+const bodyOf = async (res: Response) => await res.json() as { input?: unknown };
 
 const manifest: PluginManifest = {
   name: "@test/pkg",
@@ -20,7 +24,6 @@ const manifest: PluginManifest = {
   description: "test",
   version: "1.0.0",
   style: { logo: "", icons: [{ src: "https://cdn.example/icon.png", sizes: ["128x128"] }] },
-  imports: {},
 };
 
 /** Analyzes the source the way the build does: with the system wrapper types (`VoidValue`, …) included. */
@@ -388,27 +391,27 @@ describe("serving the routes (fixture plugin with the Invoices class)", () => {
   it("GET with coerced query parameters", async () => {
     const res = await app.request("/api/invoices?page=2&status=open");
     expect(res.status).toBe(200);
-    expect((await res.json()).input).toEqual({ page: 2, status: "open" });
+    expect((await bodyOf(res)).input).toEqual({ page: 2, status: "open" });
   });
 
   it("GET and DELETE with the id from the path", async () => {
-    expect((await (await app.request("/api/invoices/inv-1")).json()).input).toEqual({ id: "inv-1" });
+    expect((await bodyOf(await app.request("/api/invoices/inv-1"))).input).toEqual({ id: "inv-1" });
     const del = await app.request("/api/invoices/inv-2", { method: "DELETE" });
     expect(del.status).toBe(200);
-    expect((await del.json()).input).toEqual({ id: "inv-2" });
+    expect((await bodyOf(del)).input).toEqual({ id: "inv-2" });
   });
 
   it("POST with the body, PUT with the body plus the id from the path", async () => {
     const post = await app.request("/api/invoices", { method: "POST", ...json({ customer: "Ada", total: 10 }) });
-    expect((await post.json()).input).toEqual({ customer: "Ada", total: 10 });
+    expect((await bodyOf(post)).input).toEqual({ customer: "Ada", total: 10 });
     const put = await app.request("/api/invoices/inv-3", { method: "PUT", ...json({ customer: "Ada", total: 12, paid: true }) });
     expect(put.status).toBe(200);
-    expect((await put.json()).input).toEqual({ id: "inv-3", customer: "Ada", total: 12, paid: true });
+    expect((await bodyOf(put)).input).toEqual({ id: "inv-3", customer: "Ada", total: 12, paid: true });
   });
 
   it("custom method stays POST at its own name", async () => {
     const res = await app.request("/api/invoices/approve", { method: "POST", ...json({ id: "inv-4" }) });
-    expect((await res.json()).input).toEqual({ id: "inv-4" });
+    expect((await bodyOf(res)).input).toEqual({ id: "inv-4" });
   });
 
   it("answers 200 for a result with an `error` key, whatever its value", async () => {
@@ -435,7 +438,7 @@ describe("serving the routes (fixture plugin with the Invoices class)", () => {
   it("tagged relative path with a numeric path parameter and a query parameter", async () => {
     const res = await app.request("/api/invoices/archive/2024?customer=Ada");
     expect(res.status).toBe(200);
-    expect((await res.json()).input).toEqual({ year: 2024, customer: "Ada" });
+    expect((await bodyOf(res)).input).toEqual({ year: 2024, customer: "Ada" });
   });
 
   it("rejects a non-numeric path or query value with 422", async () => {

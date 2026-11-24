@@ -38,7 +38,7 @@ beforeAll(async () => {
     pluginRootFolder: test1Dir,
     toolModules: { Calculator: { Calculator } as unknown as Record<string, unknown> },
     mcp: { servers: { main: { tools: ["Calculator"] }, stats: { tools: ["HelloWorld"] } } },
-    auth: { middleware: requireToken },
+    auth: { name: "bearerAuth", type: "http", scheme: "bearer", middleware: requireToken },
   };
   const helper = new PluginApiHelper("/api", config);
   await helper.init();

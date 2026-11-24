@@ -43,7 +43,7 @@ function frame() {
   widget.peer = page;
   widget.parent = page;
   (globalThis as { window?: unknown }).window = widget;
-  const iframe = { contentWindow: widget, ownerDocument: { defaultView: page }, style: {}, src: "", srcdoc: "" } as unknown as HTMLIFrameElement;
+  const iframe = { contentWindow: widget, ownerDocument: { defaultView: page }, style: {}, src: "", srcdoc: "" } as unknown as Parameters<typeof createWidgetHost>[0]["iframe"];
   return { iframe };
 }
 
