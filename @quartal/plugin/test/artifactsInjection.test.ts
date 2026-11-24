@@ -2,12 +2,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { getAnonApp, Helpers, buildArtifactsModuleSource, collectPluginFileMap } from "../src/index.ts";
 import type { PluginRuntimeArtifacts } from "../src/index.ts";
+import { serveForTest, type TestServer } from "./helpers/serveForTest.ts";
 
 // Verifies the build-time artifacts snapshot fully replaces the disk reads: the app is assembled
 // with a plugin root that does not exist, so every served value must come from the injected object.
@@ -41,7 +41,7 @@ async function loadFixtureArtifacts(): Promise<PluginRuntimeArtifacts> {
 }
 
 let app: Hono;
-let server: { close: () => void } | undefined;
+let server: TestServer | undefined;
 let baseUrl = "";
 
 beforeAll(async () => {
@@ -52,12 +52,7 @@ beforeAll(async () => {
     artifacts: await loadFixtureArtifacts(),
     toolModules: { Calculator: { Calculator } as unknown as Record<string, unknown> },
   });
-  await new Promise<void>((resolve) => {
-    server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info: { port: number }) => {
-      baseUrl = `http://127.0.0.1:${info.port}`;
-      resolve();
-    }) as unknown as { close: () => void };
-  });
+  ({ server, baseUrl } = await serveForTest(app));
 });
 afterAll(() => server?.close());
 
