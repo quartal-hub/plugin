@@ -527,7 +527,7 @@ export class HubFiles {
   /**
    * Reads the file a `qrtl://` reference points to — the version it pins, or the current one —
    * authorized by the caller's own token (a reference grants nothing by itself). `~` as the owner
-   * is the company the token is for: the selected company.
+   * is passed on as it is: Quartal Files resolves it to the company the token is for.
    * @param ref The reference, e.g. `qrtl://~/inbox/statement.pdf?version=v3`.
    * @param options The MIME types the caller accepts (`image/*` style wildcards allowed).
    * @returns The file's entry and its bytes.
@@ -541,8 +541,7 @@ export class HubFiles {
    */
   async open(ref: HubFileRef, options: { accept?: string[] } = {}): Promise<{ entry: HubFileEntry; bytes: Uint8Array }> {
     const { owner, path, version } = parseHubFileRef(ref);
-    const resolvedOwner = owner === TOKEN_OWNER ? await this.owner({}) : owner;
-    const { entry, encoding, content } = await this.getContent(path, { owner: resolvedOwner, version });
+    const { entry, encoding, content } = await this.getContent(path, { owner, version });
     if (entry.isFolder) throw new Error(`${ref} is a folder, not a file.`);
     if (options.accept?.length && !mimeAccepted(entry.mimeType, options.accept)) {
       throw new Error(`${ref} is ${entry.mimeType ?? "of an unknown type"}; expected ${options.accept.join(", ")}.`);

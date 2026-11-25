@@ -224,7 +224,7 @@ describe("HubFiles", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("opens qrtl:// references: ~ is the selected company, ?version pins the version", async () => {
+  it("opens qrtl:// references: ~ goes to Quartal Files as it is, ?version pins the version", async () => {
     respond = (call) => {
       if (call.url.origin === EXPERIMENTAL_HUB_SERVICE_URLS.iam) {
         return json({ company: { companyId: "c1", name: "Acme", businessId: null, isAccountingFirm: false } });
@@ -240,7 +240,7 @@ describe("HubFiles", () => {
 
     const { entry, bytes } = await hub.files.open("qrtl://~/inbox/a%20b.pdf?version=v3", { accept: ["application/*"] });
     expect(new TextDecoder().decode(bytes)).toBe("%PDF");
-    expect(Object.fromEntries(calls[1].url.searchParams)).toEqual({ owner: "c1", path: "/inbox/a b.pdf", version: "v3" });
+    expect(Object.fromEntries(calls[1].url.searchParams)).toEqual({ owner: "~", path: "/inbox/a b.pdf", version: "v3" });
 
     await hub.files.open("qrtl://c2/inbox/a%20b.pdf");
     expect(calls[2].url.searchParams.get("owner")).toBe("c2");
