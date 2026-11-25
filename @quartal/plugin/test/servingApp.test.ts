@@ -46,7 +46,7 @@ describe("PluginApiHelper — request serving (app.fetch)", () => {
       body: JSON.stringify({ first: "not-a-number" }),
     });
     expect(res.status).toBe(422);
-    expect((await res.json()).error).toBe("Validation failed");
+    expect((await res.json() as { error: string }).error).toBe("Validation failed");
   });
 
   it("serves /open-api.json with a path per tool method", async () => {
@@ -69,6 +69,6 @@ describe("PluginApiHelper — request serving (app.fetch)", () => {
       body: JSON.stringify({ name: "x" }),
     });
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toContain("Tool module not found");
+    expect((await res.json() as { error: string }).error).toContain("Tool module not found");
   });
 });

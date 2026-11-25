@@ -19,7 +19,6 @@ const manifest: PluginManifest = {
   description: "test",
   version: "1.0.0",
   style: { logo: "", icons: [{ src: "https://cdn.example/icon.png", sizes: ["128x128"] }] },
-  imports: {},
 };
 
 const files = () => prepareCodeFilesForPlugin(analyzeSource({

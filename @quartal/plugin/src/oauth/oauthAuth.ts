@@ -1,6 +1,8 @@
 import type { MiddlewareHandler } from "hono";
 import { createMiddleware } from "hono/factory";
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from "jose";
+import * as oauth from "oauth4webapi";
+import * as client from "openid-client";
 
 import { getPluginCache } from "../cache/PluginCache.ts";
 import type { AuthContext, Avatar, QrtlAuthConfig, QuartalPluginContext } from "../model/index.ts";
@@ -318,39 +320,64 @@ export function unauthorized(
   );
 }
 
-interface OidcConfig {
-  jwks_uri?: string;
-  token_endpoint?: string;
-  authorization_endpoint?: string;
+const LOOPBACK_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * Whether the URL's host is a loopback address (a local development server). Plain HTTP is
+ * allowed only for a loopback issuer.
+ * @param url An absolute URL, such as an issuer or a request origin.
+ */
+export function isLoopbackUrl(url: string): boolean {
+  return LOOPBACK_HOSTNAMES.has(new URL(url).hostname);
 }
 
-const oidcConfigCache = new Map<string, Promise<OidcConfig>>();
+/**
+ * An openid-client configuration for a public client (no client authentication) of the issuer's
+ * authorization server, from discovery with the token endpoint resolved by
+ * {@link getTokenEndpoint}. Every endpoint must use HTTPS, except for a loopback issuer.
+ * @param issuer The authorization-server issuer URL.
+ * @param clientId The client id.
+ */
+export async function loginClient(issuer: string, clientId: string): Promise<client.Configuration> {
+  const server = await discoverAuthorizationServer(issuer);
+  const tokenEndpoint = await getTokenEndpoint({ issuer });
+  const config = new client.Configuration({ ...server, token_endpoint: tokenEndpoint }, clientId, undefined, client.None());
+  if (isLoopbackUrl(issuer)) client.allowInsecureRequests(config);
+  return config;
+}
 
-async function getOidcConfig(issuer: string): Promise<OidcConfig> {
-  const cached = oidcConfigCache.get(issuer);
+const discoveryCache = new Map<string, Promise<oauth.AuthorizationServer>>();
+
+/**
+ * The authorization server's metadata from OIDC discovery
+ * (`${issuer}/.well-known/openid-configuration`), cached per issuer. The metadata's `issuer` must
+ * equal the configured issuer exactly.
+ * @param issuer The authorization-server issuer URL.
+ */
+async function discoverAuthorizationServer(issuer: string): Promise<oauth.AuthorizationServer> {
+  const cached = discoveryCache.get(issuer);
   if (cached) return await cached;
-  const fetchPromise = (async (): Promise<OidcConfig> => {
-    const url = issuer.replace(/\/$/, "") + "/.well-known/openid-configuration";
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(
-        `OIDC discovery failed for ${issuer}: ${res.status} ${res.statusText}`,
-      );
-    }
-    return await res.json() as OidcConfig;
-  })();
-  oidcConfigCache.set(issuer, fetchPromise);
+  const issuerUrl = new URL(issuer);
+  const discovery = oauth.discoveryRequest(issuerUrl, {
+    algorithm: "oidc",
+    ...(isLoopbackUrl(issuer) ? { [oauth.allowInsecureRequests]: true } : {}),
+  })
+    .then((res) => oauth.processDiscoveryResponse(issuerUrl, res))
+    .catch((err: unknown) => {
+      throw new Error(`OIDC discovery failed for ${issuer}: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+    });
+  discoveryCache.set(issuer, discovery);
   try {
-    return await fetchPromise;
+    return await discovery;
   } catch (err) {
-    oidcConfigCache.delete(issuer);
+    discoveryCache.delete(issuer);
     throw err;
   }
 }
 
 async function getJwksUri(opts: ResolvedOAuthOptions): Promise<string> {
   if (opts.jwksUri) return opts.jwksUri;
-  const config = await getOidcConfig(opts.issuer);
+  const config = await discoverAuthorizationServer(opts.issuer);
   if (!config.jwks_uri) {
     throw new Error(`OIDC discovery did not return jwks_uri for ${opts.issuer}`);
   }
@@ -368,24 +395,11 @@ export async function getTokenEndpoint(
 ): Promise<string> {
   const explicit = opts.tokenUrl ?? process.env.OAUTH_TOKEN_URL ?? undefined;
   if (explicit) return explicit;
-  const config = await getOidcConfig(opts.issuer);
+  const config = await discoverAuthorizationServer(opts.issuer);
   if (!config.token_endpoint) {
     throw new Error(`OIDC discovery did not return token_endpoint for ${opts.issuer}`);
   }
   return config.token_endpoint;
-}
-
-/**
- * Resolves the OAuth2 authorization endpoint URL from the issuer's OIDC config.
- * Used by the docs-site login flow to build the browser redirect.
- * @param issuer The authorization-server issuer URL.
- */
-export async function getAuthorizationEndpoint(issuer: string): Promise<string> {
-  const config = await getOidcConfig(issuer);
-  if (!config.authorization_endpoint) {
-    throw new Error(`OIDC discovery did not return authorization_endpoint for ${issuer}`);
-  }
-  return config.authorization_endpoint;
 }
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();

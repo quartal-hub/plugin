@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
-import { npxSkillsAddCommand } from "@quartal/plugin-core";
+import { npxSkillsAddCommand, type PluginRepository } from "@quartal/plugin-core";
 import { getAnonApp } from "../src/index.ts";
 
 // Verifies the fully-assembled anonymous app serves every standard route group via app.fetch,
@@ -84,7 +84,7 @@ describe("getAnonApp — full route assembly", () => {
 
   it("exposes repository.directory in the overview so docs can link to the real repo path", async () => {
     const res = await app.request("/com.quartal.plugin/contents.json");
-    const info = await res.json() as { repository?: { url: string; directory?: string } };
+    const info = await res.json() as { repository?: PluginRepository };
     expect(info.repository?.directory).toBe("samples/test1");
     expect(npxSkillsAddCommand(info.repository, "coin-flipper")).toBe(
       "npx skills add https://github.com/quartal-hub/plugin/tree/main/samples/test1/skills/coin-flipper",

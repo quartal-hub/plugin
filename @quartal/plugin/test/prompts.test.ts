@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { serve } from "@hono/node-server";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { PluginApiHelper, PluginMcpHelper, type PluginAppConfig, type PromptResponse } from "../src/index.ts";
+import { serveForTest, type TestServer } from "./helpers/serveForTest.ts";
 
 const test1Dir = fileURLToPath(new URL("./fixtures/pkg/", import.meta.url));
 
@@ -33,7 +33,7 @@ class GreetingPrompts {
   }
 }
 
-let server: { close: () => void } | undefined;
+let server: TestServer | undefined;
 let baseUrl = "";
 
 beforeAll(async () => {
@@ -46,12 +46,7 @@ beforeAll(async () => {
   const app = helper.getApiApp();
   await PluginMcpHelper.applyToApp(app as unknown as Hono, helper, config);
 
-  await new Promise<void>((resolve) => {
-    server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info: { port: number }) => {
-      baseUrl = `http://127.0.0.1:${info.port}`;
-      resolve();
-    }) as unknown as { close: () => void };
-  });
+  ({ server, baseUrl } = await serveForTest(app));
 });
 
 afterAll(() => server?.close());
