@@ -1,4 +1,4 @@
-import type { FileStaging, FileTransferTarget, McpFile } from "../model/index.ts";
+import type { FileStaging, FileStagingCall, FileTransferTarget, McpFile } from "../model/index.ts";
 import { base64ToBytes } from "../hub/base64.ts";
 
 /** The MCP files extension id. */
@@ -61,11 +61,13 @@ export interface ResolveFilesInput {
   mintState?: (state: FileUploadState) => Promise<string>;
   /** The verified request-state of a retry. */
   state?: FileUploadState;
+  /** Runs a staging call with the caller's context (resolved like for the tool itself). */
+  withCall?: <T>(fn: (call: FileStagingCall) => Promise<T>) => Promise<T>;
 }
 
 /** The outcome of {@link resolveToolCallFiles}. */
 export type ResolveFilesOutcome =
-  | { kind: "ready"; bytes: Map<string, Uint8Array> }
+  | { kind: "ready"; bytes: Map<string, Uint8Array>; staged: Map<string, string> }
   | { kind: "upload"; uploads: (FileTransferTarget & { fileId: string })[]; requestState: string }
   | { kind: "missing-capability" }
   | { kind: "mismatch"; message: string }
@@ -81,7 +83,8 @@ export type ResolveFilesOutcome =
 export async function resolveToolCallFiles(input: ResolveFilesInput): Promise<ResolveFilesOutcome> {
   const files = collectFiles(input.args, input.fileArgs);
   const bytes = new Map<string, Uint8Array>();
-  if (files.length === 0) return { kind: "ready", bytes };
+  const staged = new Map<string, string>();
+  if (files.length === 0) return { kind: "ready", bytes, staged };
 
   const ids = new Set<string>();
   let inlineTotal = 0;
@@ -113,9 +116,10 @@ export async function resolveToolCallFiles(input: ResolveFilesInput): Promise<Re
     }
     pending.push(file);
   }
-  if (pending.length === 0) return { kind: "ready", bytes };
+  if (pending.length === 0) return { kind: "ready", bytes, staged };
 
-  const call = { tool: input.tool, headers: input.headers };
+  const withCall = input.withCall ?? (<T>(fn: (call: FileStagingCall) => Promise<T>) =>
+    fn({ tool: input.tool, args: input.args, ctx: { authenticated: false } }));
   const argsHash = await sha256Hex(canonicalJson(input.args));
   const principal = await sha256Hex(input.headers.authorization ?? input.headers.Authorization ?? "");
 
@@ -124,26 +128,35 @@ export async function resolveToolCallFiles(input: ResolveFilesInput): Promise<Re
     if (state.tool !== input.tool || state.args !== argsHash || state.principal !== principal) {
       return { kind: "mismatch", message: "The request state belongs to another call." };
     }
+    const staging = input.staging;
     for (const file of pending) {
       const key = state.files[file.id];
-      const staged = key && input.staging ? await input.staging.read(key, call) : undefined;
-      if (!staged) return { kind: "refused", message: `File "${label(file)}" did not arrive.` };
-      const check = await bytesProblem(file, staged);
+      if (!key || !staging) return { kind: "refused", message: `File "${label(file)}" did not arrive.` };
+      if (staging.confirm) {
+        const ok = await withCall((call) => staging.confirm!(key, file, call));
+        if (!ok) return { kind: "refused", message: `File "${label(file)}" did not arrive, or does not match its size or digest.` };
+        staged.set(file.id, key);
+        continue;
+      }
+      const received = staging.read ? await withCall((call) => staging.read!(key, call)) : undefined;
+      if (!received) return { kind: "refused", message: `File "${label(file)}" did not arrive.` };
+      const check = await bytesProblem(file, received);
       if (check) return { kind: "refused", message: check };
-      bytes.set(file.id, staged);
+      bytes.set(file.id, received);
     }
-    return { kind: "ready", bytes };
+    return { kind: "ready", bytes, staged };
   }
 
-  if (!input.staging || !input.mintState) {
+  if (!input.staging || !input.mintState || (!input.staging.read && !input.staging.confirm)) {
     return { kind: "refused", message: "This plugin accepts files only inline (base64 `data`)." };
   }
   if (!input.clientUpload) return { kind: "missing-capability" };
 
   const uploads: (FileTransferTarget & { fileId: string })[] = [];
   const keys: Record<string, string> = {};
+  const staging = input.staging;
   for (const file of pending) {
-    const { target, key } = await input.staging.createUpload(file, call);
+    const { target, key } = await withCall((call) => staging.createUpload(file, call));
     uploads.push({ fileId: file.id, ...target });
     keys[file.id] = key;
   }

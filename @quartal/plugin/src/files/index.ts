@@ -8,6 +8,7 @@
  */
 export { offerDownload } from "./offerDownload.ts";
 export { readMcpFile } from "./readMcpFile.ts";
+export { stagedFileKey } from "./stagedFileKey.ts";
 export { sha256Base64Url } from "./resolveToolCallFiles.ts";
 export type {
   FileDownload,

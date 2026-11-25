@@ -82,6 +82,7 @@ export class PluginMcpHelper {
   private readonly promptEntries: McpPromptDescriptor[];
   private readonly executePrompt: PluginApiHelper["executePrompt"];
   private readonly executeResource: PluginApiHelper["executeResource"];
+  private readonly withToolContext: PluginApiHelper["withToolContext"];
   private readonly resourceEntries: McpResourceDescriptor[];
   private readonly widgets: WidgetEntry[];
   private readonly widgetsByToolId: Map<string, WidgetEntry>;
@@ -193,6 +194,7 @@ export class PluginMcpHelper {
     this.getFunctionDef = (className, methodName) => apiHelper.getFunctionDef(className, methodName);
     this.executePrompt = apiHelper.executePrompt;
     this.executeResource = apiHelper.executeResource;
+    this.withToolContext = apiHelper.withToolContext;
     this.resourceEntries = resourceEntries;
     this.fileStaging = fileStaging;
     const secret = typeof process !== "undefined" ? process.env?.QRTL_REQUEST_STATE_SECRET : undefined;
@@ -525,6 +527,10 @@ export class PluginMcpHelper {
             staging: this.fileStaging,
             ...(this.stateCodec ? { mintState: (s: FileUploadState) => this.stateCodec!.mint(s, ctx as never) } : {}),
             ...(state ? { state } : {}),
+            withCall: (fn) => this.withToolContext(
+              (toolCtx) => fn({ tool: String(toolName), args: params, ctx: toolCtx }),
+              { headers },
+            ),
           });
           if (received.kind === "upload") {
             return { content: [], resultType: "upload_required", uploads: received.uploads, requestState: received.requestState } as never;
@@ -538,7 +544,7 @@ export class PluginMcpHelper {
           if (received.kind === "refused") {
             return { content: [{ type: "text" as const, text: received.message }], isError: true };
           }
-          files = { bytes: received.bytes, downloads: [] };
+          files = { bytes: received.bytes, staged: received.staged, downloads: [] };
         }
 
         try {

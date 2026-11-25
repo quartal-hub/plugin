@@ -264,7 +264,7 @@ export class PluginApiHelper {
               const message = "message" in received ? received.message : "Send the files inline as base64 `data`.";
               return c.json({ error: message }, 422);
             }
-            files = { bytes: received.bytes, downloads: [] };
+            files = { bytes: received.bytes, staged: received.staged, downloads: [] };
           }
           result = await this.executeStrict(fileName, className, methodName, params, {
             headers,
@@ -398,6 +398,23 @@ export class PluginApiHelper {
       variables,
       authContext,
     );
+  };
+
+  /**
+   * Runs `fn` with the context a tool of this call would get: through `config.execute` (the auth
+   * layer resolves the signed-in user) or `{ authenticated: false }` without one.
+   * @param fn The function.
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  withToolContext = async <T>(fn: (ctx: QuartalPluginContext) => Promise<T>, authContext?: AuthContext): Promise<T> => {
+    if (this.config.execute) {
+      return await this.config.execute<Promise<T>>(
+        ((_input: Record<string, unknown>, ctx: unknown) => fn(ctx as QuartalPluginContext)) as never,
+        {},
+        authContext,
+      );
+    }
+    return await fn({ authenticated: false });
   };
 
   /**

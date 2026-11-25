@@ -115,6 +115,12 @@ export const fileStaging: FileStaging = {
 };
 ```
 
-Upload targets should accept a single write of at most the declared size, and staged bytes should
-be removed when they are not used within ten minutes. Without a file staging, tools accept files
-inline only.
+`call` carries the tool name, its arguments and the caller's context (the signed-in user), so a
+staging can put the upload where the tool will need it. Upload targets should accept a single write
+of at most the declared size, and staged bytes should be removed when they are not used within ten
+minutes. Without a file staging, tools accept files inline only.
+
+A storage that checks uploads itself — for example a content-addressed store keyed by the SHA-256
+(add `@requireDigest` to the property) — can implement `confirm(key, file, call)` instead of `read`:
+the framework then does not load the bytes, and the tool gets the staged key with
+`stagedFileKey(ctx, file)` to move them into place.

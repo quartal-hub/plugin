@@ -192,3 +192,39 @@ describe("files over MCP", () => {
     expect(await res.json()).toEqual({ bytes: pdf.length });
   });
 });
+
+describe("resolveToolCallFiles with a staging that confirms", () => {
+  it("records the staged key instead of reading the bytes, with the call's arguments and context", async () => {
+    const { resolveToolCallFiles } = await import("../src/files/resolveToolCallFiles.ts");
+    const seen: { args: unknown; ctx: unknown }[] = [];
+    const staging: FileStaging = {
+      async createUpload(file, call) {
+        seen.push({ args: call.args, ctx: call.ctx });
+        return { key: `blob-${file.id}`, target: { url: "https://u.example.com/x", credentials: "omit" } };
+      },
+      async confirm(key) {
+        return key === "blob-f1";
+      },
+    };
+    const file = { id: "f1", mimeType: "text/plain", size: 3 };
+    const args = { path: "/data/a.txt", file };
+    const fileArgs = [{ name: "file", array: false }];
+    const base = {
+      tool: "saveFile", args, fileArgs, headers: {}, clientUpload: true, maxInlineBytes: 0, staging,
+      mintState: async () => "state",
+      withCall: <T>(fn: (call: { tool: string; args: Record<string, unknown>; ctx: QuartalPluginContext }) => Promise<T>) =>
+        fn({ tool: "saveFile", args, ctx: { authenticated: true, uid: "u1" } }),
+    };
+    const first = await resolveToolCallFiles(base);
+    expect(first.kind).toBe("upload");
+    expect(seen[0]).toEqual({ args, ctx: { authenticated: true, uid: "u1" } });
+
+    const state = { tool: "saveFile", args: "", principal: "", files: { f1: "blob-f1" } };
+    // The hashes must match the call: mint a state the way the resolver does by reading what it bound.
+    let bound: unknown;
+    await resolveToolCallFiles({ ...base, mintState: async (s) => { bound = s; return "x"; } });
+    const retry = await resolveToolCallFiles({ ...base, state: { ...(bound as typeof state) } });
+    expect(retry).toMatchObject({ kind: "ready" });
+    expect((retry as { staged: Map<string, string> }).staged.get("f1")).toBe("blob-f1");
+  });
+});
