@@ -39,6 +39,10 @@ export interface GenerateToolsOptions {
   promptsEntry?: string;
   /** Import base used inside the generated prompts registry (relative to `out`). Default: `../prompts`. */
   promptsRegistryImportBase?: string;
+  /** Resources entry module path, relative to `cwd`. Analyzed only when the file exists. Default: `./resources/mod.ts`. */
+  resourcesEntry?: string;
+  /** Import base used inside the generated resources registry (relative to `out`). Default: `../resources`. */
+  resourcesRegistryImportBase?: string;
 }
 
 /**
@@ -47,10 +51,12 @@ export interface GenerateToolsOptions {
  * - open-api.json (OpenAPI 3.0, validated at build time)
  * - mcp-tools.json (MCP tool definitions with JSON Schema inputs)
  * - mcp-prompts.json (MCP prompt definitions with argument lists)
+ * - mcp-resources.json (MCP resources and resource templates from `resources/`)
  * - types.json (named type definitions)
  * - contents.json (unified plugin overview served at `GET /plugin.json`)
  * - tools.registry.ts (static tool-module import map for runtime execution)
  * - prompts.registry.ts (static prompt-module import map; empty when the plugin has no prompts)
+ * - resources.registry.ts (static resource-module import map; empty when the plugin has no resources)
  * - artifacts.ts (importable build-time snapshot: the JSON artifacts + manifest, README,
  *   qrtl.config runtime options and widget entries — see {@link PluginRuntimeArtifacts})
  *
@@ -78,12 +84,19 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
     ? new TsMorphAnalyzer().analyzeEntry(promptsEntry, { cwd })
     : [];
 
+  // Resources are optional too: analyzed only when the plugin has a resources entry module.
+  const resourcesEntry = resolve(cwd, options?.resourcesEntry ?? "./resources/mod.ts");
+  const resourceFiles = existsSync(resourcesEntry)
+    ? new TsMorphAnalyzer().analyzeEntry(resourcesEntry, { cwd })
+    : [];
+
   let artifacts;
   try {
     artifacts = buildPluginArtifacts(files, manifest, {
       basePath: options?.basePath,
       widgets,
       promptFiles,
+      resourceFiles,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -103,12 +116,18 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
       kind: "prompt",
     });
     await writeFile(join(out, "prompts.registry.ts"), promptsRegistry);
+    const resourcesRegistry = buildToolsRegistrySource(resourceFiles, {
+      importBase: options?.resourcesRegistryImportBase ?? "../resources",
+      exportName: "resourceModules",
+      kind: "resource",
+    });
+    await writeFile(join(out, "resources.registry.ts"), resourcesRegistry);
   }
 
   const basePath = options?.basePath ?? "/api";
   const qrtlConfig = await Helpers.loadQrtlConfig(cwd);
   const mcpOptions = typeof qrtlConfig?.mcp === "object" ? qrtlConfig.mcp : undefined;
-  const skills = await buildSkillSummaries(cwd, manifest.name);
+  const skills = await buildSkillSummaries(cwd);
   const agents = await buildAgentSummaries(cwd, manifest.name, {
     pluginTools: artifacts.mcpTools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(manifest.name),
@@ -176,6 +195,7 @@ export function buildArtifactsModuleSource(
     `import contents from "./contents.json";`,
     `import mcpTools from "./mcp-tools.json";`,
     `import mcpPrompts from "./mcp-prompts.json";`,
+    `import mcpResources from "./mcp-resources.json";`,
     ``,
     `export const artifacts = {`,
     `  tools,`,
@@ -184,6 +204,7 @@ export function buildArtifactsModuleSource(
     `  contents,`,
     `  mcpTools,`,
     `  mcpPrompts,`,
+    `  mcpResources,`,
     `  manifest: ${literal(values.manifest)},`,
     ...optional("readme"),
     `  auth: ${JSON.stringify(values.auth)},`,

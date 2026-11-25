@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import type { McpServerOptions } from "./McpServerOptions.ts";
 import type { AuthContext } from "../AuthContext.ts";
+import type { FileStaging } from "../files/FileStaging.ts";
 import type { FetchWidgetHtml } from "./FetchWidgetHtml.ts";
 import type { PluginRuntimeArtifacts } from "./PluginRuntimeArtifacts.ts";
 import type { WidgetEntry } from "./WidgetEntry.ts";
@@ -60,6 +61,18 @@ export interface PluginAppConfig {
    * MCP prompts at runtime. When omitted, `prompts/get` returns a helpful error.
    */
   promptModules?: ToolModuleRegistry;
+
+  /**
+   * Static resource-module registry (from the generated `resources.registry.ts`). Required to read
+   * the plugin's own MCP resources (`src/resources/`).
+   */
+  resourceModules?: ToolModuleRegistry;
+
+  /**
+   * Where uploaded files are staged (MCP files extension) — exported as `fileStaging` from the
+   * plugin's `src/file-staging.ts`. Without it, tools accept files only inline.
+   */
+  fileStaging?: FileStaging;
 
   /**
    * Explicit widget entries advertised as MCP Apps UI resources. When set, runtime widget-page

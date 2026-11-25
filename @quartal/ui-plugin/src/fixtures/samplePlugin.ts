@@ -128,7 +128,7 @@ export const samplePlugin: PluginInfo = {
     contents: "/com.quartal.plugin/contents.json",
     openApi: "/open-api.json",
     types: "/types.json",
-    skillsCatalog: "/skills/catalog.json",
+    skills: "/mcp/skills.json",
     agentsCatalog: "/agents/catalog.json",
     readme: "/readme.md",
     api: "/api",

@@ -27,14 +27,30 @@ description tells the agent *when* to load the skill, the body tells it *what to
 
 ## How skills are served
 
-- The skill catalog is published at `/skills/catalog.json`, and each skill's content is served
-  from your plugin — so skills **update automatically** when you deploy, unlike copies installed
-  by hand.
+- Skills are served over MCP with the
+  [Skills extension](https://modelcontextprotocol.io/extensions/skills/overview)
+  (`io.modelcontextprotocol/skills`): an agent connected to your plugin's `/mcp` endpoint sees the
+  skills next to the tools and loads one only when it needs it. Because the content comes from your
+  plugin, skills **update automatically** when you deploy, unlike copies installed by hand.
+- Each skill is the resource `skill://<name>/SKILL.md`, and its other files are
+  `skill://<name>/<path>`. The skill list carries a SHA-256 digest of every file, so clients can
+  verify what they load.
+- `GET /mcp/skills.json` mirrors the MCP `skills/list` result, and every file is also served over
+  plain HTTP at `/skills/<name>/<path>` (plus `/skills/<name>.zip` for the whole skill).
 - Your plugin's docs site (at `/`) lists the skills with install commands for tools that support
   them.
 - Skills are also packaged into the plugin's [Agent Plugins](https://agent-plugins.org) package
   (`/plugin.zip`), so clients that read the package get all your skills (and their updates) by
   connecting to one plugin.
+
+## Rules the skill list enforces
+
+- The folder name must equal the `name` in the frontmatter (lowercase letters, digits and single
+  hyphens), and the frontmatter needs a `description`.
+- A skill has at most 512 files and 16 MiB in total.
+- Symbolic links are not allowed inside a skill.
+
+A skill that breaks a rule is left out of the list, and the reason is printed in the dev server log.
 
 ## What belongs in a skill
 

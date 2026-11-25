@@ -9,6 +9,7 @@ import {
 } from "../src/index.ts";
 import type { QuartalPluginContext } from "../src/index.ts";
 import { setExperimentalHubEnabled } from "../src/hub/experimentalHubServices.ts";
+import { formatHubFileRef, parseHubFileRef } from "../src/hub/index.ts";
 
 const ctx: QuartalPluginContext = { authenticated: true, uid: "user-1", token: "tok-1" };
 
@@ -221,6 +222,42 @@ describe("HubFiles", () => {
     const { files } = getExperimentalHubContext(ctx);
     await expect(files.listDrives()).rejects.toThrow(/No company selected/);
     expect(calls).toHaveLength(0);
+  });
+
+  it("opens qrtl:// references: ~ goes to Quartal Files as it is, ?version pins the version", async () => {
+    respond = (call) => {
+      if (call.url.origin === EXPERIMENTAL_HUB_SERVICE_URLS.iam) {
+        return json({ company: { companyId: "c1", name: "Acme", businessId: null, isAccountingFirm: false } });
+      }
+      return json({
+        entry: { owner: "c1", path: "/inbox/a b.pdf", mimeType: "application/pdf", isFolder: false, version: "v3" },
+        encoding: "base64",
+        content: Buffer.from("%PDF").toString("base64"),
+      });
+    };
+    const hub = getExperimentalHubContext(ctx);
+    await hub.companies.setSelected("c1");
+
+    const { entry, bytes } = await hub.files.open("qrtl://~/inbox/a%20b.pdf?version=v3", { accept: ["application/*"] });
+    expect(new TextDecoder().decode(bytes)).toBe("%PDF");
+    expect(Object.fromEntries(calls[1].url.searchParams)).toEqual({ owner: "~", path: "/inbox/a b.pdf", version: "v3" });
+
+    await hub.files.open("qrtl://c2/inbox/a%20b.pdf");
+    expect(calls[2].url.searchParams.get("owner")).toBe("c2");
+
+    expect(hub.files.refOf(entry)).toBe("qrtl://~/inbox/a%20b.pdf?version=v3");
+    expect(hub.files.refOf(entry, { explicitOwner: true })).toBe("qrtl://c1/inbox/a%20b.pdf?version=v3");
+    await expect(hub.files.open("qrtl://~/inbox/a%20b.pdf", { accept: ["image/*"] })).rejects.toThrow(/expected image/);
+  });
+});
+
+describe("Quartal Files references", () => {
+  it("parses and formats qrtl:// references", () => {
+    expect(parseHubFileRef("qrtl://~/data/reports/2026.pdf")).toEqual({ owner: "~", path: "/data/reports/2026.pdf" });
+    expect(parseHubFileRef("qrtl://c1/data/x%40y.txt?version=v9")).toEqual({ owner: "c1", path: "/data/x@y.txt", version: "v9" });
+    expect(formatHubFileRef({ owner: "~", path: "/data/x@y.txt", version: "v9" })).toBe("qrtl://~/data/x%40y.txt?version=v9");
+    expect(() => parseHubFileRef("/data/x.txt")).toThrow(/Not a Quartal Files reference/);
+    expect(() => parseHubFileRef("qrtl://c1")).toThrow(/owner and a drive/);
   });
 });
 

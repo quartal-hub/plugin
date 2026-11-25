@@ -2,31 +2,10 @@ import { readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Context, Hono } from "hono";
 
-import type { PluginFileMapEntry, PluginManifest, SkillsCatalog, SkillsCatalogResponse } from "../model/index.ts";
+import type { PluginFileMapEntry } from "../model/index.ts";
 import { fileMapBytes, fileMapGet, fileMapUnder } from "../helpers/fileMap.ts";
-import { discoverSkills, isValidSkillName, skillsFromFileMap } from "./skillDiscovery.ts";
+import { isValidSkillName } from "./skillDiscovery.ts";
 import { buildDirectoryZip, buildFilesZip } from "./skillZip.ts";
-import { Helpers } from "../helpers/Helpers.ts";
-
-function enrichCatalog(catalog: SkillsCatalog, origin: string): SkillsCatalogResponse {
-  return {
-    version: catalog.version,
-    plugin: catalog.plugin,
-    skills: catalog.skills.map((skill) => ({
-      ...skill,
-      urls: {
-        skillMd: `${origin}/skills/${skill.name}/SKILL.md`,
-        zip: `${origin}/skills/${skill.name}.zip`,
-        skill: `${origin}/skills/${skill.name}.skill`,
-        html: `${origin}/skills.html?skill=${encodeURIComponent(skill.name)}`,
-      },
-      files: skill.files.map((f) => ({
-        ...f,
-        url: `${origin}/skills/${skill.name}/${f.path}`,
-      })),
-    })),
-  };
-}
 
 function skillsRoot(baseDir: string): string {
   return join(baseDir, "skills");
@@ -73,11 +52,10 @@ function buildSkillZipFromMap(files: readonly PluginFileMapEntry[], name: string
   return buildFilesZip(entries);
 }
 
-function zipHeaders(filename: string, extension: "zip" | "skill"): Record<string, string> {
-  const type = extension === "skill" ? "skill" : "zip";
+function zipHeaders(filename: string): Record<string, string> {
   return {
     "Content-Type": "application/zip",
-    "Content-Disposition": `attachment; filename="${filename}.${type}"`,
+    "Content-Disposition": `attachment; filename="${filename}.zip"`,
   };
 }
 
@@ -97,33 +75,27 @@ function skillFileContentType(subPath: string): string {
 }
 
 /**
- * Serves Agent Skills: catalog, static files, and zip/.skill downloads. With a file map (bundled
- * deployments) everything is served from memory; otherwise from `<root>/skills/` on disk.
+ * Serves Agent Skills over plain HTTP: each skill's files and a zip download per skill. The skill
+ * list itself is the MCP `skills/list` result (`GET /mcp/skills.json`, see `PluginMcpHelper`).
+ * With a file map (bundled deployments) everything is served from memory; otherwise from
+ * `<root>/skills/` on disk.
  * @param app Hono app to register routes on.
  * @param pluginRootFolder Plugin root (defaults to cwd).
- * @param manifest Plugin manifest (loaded on demand if omitted).
  * @param options File map injection.
  */
 export function registerSkillRoutes(
   app: Hono,
   pluginRootFolder?: string,
-  manifest?: PluginManifest,
   options?: SkillRoutesOptions,
 ): void {
   const baseDir = pluginRootFolder ?? process.cwd();
-  const pkg = manifest;
   const fileMap = options?.fileMap;
 
-  const loadCatalog = async (): Promise<SkillsCatalog> => {
-    const info = pkg ?? await Helpers.getPluginManifest(baseDir);
-    return fileMap ? skillsFromFileMap(fileMap, info.name) : await discoverSkills(baseDir, info.name);
-  };
-
-  const serveSkillArchive = async (c: Context, name: string, extension: "zip" | "skill"): Promise<Response> => {
+  const serveSkillArchive = async (c: Context, name: string): Promise<Response> => {
     if (!isValidSkillName(name)) return c.text("Not found", 404);
     const bytes = fileMap ? buildSkillZipFromMap(fileMap, name) : await buildSkillZip(baseDir, name);
     if (!bytes) return c.text("Not found", 404);
-    return c.body(new Uint8Array(bytes), 200, zipHeaders(name, extension));
+    return c.body(new Uint8Array(bytes), 200, zipHeaders(name));
   };
 
   const readSkillFile = async (name: string, subPath: string): Promise<Uint8Array | null> => {
@@ -144,19 +116,9 @@ export function registerSkillRoutes(
     }
   };
 
-  app.get("/skills/catalog.json", async (c) => {
-    const catalog = await loadCatalog();
-    const origin = new URL(c.req.url).origin;
-    return c.json(enrichCatalog(catalog, origin));
-  });
-
   app.get("/skills/:archive{.+\\.zip$}", (c) => {
     const name = (c.req.param("archive") ?? "").replace(/\.zip$/, "");
-    return serveSkillArchive(c, name, "zip");
-  });
-  app.get("/skills/:archive{.+\\.skill$}", (c) => {
-    const name = (c.req.param("archive") ?? "").replace(/\.skill$/, "");
-    return serveSkillArchive(c, name, "skill");
+    return serveSkillArchive(c, name);
   });
 
   app.get("/skills/:name/SKILL.md", async (c) => {

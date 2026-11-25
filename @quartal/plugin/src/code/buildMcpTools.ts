@@ -70,6 +70,9 @@ export function buildMcpTools(codeFiles: CodeFile[]): McpToolDescriptor[] {
       ...(outputSchema ? { outputSchema } : {}),
       ...(fn.visibility ? { visibility: fn.visibility } : {}),
       ...(annotations ? { annotations } : {}),
+      ...(fn.elicitations?.length
+        ? { elicitations: Object.fromEntries(fn.elicitations.map((e) => [e.key, e.schema])) }
+        : {}),
     });
   }
 

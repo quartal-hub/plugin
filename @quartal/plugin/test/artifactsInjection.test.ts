@@ -100,11 +100,11 @@ describe("getAnonApp with injected artifacts (no disk reads)", () => {
     expect(body).toContain("add");
   });
 
-  it("serves the skills catalog, files and zips from the file map", async () => {
-    const res = await app.request("/skills/catalog.json");
+  it("serves the skills list, files and zips from the file map", async () => {
+    const res = await app.request("/mcp/skills.json");
     expect(res.status).toBe(200);
-    const catalog = await res.json() as { skills: { name: string }[] };
-    const names = catalog.skills.map((s) => s.name);
+    const catalog = await res.json() as { skills: { uri: string; frontmatter: { name: string } }[] };
+    const names = catalog.skills.map((s) => s.frontmatter.name);
     expect(names).toContain("coin-flipper");
     expect(names.length).toBeGreaterThanOrEqual(4);
 

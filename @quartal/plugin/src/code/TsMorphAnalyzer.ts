@@ -16,10 +16,12 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import type { CodeClass, CodeElicitation, CodeFile, CodeFunction, CodeResourceDeclaration, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import { elicitationSchemaFromType } from "./elicitationSchemaFromType.ts";
 import { parseMcpTag } from "./parseMcpTag.ts";
 import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
 import { quoteStringLiteral } from "./parseStringLiteral.ts";
+import { resourceMimeTypeOfType } from "./resourceMimeTypeOfType.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -240,6 +242,14 @@ export class TsMorphAnalyzer {
     if (rest) fn.rest = rest;
     const mcp = mcpTag(method, `${className}.${name}`);
     if (mcp) fn.mcp = mcp;
+    const resource = resourceTag(method, `${className}.${name}`);
+    if (resource) {
+      // Without @mimeType, list the type the runtime serves the return value with.
+      const inferred = resource.mimeType ? undefined : resourceMimeTypeOfType(method.getReturnType());
+      fn.resource = inferred ? { ...resource, mimeType: inferred } : resource;
+    }
+    const elicitations = elicitFormCalls(method, `${className}.${name}`);
+    if (elicitations.length) fn.elicitations = elicitations;
     return fn;
   }
 
@@ -259,6 +269,8 @@ export class TsMorphAnalyzer {
     if (fmt !== undefined) out.format = fmt;
     const ex = exampleTag(prop);
     if (ex !== undefined) out.example = ex;
+    const file = fileTags(prop);
+    if (file) out.file = file;
     return out;
   }
 
@@ -381,9 +393,10 @@ const KEYWORD_BY_KIND: Record<number, CodeOrSystemType> = {
 
 function toolsPath(absFile: string): string | null {
   const norm = absFile.replace(/\\/g, "/");
-  // Both plugin source folders share the analysis pipeline: `tools/` (MCP tools + REST) and
-  // `prompts/` (MCP prompts). Files under either are analyzed; everything else becomes imported types.
-  const m = norm.match(/\/(tools|prompts)\/(.+)$/);
+  // The plugin source folders share the analysis pipeline: `tools/` (MCP tools + REST), `prompts/`
+  // (MCP prompts) and `resources/` (MCP resources). Files under them are analyzed; everything else
+  // becomes imported types.
+  const m = norm.match(/\/(tools|prompts|resources)\/(.+)$/);
   return m ? `${m[1]}/${m[2]}` : null;
 }
 
@@ -541,6 +554,66 @@ function restClassTag(node: JSDocableNode, where: string): RestClassDeclaration 
   return t ? parseRestClassTag(tagText(t), where) : undefined;
 }
 /** Reads the `@mcp` tag of a tool method or class (`hidden`); throws on an invalid tag. */
+/** `@cache` durations: a number with `ms`, `s`, `m` or `h`. */
+const DURATION = /^(\d+)(ms|s|m|h)$/;
+const DURATION_MS: Record<string, number> = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 };
+
+/**
+ * Reads the resource tags of a `src/resources/` method: `@uri <uri or template>`,
+ * `@mimeType <type>` and `@cache <duration> [public|private]` (e.g. `@cache 5m public`).
+ * @param node The method.
+ * @param where `Class.method`, for error messages.
+ */
+function resourceTag(node: JSDocableNode, where: string): CodeResourceDeclaration | undefined {
+  const all = tags(node);
+  const uri = all.find((t) => t.getTagName() === "uri");
+  if (!uri) return undefined;
+  const value = tagText(uri).trim().split(/\s+/)[0];
+  if (!value || !/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+    throw new Error(`${where}: @uri needs a URI with a scheme, e.g. "policy://travel".`);
+  }
+  const out: CodeResourceDeclaration = { uri: value };
+  const mime = all.find((t) => t.getTagName() === "mimeType");
+  const mimeValue = mime ? tagText(mime).trim() : "";
+  if (mimeValue) out.mimeType = mimeValue;
+  const cache = all.find((t) => t.getTagName() === "cache");
+  if (cache) {
+    const [duration, scope] = tagText(cache).trim().split(/\s+/);
+    const m = DURATION.exec(duration ?? "");
+    if (!m) throw new Error(`${where}: @cache needs a duration such as "5m" or "30s", optionally followed by "public".`);
+    out.cacheTtlMs = Number(m[1]) * DURATION_MS[m[2]];
+    if (scope === "public" || scope === "private") out.cacheScope = scope;
+  }
+  return out;
+}
+
+/** Byte-size suffixes of `@maxSize` (`20MB`, `512KB`, `1GB`; a bare number is bytes). */
+const SIZE_UNITS: Record<string, number> = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 };
+
+/**
+ * Reads the MCP files extension tags of an `McpFile` property: `@accept application/pdf, image/*`,
+ * `@maxSize 20MB` and `@requireDigest`.
+ * @param node The property.
+ */
+function fileTags(node: JSDocableNode): { accept?: string[]; maxSize?: number; requireDigest?: boolean } | undefined {
+  const all = tags(node);
+  const accept = all.find((t) => t.getTagName() === "accept");
+  const maxSize = all.find((t) => t.getTagName() === "maxSize");
+  const requireDigest = all.some((t) => t.getTagName() === "requireDigest");
+  if (!accept && !maxSize && !requireDigest) return undefined;
+  const out: { accept?: string[]; maxSize?: number; requireDigest?: boolean } = {};
+  if (accept) {
+    const values = tagText(accept).split(/[\s,]+/).filter(Boolean);
+    if (values.length) out.accept = values;
+  }
+  if (maxSize) {
+    const m = /^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i.exec(tagText(maxSize).trim());
+    if (m) out.maxSize = Math.round(Number(m[1]) * SIZE_UNITS[(m[2] ?? "b").toLowerCase()]);
+  }
+  if (requireDigest) out.requireDigest = true;
+  return out;
+}
+
 function mcpTag(node: JSDocableNode, where: string): McpDeclaration | undefined {
   const t = tags(node).find((x) => x.getTagName() === "mcp");
   return t ? parseMcpTag(tagText(t), where) : undefined;
@@ -686,4 +759,33 @@ function registerBestInfo(registry: Map<string, CodeType>, codeType: CodeType): 
   const score = (t: CodeType) => (t.enum?.length ?? 0) + t.properties.length;
   const existing = registry.get(codeType.name);
   if (!existing || score(codeType) > score(existing)) registry.set(codeType.name, codeType);
+}
+
+/**
+ * The forms a tool method asks for: every `elicitForm<T>(ctx, "<key>", …)` call in its body, with
+ * the MCP form schema built from `T`. A call without a type argument or with a non-literal key is
+ * skipped (it must pass `schema` itself).
+ * @param method The tool method.
+ * @param where `Class.method`, for error messages.
+ */
+function elicitFormCalls(method: MethodDeclaration, where: string): CodeElicitation[] {
+  const found = new Map<string, CodeElicitation>();
+  for (const call of method.getDescendantsOfKind(ts.SyntaxKind.CallExpression)) {
+    const callee = call.getExpression();
+    const calleeName = Node.isIdentifier(callee)
+      ? callee.getText()
+      : Node.isPropertyAccessExpression(callee) ? callee.getName() : undefined;
+    if (calleeName !== "elicitForm") continue;
+    const [typeArg] = call.getTypeArguments();
+    const keyArg = call.getArguments()[1];
+    if (!typeArg || !keyArg || !Node.isStringLiteral(keyArg)) continue;
+    const key = keyArg.getLiteralValue();
+    const schema = elicitationSchemaFromType(typeArg.getType(), typeArg, `${where} elicitForm "${key}"`);
+    const earlier = found.get(key);
+    if (earlier && JSON.stringify(earlier.schema) !== JSON.stringify(schema)) {
+      throw new Error(`${where}: elicitForm key "${key}" is used with two different form types.`);
+    }
+    found.set(key, { key, schema });
+  }
+  return [...found.values()];
 }

@@ -14,6 +14,7 @@ import { base64ToBytes, bytesToBase64 } from "./base64.ts";
 import { HubApiError } from "./HubApiError.ts";
 import type { HubApiClient } from "./HubApiClient.ts";
 import type { HubCompanies } from "./HubCompanies.ts";
+import { formatHubFileRef, parseHubFileRef, TOKEN_OWNER, type HubFileRef } from "./hubFileRef.ts";
 
 /** Picks the company whose files a call works on. */
 export interface HubFilesOwnerOption {
@@ -521,6 +522,50 @@ export class HubFiles {
     });
   }
 
+  // ---------------------------------------------------------------- references
+
+  /**
+   * Reads the file a `qrtl://` reference points to — the version it pins, or the current one —
+   * authorized by the caller's own token (a reference grants nothing by itself). `~` as the owner
+   * is passed on as it is: Quartal Files resolves it to the company the token is for.
+   * @param ref The reference, e.g. `qrtl://~/inbox/statement.pdf?version=v3`.
+   * @param options The MIME types the caller accepts (`image/*` style wildcards allowed).
+   * @returns The file's entry and its bytes.
+   * @throws When the reference is malformed, the file is a folder, or its type is not accepted.
+   * @example
+   * ```ts
+   * const { entry, bytes } = await getExperimentalHubContext(ctx).files.open(input.statement, {
+   *   accept: ["application/pdf"],
+   * });
+   * ```
+   */
+  async open(ref: HubFileRef, options: { accept?: string[] } = {}): Promise<{ entry: HubFileEntry; bytes: Uint8Array }> {
+    const { owner, path, version } = parseHubFileRef(ref);
+    const { entry, encoding, content } = await this.getContent(path, { owner, version });
+    if (entry.isFolder) throw new Error(`${ref} is a folder, not a file.`);
+    if (options.accept?.length && !mimeAccepted(entry.mimeType, options.accept)) {
+      throw new Error(`${ref} is ${entry.mimeType ?? "of an unknown type"}; expected ${options.accept.join(", ")}.`);
+    }
+    const bytes = encoding === "base64" ? base64ToBytes(content) : new TextEncoder().encode(content);
+    return { entry, bytes };
+  }
+
+  /**
+   * The `qrtl://` reference of a file, pinned to its current version: `~` as the owner by default
+   * (for the token's own company), or the explicit owner for references that are stored or used
+   * with a token for several companies.
+   * @param entry The file, e.g. `HubFileWriteResult.entry`.
+   * @param options `explicitOwner: true` names the owner instead of `~`.
+   * @returns The reference.
+   */
+  refOf(entry: HubFileEntry, options: { explicitOwner?: boolean } = {}): HubFileRef {
+    return formatHubFileRef({
+      owner: options.explicitOwner ? entry.owner : TOKEN_OWNER,
+      path: entry.path,
+      ...(entry.version ? { version: entry.version } : {}),
+    });
+  }
+
   private async owner(options: HubFilesOwnerOption): Promise<string> {
     if (options.owner) return options.owner;
     const selected = await this.companies.getSelected();
@@ -529,4 +574,14 @@ export class HubFiles {
     }
     return selected.companyId;
   }
+}
+
+/** Whether a MIME type matches one of the accepted types (`type/*` wildcards allowed). */
+function mimeAccepted(mimeType: string | undefined, accept: string[]): boolean {
+  if (!mimeType) return false;
+  const type = mimeType.split(";")[0].trim().toLowerCase();
+  return accept.some((a) => {
+    const want = a.trim().toLowerCase();
+    return want.endsWith("/*") ? type.startsWith(want.slice(0, -1)) : type === want;
+  });
 }

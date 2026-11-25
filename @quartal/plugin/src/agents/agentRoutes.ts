@@ -76,8 +76,7 @@ export function registerAgentRoutes(
   const loadCatalog = async (): Promise<AgentsCatalog> => {
     const info = manifest ?? await Helpers.getPluginManifest(baseDir);
     const pluginSkills = options.pluginSkills ??
-      (fileMap ? skillsFromFileMap(fileMap, info.name) : await discoverSkills(baseDir, info.name))
-        .skills.map((s) => s.name);
+      (fileMap ? skillsFromFileMap(fileMap) : await discoverSkills(baseDir)).map((s) => s.name);
     return fileMap
       ? agentsFromFileMap(fileMap, info.name, { ...options, pluginSkills })
       : await discoverAgents(baseDir, info.name, { ...options, pluginSkills });

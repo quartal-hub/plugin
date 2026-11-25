@@ -8,6 +8,9 @@ order: 4
 > **For testing and prototypes only.** The Quartal Hub context, the services behind it and their
 > URLs may change at any time, without a version marked as a breaking change. Do not build
 > production plugins on it.
+>
+> Quartal Hub is now piloting with selected Advisors and Enterprise customers in Finland.
+> [Register at hub.quartal.com](https://hub.quartal.com/) for early access.
 
 When a plugin signs users in through Quartal Hub (`auth: "quartal-hub"`, see
 [Authentication](/docs/auth/authentication/)), a tool can call the Quartal Hub services as the

@@ -78,17 +78,17 @@ Runnable example plugins live in [`samples/`](./samples/) (`@samples/*`, private
 plugin; the types of tool inputs and outputs live there too, usually in `src/tools/model/`, and are re-exported
 from `src/tools/mod.ts` — the generator follows every type a tool signature reaches, see
 [the tools docs](./website/src/content/docs/tools/creating-tools.md)), `src/prompts/` (optional MCP prompt classes — same convention: each function takes one object
-parameter whose properties become the prompt arguments, returns a string or `{ messages }`),
+parameter whose properties become the prompt arguments, returns a string or `{ messages }`), `src/resources/` (optional MCP resource classes: each method has a `@uri` tag; a URI with `{variables}` is a template over the input properties),
 `src/pages/widgets/` (one page per tool, any framework), `skills/`, `agents/` (one `.md`/`.json`
 per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
-`src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts` + `catchAllRoute.ts`) is gitignored.
+`src/qrtl-plugin/` (metadata + `tools.registry.ts` + `prompts.registry.ts` + `resources.registry.ts` + `catchAllRoute.ts`) is gitignored.
 
 ## Run a plugin locally
 
 - Any `@samples/*`: `cd samples/<name> && pnpm install && npm run dev` → `astro dev`.
   - `POST /api/<Class>/<method>`, docs SPA at `/`, Agent Plugins manifest at `/plugin.json` (package at
     `/plugin.zip`, MCP config at `/mcp.json`, overview at `/com.quartal.plugin/contents.json`),
-    `/skills/catalog.json`, MCP at `/mcp` (+ `/mcp/tools.json` REST mirror), widgets at
+    MCP at `/mcp` (+ `/mcp/tools.json` / `/mcp/skills.json` REST mirrors; skills over MCP), widgets at
     `/widgets/<toolId>`, agents at `/agents/catalog.json`, embedding: `/widgets.js`, `/widgets/routes.json`,
     `/widgets/<toolId>/embed.md` (see `samples/embed-page`).
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).

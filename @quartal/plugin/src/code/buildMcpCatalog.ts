@@ -1,15 +1,17 @@
-import type { CodeFile, McpCatalog, McpCatalogEntry, McpPromptDescriptor, WidgetCatalogEntry } from "@quartal/plugin-core";
+import type { CodeFile, McpCatalog, McpCatalogEntry, McpPromptDescriptor, McpResourceDescriptor, WidgetCatalogEntry } from "@quartal/plugin-core";
 import { buildMcpTools } from "./buildMcpTools.ts";
 
 /** Builds a read-only MCP catalog (no JSON Schemas — see `mcp-tools.json` for execution).
  * @param codeFiles Analyzed code files containing MCP tool classes.
  * @param widgetEntries Optional widget catalog entries to include.
  * @param promptDescriptors Optional MCP prompt descriptors (from the plugin's `prompts/` entry).
+ * @param resourceDescriptors Optional MCP resource descriptors (from the plugin's `resources/` entry).
  */
 export function buildMcpCatalog(
   codeFiles: CodeFile[],
   widgetEntries?: WidgetCatalogEntry[],
   promptDescriptors?: McpPromptDescriptor[],
+  resourceDescriptors?: McpResourceDescriptor[],
 ): McpCatalog {
   const tools = buildMcpTools(codeFiles).map((t) => ({
     id: t.id,
@@ -34,7 +36,11 @@ export function buildMcpCatalog(
 
   return {
     tools,
-    resources: [],
+    resources: (resourceDescriptors ?? []).map((r) => ({
+      name: r.id,
+      ...(r.title ? { title: r.title } : {}),
+      description: `${r.description} (${r.uri})`,
+    })),
     prompts,
     widgets,
   };

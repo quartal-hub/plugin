@@ -18,4 +18,6 @@ export interface CodePropOrParam {
   format?: string;
   /** Example value from JSDoc `@example` (first value when several are listed). */
   example?: unknown;
+  /** For an `McpFile` property: `@accept`, `@maxSize` and `@requireDigest` (MCP files extension). */
+  file?: { accept?: string[]; maxSize?: number; requireDigest?: boolean };
 }

@@ -38,19 +38,19 @@ package: what you download at `/plugin.zip` is exactly what the individual URLs 
 | `GET /mcp/tools.json` | REST mirror of the MCP `tools/list` result — the exact same JSON, readable with a plain GET. Also per server: `GET /mcp/<server>/tools.json`. The mirrors are public even when the plugin requires a login. |
 | `GET /mcp/prompts.json` | REST mirror of `prompts/list`. |
 | `GET /mcp/resources.json` | REST mirror of `resources/list`. |
+| `GET /mcp/skills.json` | REST mirror of `skills/list` (MCP Skills extension): every skill's `SKILL.md` URI, frontmatter and file manifest. |
 
 ## REST API
 
 | Endpoint | Returns |
 |---|---|
-| `GET`, `POST`, `PUT` or `DELETE /api/<class>/…` | Executes one tool. The route follows from the class and method names (`Invoices.get({ id })` → `GET /api/invoices/{id}`, `HelloWorld.sayHello` → `POST /api/hello-world/say-hello`) or from a `@rest` tag — see [REST routes](/docs/tools/creating-tools#rest-routes). Path parameters, query string and JSON body are validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `500` on execution errors. Every operation is described in `open-api.json`. |
+| `GET`, `POST`, `PUT` or `DELETE /api/<class>/…` | Executes one tool. The route follows from the class and method names (`Invoices.get({ id })` → `GET /api/invoices/{id}`, `HelloWorld.sayHello` → `POST /api/hello-world/say-hello`) or from a `@rest` tag — see [REST routes](/docs/tools/creating-tools#rest-routes). Path parameters, query string and JSON body are validated against the same schema the MCP tool uses: `200` with the result, `422` on validation errors, `428` when the tool [asks the user](/docs/tools/asking-the-user) something (only with the `Qrtl-Elicitation` request header), `500` on execution errors. Every operation is described in `open-api.json`. |
 
 ## Skills
 
 | Endpoint | Returns |
 |---|---|
-| `GET /skills/catalog.json` | Catalog of all skills with download and browse URLs. |
-| `GET /skills/<name>.zip` | One skill as a zip archive. `GET /skills/<name>.skill` serves the same bytes with a `.skill` filename. |
+| `GET /skills/<name>.zip` | One skill as a zip archive. |
 | `GET /skills/:name/SKILL.md` | The skill's `SKILL.md` as markdown. |
 | `GET /skills/:name/*` | Any file inside the skill folder. |
 

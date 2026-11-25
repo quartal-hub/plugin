@@ -11,6 +11,11 @@ import { resolveRestRoutes } from "../code/resolveRestRoutes.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { pluginGenerator } from "../helpers/pluginGenerator.ts";
+import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
+import { ELICITATION_HEADER, INPUT_RESPONSES_HEADER, restElicitation } from "../elicit/restElicitation.ts";
+import { bindToolCallElicitation } from "../elicit/toolCallElicitation.ts";
+import { bindToolCallFiles } from "../files/toolCallFiles.ts";
+import { fileArguments, resolveToolCallFiles } from "../files/resolveToolCallFiles.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
@@ -22,7 +27,9 @@ import type {
   ExecuteFn,
   McpCatalog,
   McpPromptDescriptor,
+  McpResourceDescriptor,
   McpToolDescriptor,
+  QuartalPluginContext,
   PluginAppConfig,
   PluginInfo,
   PromptResult,
@@ -44,6 +51,9 @@ export class PluginApiHelper {
   private prebuiltTypes: unknown[] | null = null;
   private prebuiltContents: PluginInfo | null = null;
   private prebuiltMcpTools: McpToolDescriptor[] | null = null;
+  private prebuiltMcpResources: McpResourceDescriptor[] | null = null;
+  /** Tool descriptors built from the code files (no `mcp-tools.json`), kept while the code files stay the same. */
+  private builtMcpTools: { from: CodeFile[]; tools: McpToolDescriptor[] } | undefined;
   private prebuiltMcpPrompts: McpPromptDescriptor[] | null = null;
   private widgetEntries: WidgetCatalogEntry[] = [];
   private baseDir: string;
@@ -91,12 +101,31 @@ export class PluginApiHelper {
 
   /** In-memory MCP catalog derived from code files + configured widgets (feeds `contents.json`). */
   public getMcpCatalog(): McpCatalog {
-    return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
+    return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts, this.mcpResources);
+  }
+
+  /**
+   * The generated elicitation form schemas of one tool method, by `elicitForm` key.
+   * @param className The tool class.
+   * @param methodName The tool method.
+   */
+  public getElicitationSchemas(className: string, methodName: string): Record<string, Record<string, unknown>> {
+    const tool = this.getMcpTools().find((t) => t.className === className && t.methodName === methodName);
+    return tool?.elicitations ?? {};
   }
 
   /** MCP tool descriptors: the generated `mcp-tools.json`, or built from the code files. Available after `init()`. */
   public getMcpTools(): McpToolDescriptor[] {
-    return this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+    if (this.prebuiltMcpTools) return this.prebuiltMcpTools;
+    if (this.builtMcpTools?.from !== this.codeFiles) {
+      this.builtMcpTools = { from: this.codeFiles, tools: buildMcpTools(this.codeFiles) };
+    }
+    return this.builtMcpTools.tools;
+  }
+
+  /** MCP resource descriptors loaded from `qrtl-plugin/mcp-resources.json`. Available after `init()`. */
+  public get mcpResources(): McpResourceDescriptor[] {
+    return this.prebuiltMcpResources ?? [];
   }
 
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
@@ -129,7 +158,7 @@ export class PluginApiHelper {
     }
     const catalog = this.getMcpCatalog();
     const mcpTools = this.getMcpTools();
-    const skills = await buildSkillSummaries(this.baseDir, this.manifest!.name);
+    const skills = await buildSkillSummaries(this.baseDir);
     return buildPluginInfo({
       manifest: this.manifest!,
       codeFiles: this.codeFiles,
@@ -159,7 +188,14 @@ export class PluginApiHelper {
     const app = new OpenAPIHono();
     app.use(cors({
       origin: "*",
-      allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version", "mcp-session-id"],
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "mcp-protocol-version",
+        "mcp-session-id",
+        ELICITATION_HEADER,
+        INPUT_RESPONSES_HEADER,
+      ],
     }));
     const manifest = this.manifest!;
 
@@ -210,11 +246,38 @@ export class PluginApiHelper {
         // `HTTPException`s pass through so auth failures keep their HTTP semantics (e.g. 401 + WWW-Authenticate).
         let result: Record<string, unknown>;
         try {
+          const elicitation = restElicitation(
+            (name) => c.req.header(name),
+            this.getElicitationSchemas(className, methodName),
+          );
+          const headers = { Authorization: c.req.header("Authorization") ?? "" };
+          // `McpFile` arguments arrive inline (base64 `data`) over REST; they are checked like MCP ones.
+          const tool = this.getMcpTools().find((t) => t.className === className && t.methodName === methodName);
+          const fileArgs = tool ? fileArguments(tool.inputSchema) : [];
+          let files;
+          if (fileArgs.length) {
+            const received = await resolveToolCallFiles({
+              tool: tool!.id, args: params, fileArgs, headers, clientUpload: false,
+              maxInlineBytes: Number.MAX_SAFE_INTEGER,
+            });
+            if (received.kind !== "ready") {
+              const message = "message" in received ? received.message : "Send the files inline as base64 `data`.";
+              return c.json({ error: message }, 422);
+            }
+            files = { bytes: received.bytes, staged: received.staged, downloads: [] };
+          }
           result = await this.executeStrict(fileName, className, methodName, params, {
-            headers: { Authorization: c.req.header("Authorization") ?? "" },
+            headers,
+            ...(elicitation ? { elicitation } : {}),
+            ...(files ? { files } : {}),
           });
         } catch (error: unknown) {
           if (error instanceof HTTPException) throw error;
+          // The tool asks the user something: 428 with the questions; the caller retries the same
+          // request with the answers in `Qrtl-Input-Responses`.
+          if (error instanceof InputRequiredSignal) {
+            return c.json({ resultType: "input_required", inputRequests: error.inputRequests }, 428);
+          }
           return c.json({ error: error instanceof Error ? error.message : "Unknown error" }, 500);
         }
         return c.json(result);
@@ -262,44 +325,17 @@ export class PluginApiHelper {
     input: Record<string, unknown>,
     authContext?: AuthContext,
   ): Promise<Record<string, unknown>> => {
-    const validatedFileName = PluginApiHelper.validateFileName(fileName);
-    const module = this.config.toolModules?.[validatedFileName] as Record<string, any> | undefined;
-    if (!module) {
-      throw new Error(
-        `Tool module not found: "${fileName}". Ensure tools.registry.ts is generated and passed as config.toolModules.`,
-      );
-    }
-
-    const TargetClass = module[className];
-    if (!TargetClass) {
-      throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
-    }
-
-    // Resolve static vs instance and keep the correct `this` receiver.
-    let targetMethod: (input: Record<string, unknown>) => unknown;
-    let thisArg: object;
-    const staticMethod = TargetClass[methodName];
-    if (staticMethod) {
-      targetMethod = staticMethod;
-      thisArg = TargetClass;
-    } else {
-      const instance = new TargetClass();
-      targetMethod = instance[methodName];
-      thisArg = instance;
-    }
-    if (typeof targetMethod !== "function") {
-      throw new Error(
-        `Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`,
-      );
-    }
-
-    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
-    let result: unknown;
-    if (this.config.execute) {
-      result = await this.config.execute<unknown>(boundMethod, input, authContext);
-    } else {
-      result = await boundMethod(input);
-    }
+    const result = await this.invoke(
+      this.config.toolModules,
+      "Tool module",
+      "tools.registry.ts",
+      "toolModules",
+      fileName,
+      className,
+      methodName,
+      input,
+      authContext,
+    );
 
     const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
     return isObject ? (result as Record<string, unknown>) : { value: result ?? null };
@@ -323,11 +359,85 @@ export class PluginApiHelper {
     input: Record<string, unknown>,
     authContext?: AuthContext,
   ): Promise<PromptResult> => {
+    const result = await this.invoke(
+      this.config.promptModules,
+      "Prompt module",
+      "prompts.registry.ts",
+      "promptModules",
+      fileName,
+      className,
+      methodName,
+      input,
+      authContext,
+    );
+    return result as PromptResult;
+  };
+
+  /**
+   * Reads one of the plugin's own MCP resources: runs the resource method from the injected
+   * resource-module registry (`config.resourceModules`, generated as `resources.registry.ts`) with
+   * the URI template variables as its input. The raw return value is preserved (a string, bytes
+   * or a `{ text | blob, mimeType }` object). Failures throw.
+   * @param descriptor The resource.
+   * @param variables The URI template variables (empty for a fixed URI).
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  executeResource = async (
+    descriptor: McpResourceDescriptor,
+    variables: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<unknown> => {
+    return this.invoke(
+      this.config.resourceModules,
+      "Resource module",
+      "resources.registry.ts",
+      "resourceModules",
+      descriptor.fileName,
+      descriptor.className,
+      descriptor.methodName,
+      variables,
+      authContext,
+    );
+  };
+
+  /**
+   * Runs `fn` with the context a tool of this call would get: through `config.execute` (the auth
+   * layer resolves the signed-in user) or `{ authenticated: false }` without one.
+   * @param fn The function.
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  withToolContext = async <T>(fn: (ctx: QuartalPluginContext) => Promise<T>, authContext?: AuthContext): Promise<T> => {
+    if (this.config.execute) {
+      return await this.config.execute<Promise<T>>(
+        ((_input: Record<string, unknown>, ctx: unknown) => fn(ctx as QuartalPluginContext)) as never,
+        {},
+        authContext,
+      );
+    }
+    return await fn({ authenticated: false });
+  };
+
+  /**
+   * Resolves `registry[fileName][className][methodName]` (static first, then an instance method)
+   * and calls it with the input and the call's context: through `config.execute` (the auth layer
+   * builds the signed-in user's context), or with `{ authenticated: false }` without one.
+   */
+  private async invoke(
+    registry: PluginAppConfig["toolModules"],
+    label: string,
+    registryFile: string,
+    configKey: string,
+    fileName: string,
+    className: string,
+    methodName: string,
+    input: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<unknown> {
     const validatedFileName = PluginApiHelper.validateFileName(fileName);
-    const module = this.config.promptModules?.[validatedFileName] as Record<string, any> | undefined;
+    const module = registry?.[validatedFileName] as Record<string, any> | undefined;
     if (!module) {
       throw new Error(
-        `Prompt module not found: "${fileName}". Ensure prompts.registry.ts is generated and passed as config.promptModules.`,
+        `${label} not found: "${fileName}". Ensure ${registryFile} is generated and passed as config.${configKey}.`,
       );
     }
     const TargetClass = module[className];
@@ -335,7 +445,7 @@ export class PluginApiHelper {
       throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
     }
 
-    // Resolve static vs instance and keep the correct `this` receiver (same rules as tools).
+    // Resolve static vs instance and keep the correct `this` receiver.
     let targetMethod: (input: Record<string, unknown>) => unknown;
     let thisArg: object;
     const staticMethod = TargetClass[methodName];
@@ -348,15 +458,21 @@ export class PluginApiHelper {
       thisArg = instance;
     }
     if (typeof targetMethod !== "function") {
-      throw new Error(`Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`);
+      throw new Error(
+        `Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`,
+      );
     }
 
-    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
-    const result = this.config.execute
-      ? await this.config.execute<unknown>(boundMethod, input, authContext)
-      : await boundMethod(input);
-    return result as PromptResult;
-  };
+    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>, ...args: unknown[]) => unknown;
+    if (this.config.execute) {
+      return await this.config.execute<unknown>(boundMethod, input, authContext);
+    }
+    // Without an auth layer the method still gets a context of its own (for elicitation).
+    const ctx: QuartalPluginContext = { authenticated: false };
+    bindToolCallElicitation(ctx, authContext?.elicitation);
+    bindToolCallFiles(ctx, authContext?.files);
+    return await boundMethod(input, ctx);
+  }
 
   /**
    * Validates a file name (letters, numbers, underscores, dashes; no extension).
@@ -421,6 +537,8 @@ export class PluginApiHelper {
       (injected?.mcpTools ?? await readJson<{ tools?: McpToolDescriptor[] }>("mcp-tools.json"))?.tools ?? null;
     this.prebuiltMcpPrompts =
       (injected?.mcpPrompts ?? await readJson<{ prompts?: McpPromptDescriptor[] }>("mcp-prompts.json"))?.prompts ?? null;
+    this.prebuiltMcpResources =
+      (injected?.mcpResources ?? await readJson<{ resources?: McpResourceDescriptor[] }>("mcp-resources.json"))?.resources ?? null;
 
     this.zodCreator = new ZodBuilder(this.codeFiles);
     this.functionDefs = this.zodCreator.getZodsForAllFunctions();

@@ -40,7 +40,7 @@ Your plugin is an [Astro](https://astro.build) project running on `http://localh
 | `/api/<class>/…`        | The generated OpenAPI / REST operations                                    |
 | `/plugin.json`          | The Agent Plugins manifest (`/plugin.zip` is the installable package)      |
 | `/widgets/<toolId>`     | Your widget pages                                                          |
-| `/skills/catalog.json`  | The Agent Skills catalog                                                   |
+| `/mcp/skills.json`      | The Agent Skills list (mirror of MCP `skills/list`)                        |
 
 Add a tool as a class in `src/tools/`, a widget as a page in `src/pages/widgets/` and a skill as a folder with a `SKILL.md` under `skills/`. Point [MCPJam](https://www.mcpjam.com/) (or Claude, or any MCP client) at `http://localhost:4321/mcp` and try your tools live.
 

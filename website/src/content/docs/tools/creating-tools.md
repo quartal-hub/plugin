@@ -46,6 +46,10 @@ That's it. Run `pnpm dev` and your plugin now serves:
 Both instance methods and `static` methods work. `private` methods (and private properties) are
 never exposed.
 
+The second parameter, when a method declares one, is the call's context (`QuartalPluginContext`):
+the signed-in user in a plugin with authentication, `{ authenticated: false }` otherwise. Pass it
+to [`elicitForm`](/docs/tools/asking-the-user) to ask the user something mid-call.
+
 ## How a method becomes a tool
 
 | Tool field | Comes from | Notes |

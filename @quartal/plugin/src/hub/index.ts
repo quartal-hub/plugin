@@ -11,6 +11,14 @@ export { EXPERIMENTAL_HUB_SERVICE_URLS, isExperimentalHubEnabled } from "./exper
 export { HubApiError } from "./HubApiError.ts";
 export { HubCompanies } from "./HubCompanies.ts";
 export { HubFiles } from "./HubFiles.ts";
+export {
+  formatHubFileRef,
+  HUB_FILE_REF_SCHEME,
+  isHubFileRef,
+  parseHubFileRef,
+  TOKEN_OWNER,
+} from "./hubFileRef.ts";
+export type { HubFileRef, HubFileRefParts } from "./hubFileRef.ts";
 export type { HubFilesOwnerOption, HubFileWriteOptions } from "./HubFiles.ts";
 export { HubFsSource } from "./HubFsSource.ts";
 export { HubSecrets } from "./HubSecrets.ts";

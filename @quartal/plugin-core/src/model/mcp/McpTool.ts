@@ -43,6 +43,8 @@ export interface McpToolDescriptor {
   visibility?: McpToolVisibility[];
   /** Behavior hints from the `@readOnly`, `@destructive`, `@idempotent` and `@openWorld` JSDoc tags, advertised as `annotations`. */
   annotations?: McpToolAnnotations;
+  /** MCP elicitation form schemas (`requestedSchema`) by the key the tool passes to `elicitForm`. */
+  elicitations?: Record<string, Record<string, unknown>>;
 }
 
 /** Root object for `mcp-tools.json`. */
