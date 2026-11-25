@@ -129,7 +129,7 @@ export class PluginApiHelper {
     }
     const catalog = this.getMcpCatalog();
     const mcpTools = this.getMcpTools();
-    const skills = await buildSkillSummaries(this.baseDir, this.manifest!.name);
+    const skills = await buildSkillSummaries(this.baseDir);
     return buildPluginInfo({
       manifest: this.manifest!,
       codeFiles: this.codeFiles,

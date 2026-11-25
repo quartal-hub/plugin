@@ -12,8 +12,8 @@ export interface PluginLinks {
   openApi: string;
   /** URL path to the types catalog (resolve a tool's type names to full definitions). */
   types: string;
-  /** URL path to the skills catalog. */
-  skillsCatalog: string;
+  /** URL path to the skills list (the main MCP server's `skills/list` result). */
+  skills: string;
   /** URL path to the agents catalog. */
   agentsCatalog: string;
   /** URL path to the plugin readme. */

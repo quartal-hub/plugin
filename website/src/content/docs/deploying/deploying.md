@@ -46,7 +46,7 @@ Whatever the platform, the same checks tell you the plugin came up correctly:
 ```bash
 curl https://your-plugin.example.com/plugin.json        # manifest
 curl https://your-plugin.example.com/open-api.json      # one path per tool
-curl https://your-plugin.example.com/skills/catalog.json
+curl https://your-plugin.example.com/mcp/skills.json
 ```
 
 And open `/` in a browser — the built-in docs site should load with your plugin's name, tools,

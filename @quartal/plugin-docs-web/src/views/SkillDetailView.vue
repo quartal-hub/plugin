@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
-import {
-  npxSkillsAddCommand,
-  type PluginInfo,
-  type SkillFileWithUrl,
-  type SkillsCatalogResponse,
-} from "@quartal/plugin-core";
+import { npxSkillsAddCommand, type PluginInfo, type SkillHttpFile } from "@quartal/plugin-core";
 import { QMarkdown } from "@quartal/ui-core";
 import FileTree from "../components/FileTree.vue";
 import CopyButton from "../components/CopyButton.vue";
 import { pluginClient } from "../lib/pluginClient.ts";
+import { loadSkills, type DocsSkill } from "../lib/loadSkills.ts";
 
 const props = defineProps<{ name: string; plugin: PluginInfo | null }>();
 
-const catalog = ref<SkillsCatalogResponse | null>(null);
-const skill = computed(() => catalog.value?.skills.find((s) => s.name === props.name));
-const selected = ref<SkillFileWithUrl | null>(null);
+const skills = ref<DocsSkill[] | null>(null);
+const skill = computed(() => skills.value?.find((s) => s.name === props.name));
+const selected = ref<SkillHttpFile | null>(null);
 const preview = ref("");
 const previewLang = ref("text");
 const previewError = ref("");
@@ -43,14 +39,14 @@ watch(skill, (s) => {
 async function loadCatalog() {
   loadError.value = "";
   try {
-    catalog.value = await pluginClient.getSkillsCatalog();
+    skills.value = await loadSkills();
     if (!skill.value) loadError.value = `Unknown skill: ${props.name}`;
   } catch (e) {
     loadError.value = e instanceof Error ? e.message : String(e);
   }
 }
 
-function getPreviewLang(file: SkillFileWithUrl): string {
+function getPreviewLang(file: SkillHttpFile): string {
   const ext = file.path.split(".").pop()?.toLowerCase();
   // TODO: Probably add @quartal/core OR add name to pass forresolving in code editor.
   switch (ext) {
@@ -72,7 +68,7 @@ function getPreviewLang(file: SkillFileWithUrl): string {
     default: return "text";
   }
 }
-async function selectFile(file: SkillFileWithUrl) {
+async function selectFile(file: SkillHttpFile) {
   selected.value = file;
   preview.value = "Loading…";
   previewError.value = "";
@@ -97,8 +93,7 @@ async function selectFile(file: SkillFileWithUrl) {
       <p class="lead">{{ skill.description }}</p>
 
       <div class="d-flex flex-wrap gap-2 mb-3">
-        <a class="btn btn-sm btn-outline-primary" :href="skill.urls.zip">Download .zip</a>
-        <a class="btn btn-sm btn-outline-primary" :href="skill.urls.skill">Download .skill</a>
+        <a class="btn btn-sm btn-outline-primary" :href="skill.zip">Download .zip</a>
       </div>
       <div v-if="npxCmd" class="mb-3 small">
         <code>{{ npxCmd }}</code>

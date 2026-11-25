@@ -25,7 +25,7 @@ export interface PluginInfo extends PluginManifest {
   tools: PluginToolEntry[];
   /** Tools grouped by source class for navigation and docs. */
   toolGroups: PluginToolGroup[];
-  /** Agent skills shipped with the plugin (details via {@link PluginLinks.skillsCatalog}). */
+  /** Agent skills shipped with the plugin (details via {@link PluginLinks.skills}). */
   skills: PluginSkillSummary[];
   /** Agents shipped with the plugin (details via {@link PluginLinks.agentsCatalog}). */
   agents: PluginAgentSummary[];

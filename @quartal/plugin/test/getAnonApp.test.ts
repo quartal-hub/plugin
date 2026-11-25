@@ -109,12 +109,18 @@ describe("getAnonApp — full route assembly", () => {
     expect(result.tools[0].inputSchema).toBeTruthy();
   });
 
-  it("serves /skills/catalog.json", async () => {
-    const res = await app.request("/skills/catalog.json");
+  it("serves the skills/list mirror at /mcp/skills.json; the skill routes serve only files and zips", async () => {
+    const res = await app.request("/mcp/skills.json");
     expect(res.status).toBe(200);
-    const catalog = await res.json() as { plugin: string; skills: { name: string }[] };
-    expect(catalog.plugin).toBe("@samples/test1");
-    expect(catalog.skills.length).toBeGreaterThan(0);
+    const catalog = await res.json() as {
+      skills: { uri: string; frontmatter: { name: string }; resources: { uri: string; digest: string }[] }[];
+    };
+    const coin = catalog.skills.find((s) => s.frontmatter.name === "coin-flipper");
+    expect(coin?.uri).toBe("skill://coin-flipper/SKILL.md");
+    expect(coin?.resources.map((r) => r.uri)).toContain("skill://coin-flipper/SKILL.md");
+    expect(coin?.resources[0].digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect((await app.request("/skills/catalog.json")).status).toBe(404);
+    expect((await app.request("/skills/coin-flipper.skill")).status).toBe(404);
   });
 
   it("mounts the MCP endpoint at /mcp", async () => {

@@ -89,7 +89,7 @@ export interface PluginPromptEntry {
   arguments: PromptArgument[];
 }
 
-/** Skill summary for the plugin overview (file list loaded from `links.skillsCatalog`). */
+/** Skill summary for the plugin overview (file list loaded from `links.skills`). */
 export interface PluginSkillSummary {
   /** Skill identifier (directory name under `skills/`). */
   name: string;

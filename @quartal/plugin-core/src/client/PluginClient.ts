@@ -5,7 +5,7 @@ import type {
   ListToolsResult,
   McpServersConfig,
   PluginInfo,
-  SkillsCatalogResponse,
+  ListSkillsResult,
 } from "../model/index.ts";
 import { PluginClientError } from "./PluginClientError.ts";
 
@@ -81,9 +81,12 @@ export class PluginClient {
     return this.#fetchText("/readme.md");
   }
 
-  /** Fetches `GET /skills/catalog.json`. */
-  getSkillsCatalog(): Promise<SkillsCatalogResponse> {
-    return this.#fetchJson<SkillsCatalogResponse>("/skills/catalog.json");
+  /**
+   * Fetches `GET /mcp/skills.json` (the main MCP server's `skills/list` result). Map an entry to
+   * its plain-HTTP files and zip with `skillHttpUrls`.
+   */
+  getMcpSkills(): Promise<ListSkillsResult> {
+    return this.#fetchJson<ListSkillsResult>("/mcp/skills.json");
   }
 
   /** Fetches `GET /agents/catalog.json`. */

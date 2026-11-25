@@ -4,8 +4,9 @@ import { HTTPException } from "hono/http-exception";
 import {
   createMcpHandler,
   INVALID_PARAMS,
+  McpServer,
   ProtocolError,
-  Server,
+  ResourceTemplate,
   type McpHttpHandler,
 } from "@modelcontextprotocol/server";
 import { z } from "@hono/zod-openapi";
@@ -30,6 +31,7 @@ import { Helpers } from "../helpers/Helpers.ts";
 import type { FunctionZodDefinition } from "../code/ZodBuilder.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
+import { PluginSkillCatalog } from "./PluginSkillCatalog.ts";
 import {
   defaultFetchWidgetHtml,
   rewriteWidgetHtml,
@@ -56,7 +58,7 @@ interface RequestContextLike {
  */
 export class PluginMcpHelper {
   /** The REST mirrors of the MCP list results, served next to each server's protocol endpoint. */
-  private static readonly LIST_FILES = ["tools.json", "prompts.json", "resources.json"] as const;
+  private static readonly LIST_FILES = ["tools.json", "prompts.json", "resources.json", "skills.json"] as const;
 
   private readonly manifest: PluginManifest;
   private readonly toolEntries: McpToolDescriptor[];
@@ -69,16 +71,17 @@ export class PluginMcpHelper {
   private readonly getFunctionDef: (className: string, methodName: string) => FunctionZodDefinition | undefined;
   private readonly serverOptions: McpServerOptions;
   private readonly fetchWidgetHtml: FetchWidgetHtml;
+  private readonly skills: PluginSkillCatalog | undefined;
   private serverOrigin = "";
   private handler: McpHttpHandler | null = null;
 
   /**
    * Mounts the plugin's MCP server(s) on `app`, wiring auth middleware and supplied widgets. The
    * main server serves at `/mcp`; additional local servers from `mcp.servers` mount at
-   * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts stay on
-   * the main server). External servers are declaration-only (`mcp.json`) and are not mounted.
-   * The auth middleware guards the MCP protocol; every server's list mirrors (`GET tools.json` /
-   * `prompts.json` / `resources.json`) are public.
+   * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts and skills
+   * stay on the main server). External servers are declaration-only (`mcp.json`) and are not
+   * mounted. The auth middleware guards the MCP protocol; every server's list mirrors
+   * (`GET tools.json` / `prompts.json` / `resources.json` / `skills.json`) are public.
    * @param app Hono app to mount the MCP routes on.
    * @param helper Shared hub API helper (metadata, execution).
    * @param config Optional plugin app configuration.
@@ -90,10 +93,12 @@ export class PluginMcpHelper {
     config?: PluginAppConfig,
     widgets: WidgetEntry[] = [],
   ): Promise<void> {
-    if ((!helper.codeFiles.length && !helper.mcpPrompts.length) || config?.mcp === false) {
+    if (config?.mcp === false) return;
+    const baseDir = config?.pluginRootFolder ?? process.cwd();
+    const skills = new PluginSkillCatalog(baseDir, config?.artifacts?.files);
+    if (!helper.codeFiles.length && !helper.mcpPrompts.length && !(await skills.get())) {
       return;
     }
-    const baseDir = config?.pluginRootFolder ?? process.cwd();
     const hubDir = join(baseDir, helper.qrtlPluginDir);
     const toolEntries = await PluginMcpHelper.loadToolEntries(helper, hubDir);
     const mcpOptions = typeof config?.mcp === "object" ? config.mcp : undefined;
@@ -128,6 +133,7 @@ export class PluginMcpHelper {
         server.main ? helper.mcpPrompts : [],
         { ...mcpOptions, ...(server.main ? {} : { name: server.name }) },
         config?.fetchWidgetHtml,
+        server.main ? skills : undefined,
       );
     };
     // Named sub-servers are registered before the main server's catch-all so `/mcp/<name>` wins.
@@ -159,6 +165,7 @@ export class PluginMcpHelper {
     promptEntries: McpPromptDescriptor[],
     serverOptions?: McpServerOptions,
     fetchWidgetHtml?: FetchWidgetHtml,
+    skills?: PluginSkillCatalog,
   ) {
     this.manifest = apiHelper.manifest!;
     this.toolEntries = toolEntries;
@@ -173,6 +180,7 @@ export class PluginMcpHelper {
     this.executePrompt = apiHelper.executePrompt;
     this.serverOptions = serverOptions ?? {};
     this.fetchWidgetHtml = fetchWidgetHtml ?? defaultFetchWidgetHtml;
+    this.skills = skills;
   }
 
   /**
@@ -200,9 +208,9 @@ export class PluginMcpHelper {
 
   /**
    * Returns the Hono sub-app for this server: the REST mirror of the MCP list results
-   * (`GET tools.json` / `prompts.json` / `resources.json`, byte-equivalent to `tools/list` /
-   * `prompts/list` / `resources/list`) and the MCP protocol itself via `createMcpHandler`
-   * (modern + legacy fallback) on everything else.
+   * (`GET tools.json` / `prompts.json` / `resources.json` / `skills.json`, byte-equivalent to
+   * `tools/list` / `prompts/list` / `resources/list` / `skills/list`) and the MCP protocol itself
+   * via `createMcpHandler` (modern + legacy fallback) on everything else.
    */
   getApp(): Hono {
     const app = new Hono();
@@ -211,6 +219,7 @@ export class PluginMcpHelper {
     app.get("/tools.json", (c) => c.json(this.listToolsResult()));
     app.get("/prompts.json", (c) => c.json(this.listPromptsResult()));
     app.get("/resources.json", (c) => c.json(this.listResourcesResult(new URL(c.req.url).origin)));
+    app.get("/skills.json", async (c) => c.json(this.skills ? await this.skills.listResult() : { skills: [] }));
     app.all("/*", (c) => {
       // Fallback origin for requests without a `host` header — latched from the first request,
       // matching the previous transport-creation-time behavior. `resolveOrigin` prefers the
@@ -273,20 +282,22 @@ export class PluginMcpHelper {
   }
 
   /**
-   * Builds a fresh `Server` for one serving unit — `createMcpHandler` calls this once per HTTP
+   * Builds a fresh `McpServer` for one serving unit — `createMcpHandler` calls this once per HTTP
    * request (modern 2026-07-28 exchanges and stateless legacy requests alike), so instances hold
-   * no cross-request state.
+   * no cross-request state. Tools and prompts use raw request handlers on the underlying `Server`
+   * (the generated schemas are JSON Schema, not SDK-registered Zod shapes); resources go through
+   * `registerResource`, which lets the SDK's Skills extension share `resources/*` with widgets.
    */
-  private buildServer(): Server {
+  private async buildServer(): Promise<McpServer> {
     const hasWidgets = this.widgets.length > 0;
     const hasPrompts = this.promptEntries.length > 0;
     const capabilities: Record<string, unknown> = { tools: {}, logging: {} };
-    if (hasWidgets) capabilities.resources = {};
     if (hasPrompts) capabilities.prompts = {};
-    const mcpServer = new Server(
+    const mcp = new McpServer(
       buildMcpServerImplementation(this.manifest, this.serverOptions, this.serverOrigin),
       { capabilities },
     );
+    const mcpServer = mcp.server;
 
     // logging/setLevel needs no handler here — declaring the `logging` capability makes the v2 SDK
     // register its built-in one for legacy (2025-era) clients (MCPJam and Inspector send setLevel
@@ -296,38 +307,47 @@ export class PluginMcpHelper {
     mcpServer.setRequestHandler("tools/list", () => this.listToolsResult());
 
     if (hasWidgets) {
-      mcpServer.setRequestHandler("resources/list", (_request, ctx) =>
-        this.listResourcesResult(this.resolveOrigin(ctx)));
-
-      mcpServer.setRequestHandler("resources/read", async (request, ctx) => {
-        const uri = request.params.uri;
-        const widgetEntry = this.widgetsByUri.get(uri);
-        if (!widgetEntry) {
-          throw new Error(`Unknown resource: ${uri}`);
-        }
-        // Serve the live widget page: fetch it from this origin, then make it renderable inside the
-        // host's base-URL-less sandbox — asset URLs become absolute (via /widget-assets for CORS) and
-        // the origin is whitelisted in the CSP.
-        const origin = this.resolveOrigin(ctx);
-        const html = await this.fetchWidgetHtml(widgetEntry, origin);
-        if (html == null) {
-          throw new Error(
-            `Widget page "${widgetEntry.pagePath ?? `/widgets/${widgetEntry.toolId}`}" could not be rendered on ${origin}`,
-          );
-        }
-        // `_meta` on the content item (SEP-1865) AND at the top level (older hosts) — spec-compatible.
-        const cspMeta = { _meta: { ui: { csp: withWidgetOrigin(widgetEntry.csp, origin) } } };
-        return {
-          contents: [{
-            uri: widgetEntry.uri,
-            mimeType: WIDGET_MIME_TYPE,
-            text: rewriteWidgetHtml(html, origin),
+      // One template for every widget: its `list` callback sees the request, so each listing
+      // carries the CSP for the origin the client used.
+      mcp.registerResource(
+        "widgets",
+        new ResourceTemplate("ui://widgets/{toolId}.html", {
+          list: (ctx) => this.listResourcesResult(this.resolveOrigin(ctx)),
+        }),
+        { mimeType: WIDGET_MIME_TYPE },
+        async (url, _variables, ctx) => {
+          const uri = url.href;
+          const widgetEntry = this.widgetsByUri.get(uri);
+          if (!widgetEntry) {
+            throw new ProtocolError(INVALID_PARAMS, `Unknown resource: ${uri}`);
+          }
+          // Serve the live widget page: fetch it from this origin, then make it renderable inside
+          // the host's base-URL-less sandbox — asset URLs become absolute (via /widget-assets for
+          // CORS) and the origin is whitelisted in the CSP.
+          const origin = this.resolveOrigin(ctx);
+          const html = await this.fetchWidgetHtml(widgetEntry, origin);
+          if (html == null) {
+            throw new Error(
+              `Widget page "${widgetEntry.pagePath ?? `/widgets/${widgetEntry.toolId}`}" could not be rendered on ${origin}`,
+            );
+          }
+          // `_meta` on the content item (SEP-1865) AND at the top level (older hosts) — spec-compatible.
+          const cspMeta = { _meta: { ui: { csp: withWidgetOrigin(widgetEntry.csp, origin) } } };
+          return {
+            contents: [{
+              uri: widgetEntry.uri,
+              mimeType: WIDGET_MIME_TYPE,
+              text: rewriteWidgetHtml(html, origin),
+              ...cspMeta,
+            }],
             ...cspMeta,
-          }],
-          ...cspMeta,
-        };
-      });
+          };
+        },
+      );
     }
+
+    const skills = await this.skills?.get();
+    if (skills) skills.attach(mcp);
 
     if (hasPrompts) {
       mcpServer.setRequestHandler("prompts/list", () => this.listPromptsResult());
@@ -406,7 +426,7 @@ export class PluginMcpHelper {
       },
     );
 
-    return mcpServer;
+    return mcp;
   }
 }
 

@@ -127,7 +127,7 @@ export async function getAuthApp(config?: PluginAppConfig, oauth?: OAuthOptions)
     title: helper.manifest!.title,
     ...siteRedirectOptions(config.site, helper.manifest!.name),
   });
-  registerSkillRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, { fileMap });
+  registerSkillRoutes(app as Hono, config.pluginRootFolder, { fileMap });
   registerAgentRoutes(app as Hono, config.pluginRootFolder, helper.manifest!, {
     pluginTools: helper.getMcpCatalog().tools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(helper.manifest!.name),

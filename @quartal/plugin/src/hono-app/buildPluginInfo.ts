@@ -182,11 +182,10 @@ function buildWidgets(input: BuildPluginInfoInput): PluginWidgetEntry[] {
 
 /** Discovers skills under `baseDir/skills/` and summarizes them for the overview.
  * @param baseDir Plugin root directory.
- * @param pluginName Plugin name (for the skills catalog manifest).
  */
-export async function buildSkillSummaries(baseDir: string, pluginName: string): Promise<PluginSkillSummary[]> {
-  const catalog = await discoverSkills(baseDir, pluginName);
-  return catalog.skills.map((skill) => ({
+export async function buildSkillSummaries(baseDir: string): Promise<PluginSkillSummary[]> {
+  const skills = await discoverSkills(baseDir);
+  return skills.map((skill) => ({
     name: skill.name,
     description: skill.description,
     ...(skill.license ? { license: skill.license } : {}),
@@ -230,7 +229,7 @@ function defaultLinks(): PluginLinks {
     contents: `/${QUARTAL_EXTENSION_NAMESPACE}/contents.json`,
     openApi: "/open-api.json",
     types: "/types.json",
-    skillsCatalog: "/skills/catalog.json",
+    skills: "/mcp/skills.json",
     agentsCatalog: "/agents/catalog.json",
     readme: "/readme.md",
     api: "/api",

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import FileTreeNode from "./FileTreeNode.vue";
-import type { SkillFileWithUrl } from "@quartal/plugin-core";
+import type { SkillHttpFile } from "@quartal/plugin-core";
 import { sortedChildren, type TreeNode } from "../lib/fileTree.ts";
 
 defineProps<{ node: TreeNode; selectedPath?: string }>();
-const emit = defineEmits<{ select: [file: SkillFileWithUrl] }>();
+const emit = defineEmits<{ select: [file: SkillHttpFile] }>();
 </script>
 
 <template>

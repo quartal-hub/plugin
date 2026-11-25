@@ -108,7 +108,7 @@ export async function generateTools(options?: GenerateToolsOptions): Promise<voi
   const basePath = options?.basePath ?? "/api";
   const qrtlConfig = await Helpers.loadQrtlConfig(cwd);
   const mcpOptions = typeof qrtlConfig?.mcp === "object" ? qrtlConfig.mcp : undefined;
-  const skills = await buildSkillSummaries(cwd, manifest.name);
+  const skills = await buildSkillSummaries(cwd);
   const agents = await buildAgentSummaries(cwd, manifest.name, {
     pluginTools: artifacts.mcpTools.map((t) => t.id),
     pluginServer: mcpServerDisplayName(manifest.name),

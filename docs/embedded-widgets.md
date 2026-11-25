@@ -180,7 +180,7 @@ Same component and a `usePluginTool` composable. Kept apart from `@quartal/plugi
 
 - The same content, machine-readable, at `GET /widgets/<toolId>/embed.md` (and an index at
   `/widgets/embed.md`), so an agent can be pointed at one URL. A plugin could also ship it as an
-  agent skill in `/skills/catalog.json`.
+  agent skill in `/mcp/skills.json`.
 
 ## Quartal Messages: same core, different adapter
 

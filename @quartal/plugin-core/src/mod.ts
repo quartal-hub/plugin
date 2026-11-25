@@ -9,4 +9,5 @@
 export * from "./client/PluginClient.ts";
 export * from "./client/PluginClientError.ts";
 export * from "./client/skillCommands.ts";
+export * from "./client/skillHttpUrls.ts";
 export * from "./model/index.ts";

@@ -76,16 +76,14 @@ describe("isValidSkillName", () => {
 
 describe("discoverSkills", () => {
   it("discovers the committed fixture skills", async () => {
-    const catalog = await discoverSkills(PKG_DIR, "@samples/test1");
-    expect(catalog.plugin).toBe("@samples/test1");
-    expect(catalog.skills.map((s) => s.name)).toContain("coin-flipper");
-    const multiplier = catalog.skills.find((s) => s.name === "magic-multiplier");
+    const skills = await discoverSkills(PKG_DIR);
+    expect(skills.map((s) => s.name)).toContain("coin-flipper");
+    const multiplier = skills.find((s) => s.name === "magic-multiplier");
     expect(multiplier?.files.map((f) => f.path).sort()).toEqual(["SKILL.md", "scripts/multiplier.ts"].sort());
   });
 
-  it("returns an empty catalog when the plugin ships no skills", async () => {
-    const catalog = await discoverSkills(join(PKG_DIR, "agents"), "@samples/test1");
-    expect(catalog).toEqual({ version: "1.0", plugin: "@samples/test1", skills: [] });
+  it("returns no skills when the plugin ships none", async () => {
+    expect(await discoverSkills(join(PKG_DIR, "agents"))).toEqual([]);
   });
 });
 
@@ -106,7 +104,7 @@ describe("discoverSkills — metadata reaches the catalog", () => {
   });
 
   it("carries the nested metadata map through to the skill entry", async () => {
-    const catalog = await discoverSkills(dir, "@samples/tmp");
-    expect(catalog.skills[0].metadata).toEqual({ audience: "developers" });
+    const skills = await discoverSkills(dir);
+    expect(skills[0].metadata).toEqual({ audience: "developers" });
   });
 });

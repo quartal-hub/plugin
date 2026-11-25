@@ -88,7 +88,7 @@ per agent — see [docs/agents.md](./docs/agents.md)), `public/`. The generated
 - Any `@samples/*`: `cd samples/<name> && pnpm install && npm run dev` → `astro dev`.
   - `POST /api/<Class>/<method>`, docs SPA at `/`, Agent Plugins manifest at `/plugin.json` (package at
     `/plugin.zip`, MCP config at `/mcp.json`, overview at `/com.quartal.plugin/contents.json`),
-    `/skills/catalog.json`, MCP at `/mcp` (+ `/mcp/tools.json` REST mirror), widgets at
+    MCP at `/mcp` (+ `/mcp/tools.json` / `/mcp/skills.json` REST mirrors; skills over MCP), widgets at
     `/widgets/<toolId>`, agents at `/agents/catalog.json`, embedding: `/widgets.js`, `/widgets/routes.json`,
     `/widgets/<toolId>/embed.md` (see `samples/embed-page`).
 - Build + run: `npm run build` then `node ./dist/server/entry.mjs` (`@astrojs/node` standalone).

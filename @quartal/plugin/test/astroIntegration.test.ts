@@ -27,7 +27,7 @@ class Calculator {
 describe("isServerPath", () => {
   it("matches Hono server routes", () => {
     const paths = [
-      "/", "/api/calculator/add", "/mcp", "/mcp/x", "/skills/catalog.json", "/agents/catalog.json",
+      "/", "/api/calculator/add", "/mcp", "/mcp/x", "/skills/coin-flipper/SKILL.md", "/agents/catalog.json",
       "/agents/greeter.md", "/icons/0", "/plugin.json", "/widget-assets/_astro/x.js",
       "/.well-known/oauth-protected-resource", "/widgets.js", "/widgets/routes.json", "/widgets/embed.md",
       "/widgets/simpleSalary/embed.md",

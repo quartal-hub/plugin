@@ -1,12 +1,12 @@
-import type { SkillFileWithUrl } from "@quartal/plugin-core";
+import type { SkillHttpFile } from "@quartal/plugin-core";
 
 export interface TreeNode {
   name: string;
   children: Map<string, TreeNode>;
-  file?: SkillFileWithUrl;
+  file?: SkillHttpFile;
 }
 
-export function buildFileTree(files: SkillFileWithUrl[]): TreeNode {
+export function buildFileTree(files: SkillHttpFile[]): TreeNode {
   const root: TreeNode = { name: "", children: new Map() };
   for (const f of files) {
     const parts = f.path.split("/");

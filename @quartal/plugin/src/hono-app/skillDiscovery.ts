@@ -1,6 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
-import type { SkillEntry, SkillFileEntry, SkillFrontmatter, SkillsCatalog } from "@quartal/plugin-core";
+import type { SkillEntry, SkillFileEntry, SkillFrontmatter } from "@quartal/plugin-core";
 import type { PluginFileMapEntry } from "../model/index.ts";
 import { fileMapSize, fileMapText, fileMapUnder } from "../helpers/fileMap.ts";
 import { Helpers } from "../helpers/Helpers.ts";
@@ -114,9 +114,9 @@ async function listSkillFiles(skillDir: string): Promise<SkillFileEntry[]> {
  * Discovers Agent Skills in `<baseDir>/skills/{name}/SKILL.md`.
  * Invalid or incomplete skills are skipped with a console warning.
  * @param baseDir Plugin root directory.
- * @param pluginName Plugin name (for the skills catalog manifest).
+ * @returns The valid skills, sorted by name.
  */
-export async function discoverSkills(baseDir: string, pluginName: string): Promise<SkillsCatalog> {
+export async function discoverSkills(baseDir: string): Promise<SkillEntry[]> {
   const skillsRoot = join(baseDir, "skills");
   const skills: SkillEntry[] = [];
 
@@ -126,7 +126,7 @@ export async function discoverSkills(baseDir: string, pluginName: string): Promi
     skillDirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
   } catch (e) {
     if ((e as NodeJS.ErrnoException)?.code === "ENOENT") {
-      return { version: "1.0", plugin: pluginName, skills: [] };
+      return [];
     }
     throw e;
   }
@@ -143,7 +143,7 @@ export async function discoverSkills(baseDir: string, pluginName: string): Promi
     if (entry) skills.push(entry);
   }
 
-  return { version: "1.0", plugin: pluginName, skills };
+  return skills;
 }
 
 /** Validates one skill (frontmatter + naming rules) into a catalog entry; warns and returns null when invalid.
@@ -188,9 +188,9 @@ function toSkillEntry(dirName: string, raw: string, files: SkillFileEntry[]): Sk
  * `skills/<name>/…` groups that contain a `SKILL.md`, validated by the same rules. Files directly
  * under `skills/` (documentation) are ignored, matching the directory-based discovery.
  * @param files The build-time file map (plugin-root-relative paths).
- * @param pluginName Plugin name (for the skills catalog manifest).
+ * @returns The valid skills, sorted by name.
  */
-export function skillsFromFileMap(files: readonly PluginFileMapEntry[], pluginName: string): SkillsCatalog {
+export function skillsFromFileMap(files: readonly PluginFileMapEntry[]): SkillEntry[] {
   const byDir = new Map<string, { rel: string; entry: PluginFileMapEntry }[]>();
   for (const entry of fileMapUnder(files, "skills")) {
     const rest = entry.path.slice("skills/".length);
@@ -216,5 +216,5 @@ export function skillsFromFileMap(files: readonly PluginFileMapEntry[], pluginNa
     if (entry) skills.push(entry);
   }
 
-  return { version: "1.0", plugin: pluginName, skills };
+  return skills;
 }

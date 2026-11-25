@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { SkillsClient } from "@modelcontextprotocol/client/ext/skills";
 import { PluginApiHelper, PluginMcpHelper } from "../src/index.ts";
 import type { PluginAppConfig } from "../src/index.ts";
 
@@ -112,6 +113,32 @@ describe("PluginMcpHelper — MCP over Streamable HTTP (SDK client)", () => {
       expect(list.tools.some((t) => t.name === addToolId)).toBe(true);
       const call = await client.callTool({ name: addToolId, arguments: { first: 2, second: 3 } });
       expect(call.structuredContent).toEqual({ value: 5 });
+    } finally {
+      await transport.close();
+    }
+  });
+
+  it("serves the plugin's skills through the MCP Skills extension (2026-07-28)", async () => {
+    const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`));
+    const client = new Client(
+      { name: "hub-mcp-test-skills", version: "0.0.1" },
+      { capabilities: {}, versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
+    await client.connect(transport);
+    try {
+      const skills = new SkillsClient(client);
+      expect(skills.supported).toBe(true);
+      const listing = await skills.list();
+      const coin = listing.skills.find((s) => s.frontmatter.name === "coin-flipper");
+      expect(coin?.uri).toBe("skill://coin-flipper/SKILL.md");
+
+      const read = await client.readResource({ uri: "skill://coin-flipper/SKILL.md" });
+      const first = read.contents[0] as { text?: string };
+      expect(first.text).toContain("name: coin-flipper");
+
+      // The REST mirror is the same list.
+      const mirror = await (await fetch(`${baseUrl}/mcp/skills.json`)).json() as { skills: { uri: string }[] };
+      expect(mirror.skills.map((s) => s.uri)).toEqual(listing.skills.map((s) => s.uri));
     } finally {
       await transport.close();
     }
