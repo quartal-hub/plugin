@@ -517,21 +517,29 @@ export class PluginMcpHelper {
               throw new ProtocolError(INVALID_PARAMS, "Invalid or expired requestState");
             }
           }
-          const received = await resolveToolCallFiles({
-            tool: String(toolName),
-            args: params,
-            fileArgs,
-            headers,
-            clientUpload: clientFiles?.upload !== undefined,
-            maxInlineBytes: PluginMcpHelper.MAX_INLINE_BYTES,
-            staging: this.fileStaging,
-            ...(this.stateCodec ? { mintState: (s: FileUploadState) => this.stateCodec!.mint(s, ctx as never) } : {}),
-            ...(state ? { state } : {}),
-            withCall: (fn) => this.withToolContext(
-              (toolCtx) => fn({ tool: String(toolName), args: params, ctx: toolCtx }),
-              { headers },
-            ),
-          });
+          let received: Awaited<ReturnType<typeof resolveToolCallFiles>>;
+          try {
+            received = await resolveToolCallFiles({
+              tool: String(toolName),
+              args: params,
+              fileArgs,
+              headers,
+              clientUpload: clientFiles?.upload !== undefined,
+              maxInlineBytes: PluginMcpHelper.MAX_INLINE_BYTES,
+              staging: this.fileStaging,
+              ...(this.stateCodec ? { mintState: (s: FileUploadState) => this.stateCodec!.mint(s, ctx as never) } : {}),
+              ...(state ? { state } : {}),
+              withCall: (fn) => this.withToolContext(
+                (toolCtx) => fn({ tool: String(toolName), args: params, ctx: toolCtx }),
+                { headers },
+              ),
+            });
+          } catch (err) {
+            // A staging failure (e.g. no write access to the destination) is the tool's failure.
+            if (err instanceof ProtocolError) throw err;
+            const text = err instanceof HTTPException ? await err.getResponse().text() : err instanceof Error ? err.message : String(err);
+            return { content: [{ type: "text" as const, text }], isError: true };
+          }
           if (received.kind === "upload") {
             return { content: [], resultType: "upload_required", uploads: received.uploads, requestState: received.requestState } as never;
           }
