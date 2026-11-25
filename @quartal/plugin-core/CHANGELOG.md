@@ -1,5 +1,42 @@
 # @quartal/plugin-core
 
+## 2.0.0-beta.0
+
+### Major Changes
+
+- bd98c1f: Skills over MCP.
+  
+  - The main MCP server serves the plugin's `skills/` folder with the MCP Skills extension (`io.modelcontextprotocol/skills`): `skills/list`, `skills/get` and the `skill://<name>/<path>` resources, each skill with a SHA-256 file manifest. Skills are validated by the SDK's skill catalog (name equals folder, frontmatter, 512 files / 16 MiB); an invalid skill is left out with a warning.
+  - `GET /mcp/skills.json` mirrors `skills/list`. Skill files stay available at `/skills/<name>/<path>` and `/skills/<name>.zip`. There is no `/skills/catalog.json` and no `.skill` download.
+  - The MCP server is built on the SDK's `McpServer`; widgets are one `ui://widgets/{toolId}.html` resource template.
+  - `@quartal/plugin-core`: `ListSkillsResult`, `McpSkill`, `McpSkillResource` and `SkillFrontmatter` describe the MCP shapes; `PluginClient.getMcpSkills()` fetches the mirror and `skillHttpUrls()` maps an entry to its HTTP files and zip. `PluginLinks.skills` replaces `skillsCatalog`. `discoverSkills(baseDir)` and `skillsFromFileMap(files)` return `SkillEntry[]`; `registerSkillRoutes(app, root, { fileMap })` no longer takes a manifest.
+- bd98c1f: Version 2: Quartal Plugins on the stateless MCP 2026-07-28 feature set — skills over MCP, elicitation, general resources and Quartal Files references. Published as `2.0.0-beta.N` under the npm `beta` tag; the starter kit scaffolds plugins on `^2.0.0-beta.0`.
+
+### Minor Changes
+
+- bd98c1f: Asking the user mid-call (MCP elicitation).
+  
+  - `@quartal/plugin/elicit`: `elicitForm<T>(ctx, key, { message })` asks with a form and `elicitUrl(ctx, key, { message, url })` asks the user to open a page. Both are stateless (MCP 2026-07-28 input-required results): the client retries the call with the answer and the method runs again.
+  - The code generator builds the form schema from `T` (flat object of strings, numbers, booleans, string-literal unions and arrays of one; JSDoc becomes the label) into `elicitations` on the tool descriptor, and fails the build for a type a form cannot express.
+  - A client without elicitation, or a 2025-era client, gets the fallback: `decline` by default, or an error with `fallback: "error"`.
+  - REST: with `Qrtl-Elicitation: form|url`, a tool that asks answers HTTP 428 with `inputRequests`; the retry carries the answers in `Qrtl-Input-Responses` (base64url JSON). `open-api.json` documents the 428.
+  - Every tool method now receives a context as its second parameter, also without authentication (`{ authenticated: false }`).
+  - `@quartal/plugin-core`: `CodeElicitation`, `CodeFunction.elicitations` and `McpToolDescriptor.elicitations`.
+- bd98c1f: Files in and out of tools with the MCP files extension (`io.modelcontextprotocol/files`, experimental).
+  
+  - `@quartal/plugin/files`: an `McpFile` tool input property is marked `x-mcp-file` (`@accept`, `@maxSize`, `@requireDigest` from JSDoc); `readMcpFile(ctx, file)` returns the bytes the framework received and checked (size, type, SHA-256) before the tool ran; `offerDownload(ctx, …)` lists a download in the result's `_meta` for clients that support downloads.
+  - Files arrive inline (base64 `data`, up to 4 MiB per call) or through the plugin's file staging: export `fileStaging` from `src/file-staging.ts` and set `QRTL_REQUEST_STATE_SECRET`; the first `tools/call` answers `upload_required` with the targets and a sealed request state, and the retry runs the tool with the staged bytes. The extension is declared in `server/discover`.
+  - A `FileStaging` gets the tool's arguments and the caller's context, and may `confirm` an upload (storage-side size and digest check) instead of `read`ing it; the tool then finds the staged key with `stagedFileKey(ctx, file)`.
+  - REST accepts `McpFile` arguments inline.
+  - `@quartal/plugin-core`: `CodePropOrParam.file`.
+- bd98c1f: The plugin's own MCP resources.
+  
+  - Methods of classes exported from `src/resources/mod.ts` are MCP resources: `@uri` gives the URI (a URI with `{variables}` is a resource template whose variables are the method's input properties), `@mimeType` the content type and `@cache 5m [public]` the cache hint. A string is served as text, bytes as a blob, `{ text | blob, mimeType }` as given, anything else as JSON (`application/json`). Without `@mimeType`, the listed MIME type is inferred from the method's return type.
+  - The code generator writes `mcp-resources.json` and `resources.registry.ts`; the generated middleware passes `resourceModules` to the app. A method without `@uri`, a duplicate URI or a template variable missing from the input fails the build.
+  - Resources are served on the main MCP server next to widgets and skills, and listed in `GET /mcp/resources.json` and the plugin overview.
+  - Prompts and resources receive the call's context as their second parameter, like tools.
+  - `@quartal/plugin-core`: `McpResourceDescriptor`, `McpResourcesDocument`, `CodeResourceDeclaration` and `CodeFunction.resource`.
+
 ## 1.1.0
 
 ### Minor Changes
