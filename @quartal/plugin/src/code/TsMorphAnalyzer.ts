@@ -264,6 +264,8 @@ export class TsMorphAnalyzer {
     if (fmt !== undefined) out.format = fmt;
     const ex = exampleTag(prop);
     if (ex !== undefined) out.example = ex;
+    const file = fileTags(prop);
+    if (file) out.file = file;
     return out;
   }
 
@@ -576,6 +578,33 @@ function resourceTag(node: JSDocableNode, where: string): CodeResourceDeclaratio
     out.cacheTtlMs = Number(m[1]) * DURATION_MS[m[2]];
     if (scope === "public" || scope === "private") out.cacheScope = scope;
   }
+  return out;
+}
+
+/** Byte-size suffixes of `@maxSize` (`20MB`, `512KB`, `1GB`; a bare number is bytes). */
+const SIZE_UNITS: Record<string, number> = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 };
+
+/**
+ * Reads the MCP files extension tags of an `McpFile` property: `@accept application/pdf, image/*`,
+ * `@maxSize 20MB` and `@requireDigest`.
+ * @param node The property.
+ */
+function fileTags(node: JSDocableNode): { accept?: string[]; maxSize?: number; requireDigest?: boolean } | undefined {
+  const all = tags(node);
+  const accept = all.find((t) => t.getTagName() === "accept");
+  const maxSize = all.find((t) => t.getTagName() === "maxSize");
+  const requireDigest = all.some((t) => t.getTagName() === "requireDigest");
+  if (!accept && !maxSize && !requireDigest) return undefined;
+  const out: { accept?: string[]; maxSize?: number; requireDigest?: boolean } = {};
+  if (accept) {
+    const values = tagText(accept).split(/[\s,]+/).filter(Boolean);
+    if (values.length) out.accept = values;
+  }
+  if (maxSize) {
+    const m = /^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i.exec(tagText(maxSize).trim());
+    if (m) out.maxSize = Math.round(Number(m[1]) * SIZE_UNITS[(m[2] ?? "b").toLowerCase()]);
+  }
+  if (requireDigest) out.requireDigest = true;
   return out;
 }
 

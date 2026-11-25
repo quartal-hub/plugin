@@ -30,6 +30,14 @@ export type {
   ElicitUrlOptions,
   ElicitUrlResult,
 } from "./elicit/index.ts";
+export type {
+  FileDownload,
+  FileStaging,
+  FileStagingCall,
+  FileTransferTarget,
+  McpFile,
+  ToolCallFiles,
+} from "./files/index.ts";
 export { defineQrtlConfig, toQrtlAuthConfig } from "./QrtlConfig.ts";
 export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig, QrtlSiteConfig } from "./QrtlConfig.ts";
 export type {

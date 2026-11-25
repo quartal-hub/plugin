@@ -14,6 +14,8 @@ import { pluginGenerator } from "../helpers/pluginGenerator.ts";
 import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
 import { ELICITATION_HEADER, INPUT_RESPONSES_HEADER, restElicitation } from "../elicit/restElicitation.ts";
 import { bindToolCallElicitation } from "../elicit/toolCallElicitation.ts";
+import { bindToolCallFiles } from "../files/toolCallFiles.ts";
+import { fileArguments, resolveToolCallFiles } from "../files/resolveToolCallFiles.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
@@ -248,9 +250,26 @@ export class PluginApiHelper {
             (name) => c.req.header(name),
             this.getElicitationSchemas(className, methodName),
           );
+          const headers = { Authorization: c.req.header("Authorization") ?? "" };
+          // `McpFile` arguments arrive inline (base64 `data`) over REST; they are checked like MCP ones.
+          const tool = this.getMcpTools().find((t) => t.className === className && t.methodName === methodName);
+          const fileArgs = tool ? fileArguments(tool.inputSchema) : [];
+          let files;
+          if (fileArgs.length) {
+            const received = await resolveToolCallFiles({
+              tool: tool!.id, args: params, fileArgs, headers, clientUpload: false,
+              maxInlineBytes: Number.MAX_SAFE_INTEGER,
+            });
+            if (received.kind !== "ready") {
+              const message = "message" in received ? received.message : "Send the files inline as base64 `data`.";
+              return c.json({ error: message }, 422);
+            }
+            files = { bytes: received.bytes, downloads: [] };
+          }
           result = await this.executeStrict(fileName, className, methodName, params, {
-            headers: { Authorization: c.req.header("Authorization") ?? "" },
+            headers,
             ...(elicitation ? { elicitation } : {}),
+            ...(files ? { files } : {}),
           });
         } catch (error: unknown) {
           if (error instanceof HTTPException) throw error;
@@ -434,6 +453,7 @@ export class PluginApiHelper {
     // Without an auth layer the method still gets a context of its own (for elicitation).
     const ctx: QuartalPluginContext = { authenticated: false };
     bindToolCallElicitation(ctx, authContext?.elicitation);
+    bindToolCallFiles(ctx, authContext?.files);
     return await boundMethod(input, ctx);
   }
 

@@ -1,9 +1,17 @@
 # Plan: Skills over MCP, Tasks, Elicitation, File transfers and Resources
 
-> **Status: ANALYSIS (2026-11-25).** Nothing here is implemented yet. Written after Anthropic's
-> announcement (2026-11-24) that Claude and Claude Code support Skills over MCP (public beta), Tasks
-> and Elicitation (GA), and File Uploads (rolling out), all on the stateless MCP `2026-07-28`
-> revision.
+> **Status: PHASES 1–4 IMPLEMENTED in this repo (2026-11-25, version 2 beta), Tasks (phase 5)
+> open.** Written after Anthropic's announcement (2026-11-24) that Claude and Claude Code support
+> Skills over MCP (public beta), Tasks and Elicitation (GA), and File Uploads (rolling out), all on
+> the stateless MCP `2026-07-28` revision. Built: skills over MCP (`/mcp/skills.json` replaces
+> `/skills/catalog.json`), `@quartal/plugin/elicit`, `src/resources/` resources and templates,
+> `qrtl://` references in `@quartal/plugin/hub`, and the files extension in `@quartal/plugin/files`.
+> The Quartal Files plugin side (tools, resources, skill, widget, Directory listing) is in the
+> Quartal Files project. Deviations from the analysis below: Quartal Files already used
+> `qrtl://<owner>/<drive>/<path>` URIs, so references are `qrtl://` (not `qrtl://`) and a version
+> is pinned with `?version=` (file names may contain `@`); and because the Quartal Files plugin is
+> itself a Quartal plugin, the files extension (`McpFile`, `upload_required`, file staging) is
+> implemented generically in the framework — only the Files plugin needs a Directory listing.
 
 ## Sources
 
@@ -24,7 +32,7 @@
 | **Skills over MCP** | `io.modelcontextprotocol/skills`: `skills/list`, `skills/get`, skill files via `resources/read` (`skill://…`) | Claude + Claude Code, public beta | ✅ `@modelcontextprotocol/server/ext/skills` (`SkillCatalog`, `memorySkillFiles`) | Trivial: we already have `skills/` + a build-time file map | **P1 — now** |
 | **Elicitation** | MRTR: `tools/call` returns `resultType: "input_required"` + `inputRequests` + `requestState`; client retries | GA | ✅ `inputRequired()`, `createRequestStateCodec()` | Good, stateless; needs a re-execution model in tool code | **P1** |
 | **Resources (general)** | `resources/list`, `resources/templates/list`, `resources/read`, `ttlMs`/`cacheScope` | Partial in clients (see below) | ✅ core | Required anyway by skills; Quartal Files is the obvious first source | **P1 (infrastructure) / P2 (Files)** |
-| **File transfers** | `io.modelcontextprotocol/files`: `x-mcp-file` input schema, `upload_required` + signed URLs, `_meta` downloads | Rolling out; **Directory-listed connectors only** | ❌ hand-rolled | Implemented once, in the Quartal Files plugin (`HubFiles` upload/download URLs); other plugins take `qfiles://` references | **P2 — high value, gated** |
+| **File transfers** | `io.modelcontextprotocol/files`: `x-mcp-file` input schema, `upload_required` + signed URLs, `_meta` downloads | Rolling out; **Directory-listed connectors only** | ❌ hand-rolled | Implemented once, in the Quartal Files plugin (`HubFiles` upload/download URLs); other plugins take `qrtl://` references | **P2 — high value, gated** |
 | **Tasks** | `io.modelcontextprotocol/tasks`: `resultType: "task"`, `tasks/get` / `tasks/update` / `tasks/cancel` | GA | ❌ (only the old 2025-11-25 core task types) | Hard: needs a durable store + background execution on serverless | **P3 — design now, build with Hub** |
 
 Cross-cutting: **all of these exist only on the 2026-07-28 ("modern") path**. Our legacy stateless
@@ -284,18 +292,18 @@ Because of the Directory and approved-host rules, file bytes enter and leave the
 **a single plugin: Quartal Files**. It is the only Quartal plugin that implements the files
 extension, the only one listed in the Connectors Directory for that reason, and its storage host is
 the only one that needs Anthropic's approval. Every other Hub-targeting plugin works with **file
-references** (`qfiles://` URIs, see [Quartal Files URIs](#quartal-files-uris)) and reads/writes the
+references** (`qrtl://` URIs, see [Quartal Files URIs](#quartal-files-uris)) and reads/writes the
 bytes itself through `HubFiles` with the user's token.
 
 ```text
 user attaches PDF in Claude
   └─► Quartal Files  saveFile({ file: <x-mcp-file>, path: "inbox/statement.pdf" })
         upload_required → Claude PUTs bytes to Hub Files storage → call 2 commits
-        ◄── { uri: "qfiles://~/inbox/statement.pdf@v3", … }
-  └─► Accounting plugin  importStatement({ statement: "qfiles://~/inbox/statement.pdf@v3" })
+        ◄── { uri: "qrtl://~/inbox/statement.pdf?version=v3", … }
+  └─► Accounting plugin  importStatement({ statement: "qrtl://~/inbox/statement.pdf?version=v3" })
         ctx.hub.files.open(ref) → bytes via HubFiles (user's token)
-        ◄── { report: "qfiles://~/reports/reconciliation.xlsx@v1" }
-  └─► Quartal Files  downloadFile({ uri: "qfiles://~/reports/reconciliation.xlsx@v1" })
+        ◄── { report: "qrtl://~/reports/reconciliation.xlsx?version=v1" }
+  └─► Quartal Files  downloadFile({ uri: "qrtl://~/reports/reconciliation.xlsx?version=v1" })
         ◄── _meta downloads[] with a signed Hub Files URL
 ```
 
@@ -303,7 +311,7 @@ Why this shape:
 - **One Directory listing, one approved storage host.** No per-plugin review, no gateway that
   proxies every Hub plugin behind one connector.
 - **The model never carries bytes** — only short reference strings between the two calls.
-- **References are protocol-neutral.** The same `qfiles://` string works in MCP, REST, widgets and
+- **References are protocol-neutral.** The same `qrtl://` string works in MCP, REST, widgets and
   `plugin-embed`, and can be stored in a record (an invoice's attachment) — unlike an `x-mcp-file`
   argument, which only exists inside one MCP call.
 - **Files and resources unify:** a file reference *is* the Files plugin's resource URI.
@@ -312,11 +320,11 @@ Why this shape:
 
 - Tools: `saveFile` (`x-mcp-file` input + target path → returns the reference),
   `downloadFile` (reference → `_meta` downloads), plus the existing list/read/search/move tools.
-- Resources: the file system as `qfiles://` resources and templates (see
+- Resources: the file system as `qrtl://` resources and templates (see
   [section 5](#5-resources-general)).
 - A **skill** served over MCP (Skills over MCP, section 1) that teaches agents the two-step flow:
   "when the user gives a document to a Quartal tool, save it with Quartal Files first and pass the
-  `qfiles://` reference; to hand a produced file to the user, call `downloadFile`."
+  `qrtl://` reference; to hand a produced file to the user, call `downloadFile`."
 - **Fallbacks** where Claude's file transfer is unavailable (connector added by URL, ChatGPT, orgs
   with transfers disabled, legacy clients):
   1. **The widget** — an MCP App with a file picker that uploads directly to a
@@ -330,8 +338,8 @@ Why this shape:
 
 ### What the framework (this repo) provides
 
-- **`HubFileRef`** type in `@quartal/plugin/hub` — a branded string for `qfiles://` references. The
-  codegen knows it (like `Date`): it emits `{ type: "string", format: "uri", pattern: "^qfiles://" }`
+- **`HubFileRef`** type in `@quartal/plugin/hub` — a branded string for `qrtl://` references. The
+  codegen knows it (like `Date`): it emits `{ type: "string", format: "uri", pattern: "^qrtl://" }`
   with a standard description telling the agent to obtain the reference from Quartal Files.
 
   ```ts
@@ -356,16 +364,17 @@ Why this shape:
 - `HubFileWriteResult` gains a `ref` (always version-pinned) so tools can return references directly.
 - Widgets: expose `app.downloadFile()` through `@quartal/plugin/widget` (needs `ext-apps` ≥ 1.1.2;
   we have 2.x).
-- **Not now:** generic per-plugin `x-mcp-file` support (`McpFile` input type, two-call protocol in
-  `PluginMcpHelper`, staging adapters). Only plugins *outside* the Hub would need it, and they would
-  each need their own Directory listing. Revisit if such plugins ask for it; the elicitation
-  request-state codec would be reused for its `requestState`.
+- **Also built (needed by the Files plugin itself):** generic `x-mcp-file` support — `McpFile`
+  input type, the two-call `upload_required` protocol in `PluginMcpHelper`, and a `FileStaging`
+  the plugin exports from `src/file-staging.ts` (sealed request state via
+  `QRTL_REQUEST_STATE_SECRET`). Other plugins can use it too, but only Directory-listed connectors
+  get transfers in Claude.
 
 ### Quartal Files URIs
 
 ```text
-qfiles://<owner>/<path>[@<version>]
-qfiles://~/<path>[@<version>]
+qrtl://<owner>/<path>[?version=<id>]
+qrtl://~/<path>[?version=<id>]
 ```
 
 - `<owner>` is the company's Quartal IAM id.
@@ -378,9 +387,9 @@ qfiles://~/<path>[@<version>]
   reproduce it reliably, and it reads as "the current account's space" rather than as a person.
   It is an RFC 3986 *unreserved* character, so it is valid in the authority without escaping.
   Alternatives considered: `self` / `me` (read as the *user*, not the organization), `default` /
-  `current` (longer, less conventional), and an empty authority `qfiles:///path` (the `file:///`
+  `current` (longer, less conventional), and an empty authority `qrtl:///path` (the `file:///`
   convention — correct, but models and string-joining code mangle triple slashes).
-- `@<version>` pins an immutable version. References that leave a tool call to be **stored or passed
+- `?version=<id>` pins an immutable version. References that leave a tool call to be **stored or passed
   on** (upload results, report outputs) are version-pinned; references typed by people or agents
   usually are not.
 - `~` is the form for everyday use (agent instructions, skills, resource listings for a single-org
@@ -430,7 +439,7 @@ Skills over MCP will add `skill://` resources through the SDK.
 - **Quartal Files as a resource provider** — served by the Quartal Files plugin, built on a reusable
   provider in `@quartal/plugin/hub` (`resources: [hubFiles({ drives })]` in `qrtl.config`) so other
   Hub plugins can expose a scoped part of the file system too. URIs follow
-  [Quartal Files URIs](#quartal-files-uris): template `qfiles://~/{+path}` (plus the explicit-owner
+  [Quartal Files URIs](#quartal-files-uris): template `qrtl://~/{+path}` (plus the explicit-owner
   form for multi-company tokens); `resources/list` = drive roots / recent files (paginated) under
   `~`; `resources/read` = `HubFiles.getContent` (text → `text`, binary → `blob`, too big → error
   pointing to `downloadFile`). Per-user, so `cacheScope: "private"`. Later: dynamic skills stored in
@@ -470,7 +479,7 @@ the refactor anyway.
    switch, build-time skill validation, website docs. Small, ship now.
 2. **`ctx.elicit` (form + url) with MRTR**, request-state codec + secret, codegen of elicitation
    schemas from type arguments, REST 428 mapping, form renderer in ui-plugin/plugin-embed.
-3. **General resources** (`src/resources/`, `resource_link` results), the **`qfiles://` URI scheme**
+3. **General resources** (`src/resources/`, `resource_link` results), the **`qrtl://` URI scheme**
    (`~` = owner from token) and the **Quartal Files resource provider**.
 4. **File transfers** — here: `HubFileRef`, `HubFiles.open/parseRef/toRef`, `ref` on write results,
    `app.downloadFile()` in the widget API. In the Quartal Files project: `saveFile`/`downloadFile`

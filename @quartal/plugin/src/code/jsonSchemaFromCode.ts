@@ -23,6 +23,32 @@ const SYSTEM_TYPES = new Set<SystemType>([
   "bigint",
 ]);
 
+/** Name of the files-extension file type (`McpFile` from `@quartal/plugin/files`). */
+const MCP_FILE_TYPE = "McpFile";
+/** The JSON Schema keyword that marks a file argument (MCP files extension). */
+const FILE_KEYWORD = "x-mcp-file";
+
+/** The file object of the MCP files extension (`FileInput`), marked with `x-mcp-file`. */
+function mcpFileSchema(): Record<string, unknown> {
+  return {
+    type: "object",
+    [FILE_KEYWORD]: {},
+    properties: {
+      id: { type: "string", minLength: 1, maxLength: 128 },
+      name: { type: "string" },
+      mimeType: { type: "string" },
+      size: { type: "integer", minimum: 0 },
+      digest: {
+        type: "object",
+        properties: { algorithm: { const: "sha-256" }, value: { type: "string" } },
+        required: ["algorithm", "value"],
+      },
+      data: { type: "string", contentEncoding: "base64" },
+    },
+    required: ["id", "mimeType", "size"],
+  };
+}
+
 function systemTypeToJsonSchema(t: SystemType): Record<string, unknown> {
   if (t === "string") return { type: "string" };
   if (t === "number") return { type: "number" };
@@ -99,6 +125,8 @@ export function codeOrSystemTypeToJsonSchema(
       };
     }
 
+    if (trimmed === MCP_FILE_TYPE) return mcpFileSchema();
+
     const literal = parseStringLiteral(trimmed);
     if (literal !== undefined) return { type: "string", enum: [literal] };
 
@@ -142,6 +170,16 @@ export function codePropToJsonSchema(
   if (p.example !== undefined) {
     (schema as Record<string, unknown>).example = p.example;
   }
+  // An McpFile (or McpFile[]) property: copy @accept / @maxSize into `x-mcp-file`, @requireDigest into `required`.
+  const fileSchema = (schema[FILE_KEYWORD] ? schema : (schema.items as Record<string, unknown> | undefined)?.[FILE_KEYWORD] ? schema.items : undefined) as
+    Record<string, unknown> | undefined;
+  if (fileSchema && p.file) {
+    fileSchema[FILE_KEYWORD] = {
+      ...(p.file.accept ? { accept: p.file.accept } : {}),
+      ...(p.file.maxSize !== undefined ? { maxSize: p.file.maxSize } : {}),
+    };
+    if (p.file.requireDigest) fileSchema.required = [...(fileSchema.required as string[]), "digest"];
+  }
   return schema;
 }
 
@@ -156,9 +194,10 @@ export function buildToolInputSchema(
   if (params.length === 1) {
     const p0 = params[0];
     const p0Schema = codePropToJsonSchema(p0, typeIndex, new Set<string>());
+    // A file parameter stays a named property: `x-mcp-file` must not mark the input schema itself.
     if (
       p0Schema && typeof p0Schema === "object" && (p0Schema as { type?: unknown }).type === "object" &&
-      "properties" in p0Schema
+      "properties" in p0Schema && !(FILE_KEYWORD in p0Schema)
     ) {
       return { ...(p0Schema as Record<string, unknown>), additionalProperties: false };
     }

@@ -2,8 +2,10 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import {
   createMcpHandler,
+  createRequestStateCodec,
   INVALID_PARAMS,
   inputRequired,
+  type RequestStateCodec,
   McpServer,
   ProtocolError,
   ResourceTemplate,
@@ -15,6 +17,8 @@ import { z } from "@hono/zod-openapi";
 import { resolveMcpServers, type ResolvedLocalMcpServer } from "../agent-plugin/resolveMcpServers.ts";
 import type {
   ElicitationContext,
+  FileStaging,
+  ToolCallFiles,
   PluginManifest,
   ExecuteFn,
   FetchWidgetHtml,
@@ -35,6 +39,12 @@ import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import { PluginSkillCatalog } from "./PluginSkillCatalog.ts";
 import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
 import { toReadResourceResult } from "./toReadResourceResult.ts";
+import {
+  fileArguments,
+  FILES_EXTENSION_ID,
+  resolveToolCallFiles,
+  type FileUploadState,
+} from "../files/resolveToolCallFiles.ts";
 import {
   defaultFetchWidgetHtml,
   rewriteWidgetHtml,
@@ -61,6 +71,8 @@ interface RequestContextLike {
  */
 export class PluginMcpHelper {
   /** The REST mirrors of the MCP list results, served next to each server's protocol endpoint. */
+  /** Inline file bytes accepted per `tools/call` (the files extension's `maxInlineBytes`). */
+  private static readonly MAX_INLINE_BYTES = 4 * 1024 * 1024;
   /** The first protocol revision with input-required results (MRTR), which elicitation needs. */
   private static readonly MRTR_PROTOCOL_VERSION = "2026-07-28";
   private static readonly LIST_FILES = ["tools.json", "prompts.json", "resources.json", "skills.json"] as const;
@@ -79,6 +91,9 @@ export class PluginMcpHelper {
   private readonly serverOptions: McpServerOptions;
   private readonly fetchWidgetHtml: FetchWidgetHtml;
   private readonly skills: PluginSkillCatalog | undefined;
+  private readonly fileStaging: FileStaging | undefined;
+  /** Seals the files extension's request-state; absent without `QRTL_REQUEST_STATE_SECRET`. */
+  private readonly stateCodec: RequestStateCodec<FileUploadState> | undefined;
   private serverOrigin = "";
   private handler: McpHttpHandler | null = null;
 
@@ -141,6 +156,7 @@ export class PluginMcpHelper {
         config?.fetchWidgetHtml,
         server.main ? skills : undefined,
         server.main ? helper.mcpResources : [],
+        config?.fileStaging,
       );
     };
     // Named sub-servers are registered before the main server's catch-all so `/mcp/<name>` wins.
@@ -163,6 +179,7 @@ export class PluginMcpHelper {
     fetchWidgetHtml?: FetchWidgetHtml,
     skills?: PluginSkillCatalog,
     resourceEntries: McpResourceDescriptor[] = [],
+    fileStaging?: FileStaging,
   ) {
     this.manifest = apiHelper.manifest!;
     this.toolEntries = toolEntries;
@@ -177,6 +194,12 @@ export class PluginMcpHelper {
     this.executePrompt = apiHelper.executePrompt;
     this.executeResource = apiHelper.executeResource;
     this.resourceEntries = resourceEntries;
+    this.fileStaging = fileStaging;
+    const secret = typeof process !== "undefined" ? process.env?.QRTL_REQUEST_STATE_SECRET : undefined;
+    if (fileStaging && !secret) {
+      console.warn("[qrtl-plugin] src/file-staging.ts is set but QRTL_REQUEST_STATE_SECRET is not (32+ characters): files are accepted inline only.");
+    }
+    this.stateCodec = fileStaging && secret ? createRequestStateCodec<FileUploadState>({ key: secret, ttlSeconds: 600 }) : undefined;
     this.serverOptions = serverOptions ?? {};
     this.fetchWidgetHtml = fetchWidgetHtml ?? defaultFetchWidgetHtml;
     this.skills = skills;
@@ -339,6 +362,15 @@ export class PluginMcpHelper {
       { capabilities },
     );
     const mcpServer = mcp.server;
+    // MCP files extension: inline files always; out-of-band uploads with a file staging + secret.
+    mcpServer.registerCapabilities({
+      extensions: {
+        [FILES_EXTENSION_ID]: {
+          ...(this.stateCodec ? { upload: {} } : {}),
+          maxInlineBytes: PluginMcpHelper.MAX_INLINE_BYTES,
+        },
+      },
+    } as never);
 
     // logging/setLevel needs no handler here — declaring the `logging` capability makes the v2 SDK
     // register its built-in one for legacy (2025-era) clients (MCPJam and Inspector send setLevel
@@ -468,12 +500,64 @@ export class PluginMcpHelper {
           params = parsed.data;
         }
 
+        // MCP files extension: receive the `McpFile` arguments before the tool runs.
+        let files: ToolCallFiles | undefined;
+        const fileArgs = fileArguments(match.inputSchema);
+        if (fileArgs.length) {
+          const clientFiles = mcpServer.getClientCapabilities()?.extensions?.[FILES_EXTENSION_ID] as
+            { upload?: unknown; download?: unknown } | undefined;
+          let state: FileUploadState | undefined;
+          const rawState = (ctx as { mcpReq?: { requestState?: () => unknown } }).mcpReq?.requestState?.();
+          if (typeof rawState === "string" && this.stateCodec) {
+            try {
+              state = await this.stateCodec.verify(rawState, ctx as never);
+            } catch {
+              throw new ProtocolError(INVALID_PARAMS, "Invalid or expired requestState");
+            }
+          }
+          const received = await resolveToolCallFiles({
+            tool: String(toolName),
+            args: params,
+            fileArgs,
+            headers,
+            clientUpload: clientFiles?.upload !== undefined,
+            maxInlineBytes: PluginMcpHelper.MAX_INLINE_BYTES,
+            staging: this.fileStaging,
+            ...(this.stateCodec ? { mintState: (s: FileUploadState) => this.stateCodec!.mint(s, ctx as never) } : {}),
+            ...(state ? { state } : {}),
+          });
+          if (received.kind === "upload") {
+            return { content: [], resultType: "upload_required", uploads: received.uploads, requestState: received.requestState } as never;
+          }
+          if (received.kind === "missing-capability") {
+            throw new ProtocolError(-32021, "This tool needs the files extension's upload capability", {
+              requiredCapabilities: { extensions: { [FILES_EXTENSION_ID]: { upload: {} } } },
+            });
+          }
+          if (received.kind === "mismatch") throw new ProtocolError(INVALID_PARAMS, received.message);
+          if (received.kind === "refused") {
+            return { content: [{ type: "text" as const, text: received.message }], isError: true };
+          }
+          files = { bytes: received.bytes, downloads: [] };
+        }
+
         try {
           const elicitation = this.elicitationFor(mcpServer, ctx, match.elicitations ?? {});
+          const callFiles: ToolCallFiles = files ?? { bytes: new Map(), downloads: [] };
           const result = await this.execute(fileName, className, methodName, params, {
             headers,
             ...(elicitation ? { elicitation } : {}),
+            files: callFiles,
           });
+          const clientDownload = (mcpServer.getClientCapabilities()?.extensions?.[FILES_EXTENSION_ID] as
+            { download?: unknown } | undefined)?.download !== undefined;
+          if (callFiles.downloads.length && clientDownload) {
+            return {
+              structuredContent: result,
+              content: [{ type: "text" as const, text: JSON.stringify(result) }],
+              _meta: { [FILES_EXTENSION_ID]: { downloads: callFiles.downloads } },
+            };
+          }
           // `structuredContent` first, then the spec's backwards-compat serialized-JSON text block
           // ("a tool that returns structured content SHOULD also return the serialized JSON in a
           // TextContent block") — structured data leads when inspecting the raw result in MCPJam.

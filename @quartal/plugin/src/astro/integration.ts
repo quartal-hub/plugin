@@ -46,6 +46,9 @@ const WIDGETS_PAGES_DIR = "src/pages/widgets";
 /** Index pages that override the docs shell at `/` (checked at config time; restart to pick up). */
 const OWN_INDEX_PAGES = ["index.astro", "index.md", "index.mdx", "index.html", "index.ts", "index.js"];
 
+/** Where a plugin's file staging (MCP files extension) lives: a module exporting `fileStaging`. */
+const FILE_STAGING_FILES = ["src/file-staging.ts", "src/file-staging.js"];
+
 /** Whether the plugin ships its own index page under `src/pages/` (overriding the docs shell).
  * @param root Plugin root directory.
  */
@@ -88,6 +91,8 @@ export function buildPluginMiddlewareSource(
     registryImport: string;
     promptsRegistryImport?: string;
     resourcesRegistryImport?: string;
+    /** Module exporting `fileStaging` (the plugin's `src/file-staging.ts`), when it has one. */
+    fileStagingImport?: string;
     artifactsImport?: string;
     qrtlPluginDir?: string;
     ownIndexPage?: boolean;
@@ -109,6 +114,10 @@ export function buildPluginMiddlewareSource(
     ? [`import { resourceModules } from ${JSON.stringify(opts.resourcesRegistryImport)};`]
     : [];
   const resourcesArg = opts.resourcesRegistryImport ? ", resourceModules" : "";
+  const fileStagingImport = opts.fileStagingImport
+    ? [`import { fileStaging } from ${JSON.stringify(opts.fileStagingImport)};`]
+    : [];
+  const fileStagingArg = opts.fileStagingImport ? ", fileStaging" : "";
   const artifactsImport = opts.artifactsImport
     ? [`import { artifacts } from ${JSON.stringify(opts.artifactsImport)};`]
     : [];
@@ -124,10 +133,11 @@ export function buildPluginMiddlewareSource(
     `import { toolModules } from ${JSON.stringify(opts.registryImport)};`,
     ...promptsImport,
     ...resourcesImport,
+    ...fileStagingImport,
     ...artifactsImport,
     `import { ${appFn}, createPluginMiddleware } from "@quartal/plugin";`,
     ``,
-    `const appPromise = ${appFn}({ toolModules${promptsArg}${resourcesArg}${artifactsArg}${rootArg}${pkgDirArg} });`,
+    `const appPromise = ${appFn}({ toolModules${promptsArg}${resourcesArg}${fileStagingArg}${artifactsArg}${rootArg}${pkgDirArg} });`,
     `export const onRequest = createPluginMiddleware(() => appPromise${middlewareOpts});`,
     ``,
   ].join("\n");
@@ -231,12 +241,17 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
         }
         const pageAccess = site?.access === "user" ? { public: site.public ?? [] } : undefined;
 
+        // `src/file-staging.ts` (exporting `fileStaging`) lets the plugin receive uploaded files
+        // (MCP files extension). Checked at config time: adding it needs a dev-server restart.
+        const fileStagingFile = root ? FILE_STAGING_FILES.find((f) => existsSync(join(root, f))) : undefined;
+
         const source = buildPluginMiddlewareSource({
           auth,
           root,
           registryImport,
           promptsRegistryImport,
           resourcesRegistryImport,
+          ...(fileStagingFile ? { fileStagingImport: `/${fileStagingFile}` } : {}),
           artifactsImport,
           qrtlPluginDir: QRTL_PLUGIN_DIR,
           ownIndexPage,
@@ -267,6 +282,7 @@ export function qrtlPlugin(options?: QrtlPluginOptions): AstroIntegration {
             registryPath: join(root, QRTL_PLUGIN_DIR, "tools.registry.ts"),
             promptsRegistryPath: join(root, QRTL_PLUGIN_DIR, "prompts.registry.ts"),
             resourcesRegistryPath: join(root, QRTL_PLUGIN_DIR, "resources.registry.ts"),
+            ...(fileStagingFile ? { fileStagingPath: join(root, fileStagingFile) } : {}),
             ownIndexPage,
           }));
         }

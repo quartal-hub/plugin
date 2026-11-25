@@ -7,7 +7,7 @@ import type { Hono } from "hono";
 import { isServerPath, isServerPathWithOwnIndexPage } from "../astro/pluginMiddleware.ts";
 import { getAnonApp } from "../hono-app/getAnonApp.ts";
 import { getAuthApp } from "../hono-app/getAuthApp.ts";
-import type { ToolModuleRegistry } from "../model/index.ts";
+import type { FileStaging, ToolModuleRegistry } from "../model/index.ts";
 import type { VitePluginLike, ViteDevServerLike } from "./qrtlCodegenPlugin.ts";
 
 /**
@@ -35,6 +35,8 @@ export interface PluginDevServerOptions {
   promptsRegistryPath?: string;
   /** Absolute path to the generated `resources.registry.ts` (imported for resource reads). */
   resourcesRegistryPath?: string;
+  /** Absolute path to the plugin's `src/file-staging.ts` (exports `fileStaging`), when it has one. */
+  fileStagingPath?: string;
   /** The plugin ships its own `src/pages/index.*`: Astro renders `/` and the legacy `.html` redirects. */
   ownIndexPage?: boolean;
 }
@@ -113,6 +115,9 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
       const promptModules = options.promptsRegistryPath
         ? await loadRegistry(server, "prompts.registry.ts", options.promptsRegistryPath, "promptModules")
         : undefined;
+      const fileStaging = options.fileStagingPath
+        ? await loadRegistry(server, "file-staging.ts", options.fileStagingPath, "fileStaging") as unknown as FileStaging | undefined
+        : undefined;
       const resourceModules = options.resourcesRegistryPath
         ? await loadRegistry(server, "resources.registry.ts", options.resourcesRegistryPath, "resourceModules")
         : undefined;
@@ -124,6 +129,7 @@ export function pluginDevServerPlugin(options: PluginDevServerOptions): VitePlug
         ...(toolModules ? { toolModules } : {}),
         ...(promptModules ? { promptModules } : {}),
         ...(resourceModules ? { resourceModules } : {}),
+        ...(fileStaging ? { fileStaging } : {}),
       };
       return options.auth === "anon" ? await getAnonApp(config) : await getAuthApp(config);
     })();
