@@ -16,7 +16,7 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeElicitation, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import type { CodeClass, CodeElicitation, CodeFile, CodeFunction, CodeResourceDeclaration, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
 import { elicitationSchemaFromType } from "./elicitationSchemaFromType.ts";
 import { parseMcpTag } from "./parseMcpTag.ts";
 import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
@@ -241,6 +241,8 @@ export class TsMorphAnalyzer {
     if (rest) fn.rest = rest;
     const mcp = mcpTag(method, `${className}.${name}`);
     if (mcp) fn.mcp = mcp;
+    const resource = resourceTag(method, `${className}.${name}`);
+    if (resource) fn.resource = resource;
     const elicitations = elicitFormCalls(method, `${className}.${name}`);
     if (elicitations.length) fn.elicitations = elicitations;
     return fn;
@@ -544,6 +546,39 @@ function restClassTag(node: JSDocableNode, where: string): RestClassDeclaration 
   return t ? parseRestClassTag(tagText(t), where) : undefined;
 }
 /** Reads the `@mcp` tag of a tool method or class (`hidden`); throws on an invalid tag. */
+/** `@cache` durations: a number with `ms`, `s`, `m` or `h`. */
+const DURATION = /^(\d+)(ms|s|m|h)$/;
+const DURATION_MS: Record<string, number> = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 };
+
+/**
+ * Reads the resource tags of a `src/resources/` method: `@uri <uri or template>`,
+ * `@mimeType <type>` and `@cache <duration> [public|private]` (e.g. `@cache 5m public`).
+ * @param node The method.
+ * @param where `Class.method`, for error messages.
+ */
+function resourceTag(node: JSDocableNode, where: string): CodeResourceDeclaration | undefined {
+  const all = tags(node);
+  const uri = all.find((t) => t.getTagName() === "uri");
+  if (!uri) return undefined;
+  const value = tagText(uri).trim().split(/\s+/)[0];
+  if (!value || !/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+    throw new Error(`${where}: @uri needs a URI with a scheme, e.g. "policy://travel".`);
+  }
+  const out: CodeResourceDeclaration = { uri: value };
+  const mime = all.find((t) => t.getTagName() === "mimeType");
+  const mimeValue = mime ? tagText(mime).trim() : "";
+  if (mimeValue) out.mimeType = mimeValue;
+  const cache = all.find((t) => t.getTagName() === "cache");
+  if (cache) {
+    const [duration, scope] = tagText(cache).trim().split(/\s+/);
+    const m = DURATION.exec(duration ?? "");
+    if (!m) throw new Error(`${where}: @cache needs a duration such as "5m" or "30s", optionally followed by "public".`);
+    out.cacheTtlMs = Number(m[1]) * DURATION_MS[m[2]];
+    if (scope === "public" || scope === "private") out.cacheScope = scope;
+  }
+  return out;
+}
+
 function mcpTag(node: JSDocableNode, where: string): McpDeclaration | undefined {
   const t = tags(node).find((x) => x.getTagName() === "mcp");
   return t ? parseMcpTag(tagText(t), where) : undefined;

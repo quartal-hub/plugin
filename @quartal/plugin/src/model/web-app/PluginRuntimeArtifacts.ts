@@ -1,6 +1,7 @@
 import type {
   CodeFile,
   McpPromptDescriptor,
+  McpResourceDescriptor,
   McpToolDescriptor,
   PluginInfo,
   PluginManifest,
@@ -36,6 +37,8 @@ export interface PluginRuntimeArtifacts {
   mcpTools?: { tools?: McpToolDescriptor[] };
   /** Contents of the generated `mcp-prompts.json`. */
   mcpPrompts?: { prompts?: McpPromptDescriptor[] };
+  /** Contents of the generated `mcp-resources.json`. */
+  mcpResources?: { resources?: McpResourceDescriptor[] };
   /** Plugin manifest resolved at build time from `package.json` + `qrtl.config`. */
   manifest?: PluginManifest;
   /** `README.md` text (absent when the plugin has none). */

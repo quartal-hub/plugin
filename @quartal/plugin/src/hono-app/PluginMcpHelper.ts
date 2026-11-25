@@ -20,6 +20,7 @@ import type {
   FetchWidgetHtml,
   ListToolsResult,
   McpPromptDescriptor,
+  McpResourceDescriptor,
   McpServerOptions,
   McpToolDescriptor,
   PluginAppConfig,
@@ -33,6 +34,7 @@ import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import { PluginSkillCatalog } from "./PluginSkillCatalog.ts";
 import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
+import { toReadResourceResult } from "./toReadResourceResult.ts";
 import {
   defaultFetchWidgetHtml,
   rewriteWidgetHtml,
@@ -67,6 +69,8 @@ export class PluginMcpHelper {
   private readonly toolEntries: McpToolDescriptor[];
   private readonly promptEntries: McpPromptDescriptor[];
   private readonly executePrompt: PluginApiHelper["executePrompt"];
+  private readonly executeResource: PluginApiHelper["executeResource"];
+  private readonly resourceEntries: McpResourceDescriptor[];
   private readonly widgets: WidgetEntry[];
   private readonly widgetsByToolId: Map<string, WidgetEntry>;
   private readonly widgetsByUri: Map<string, WidgetEntry>;
@@ -81,8 +85,8 @@ export class PluginMcpHelper {
   /**
    * Mounts the plugin's MCP server(s) on `app`, wiring auth middleware and supplied widgets. The
    * main server serves at `/mcp`; additional local servers from `mcp.servers` mount at
-   * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts and skills
-   * stay on the main server). External servers are declaration-only (`mcp.json`) and are not
+   * `/mcp/<name>` with their subset of tool classes (widgets follow their tools; prompts, resources
+   * and skills stay on the main server). External servers are declaration-only (`mcp.json`) and are not
    * mounted. The auth middleware guards the MCP protocol; every server's list mirrors
    * (`GET tools.json` / `prompts.json` / `resources.json` / `skills.json`) are public.
    * @param app Hono app to mount the MCP routes on.
@@ -99,7 +103,7 @@ export class PluginMcpHelper {
     if (config?.mcp === false) return;
     const baseDir = config?.pluginRootFolder ?? process.cwd();
     const skills = new PluginSkillCatalog(baseDir, config?.artifacts?.files);
-    if (!helper.codeFiles.length && !helper.mcpPrompts.length && !(await skills.get())) {
+    if (!helper.codeFiles.length && !helper.mcpPrompts.length && !helper.mcpResources.length && !(await skills.get())) {
       return;
     }
     const toolEntries = helper.getMcpTools();
@@ -136,6 +140,7 @@ export class PluginMcpHelper {
         { ...mcpOptions, ...(server.main ? {} : { name: server.name }) },
         config?.fetchWidgetHtml,
         server.main ? skills : undefined,
+        server.main ? helper.mcpResources : [],
       );
     };
     // Named sub-servers are registered before the main server's catch-all so `/mcp/<name>` wins.
@@ -157,6 +162,7 @@ export class PluginMcpHelper {
     serverOptions?: McpServerOptions,
     fetchWidgetHtml?: FetchWidgetHtml,
     skills?: PluginSkillCatalog,
+    resourceEntries: McpResourceDescriptor[] = [],
   ) {
     this.manifest = apiHelper.manifest!;
     this.toolEntries = toolEntries;
@@ -169,6 +175,8 @@ export class PluginMcpHelper {
     this.execute = apiHelper.executeStrict;
     this.getFunctionDef = (className, methodName) => apiHelper.getFunctionDef(className, methodName);
     this.executePrompt = apiHelper.executePrompt;
+    this.executeResource = apiHelper.executeResource;
+    this.resourceEntries = resourceEntries;
     this.serverOptions = serverOptions ?? {};
     this.fetchWidgetHtml = fetchWidgetHtml ?? defaultFetchWidgetHtml;
     this.skills = skills;
@@ -274,12 +282,31 @@ export class PluginMcpHelper {
   /** The MCP `resources/list` result — one source for the protocol handler and `GET resources.json`. */
   private listResourcesResult(origin: string) {
     return {
-      resources: this.widgets.map((w) => ({
-        uri: w.uri,
-        name: w.name,
-        mimeType: WIDGET_MIME_TYPE,
-        _meta: { ui: { csp: withWidgetOrigin(w.csp, origin) } },
-      })),
+      resources: [
+        ...this.widgetResources(origin),
+        ...this.resourceEntries.filter((r) => !r.template).map((r) => this.resourceListing(r)),
+      ],
+    };
+  }
+
+  /** The widgets as `resources/list` entries, with the CSP for the origin the client used. */
+  private widgetResources(origin: string) {
+    return this.widgets.map((w) => ({
+      uri: w.uri,
+      name: w.name,
+      mimeType: WIDGET_MIME_TYPE,
+      _meta: { ui: { csp: withWidgetOrigin(w.csp, origin) } },
+    }));
+  }
+
+  /** A plugin resource's `resources/list` entry (or template metadata). */
+  private resourceListing(r: McpResourceDescriptor) {
+    return {
+      uri: r.uri,
+      name: r.id,
+      ...(r.title ? { title: r.title } : {}),
+      description: r.description,
+      ...(r.mimeType ? { mimeType: r.mimeType } : {}),
     };
   }
 
@@ -326,7 +353,7 @@ export class PluginMcpHelper {
       mcp.registerResource(
         "widgets",
         new ResourceTemplate("ui://widgets/{toolId}.html", {
-          list: (ctx) => this.listResourcesResult(this.resolveOrigin(ctx)),
+          list: (ctx) => ({ resources: this.widgetResources(this.resolveOrigin(ctx)) }),
         }),
         { mimeType: WIDGET_MIME_TYPE },
         async (url, _variables, ctx) => {
@@ -358,6 +385,31 @@ export class PluginMcpHelper {
           };
         },
       );
+    }
+
+    // The plugin's own resources (`src/resources/`): fixed URIs and URI templates.
+    for (const resource of this.resourceEntries) {
+      const { uri: _uri, name: _name, ...metadata } = this.resourceListing(resource);
+      const config = {
+        ...metadata,
+        ...(resource.cacheTtlMs !== undefined
+          ? { cacheHint: { ttlMs: resource.cacheTtlMs, cacheScope: resource.cacheScope ?? "private" } }
+          : {}),
+      };
+      const read = async (url: URL, variables: Record<string, unknown>, ctx: RequestContextLike) => {
+        const value = await this.executeResource(resource, variables, { headers: PluginMcpHelper.headersRecord(ctx) });
+        return toReadResourceResult(resource, url.href, value);
+      };
+      if (resource.template) {
+        mcp.registerResource(
+          resource.id,
+          new ResourceTemplate(resource.uri, { list: undefined }),
+          config,
+          (url, variables, ctx) => read(url, variables, ctx),
+        );
+      } else {
+        mcp.registerResource(resource.id, resource.uri, config, (url, ctx) => read(url, {}, ctx));
+      }
     }
 
     const skills = await this.skills?.get();

@@ -5,6 +5,7 @@ export type { CodeFile } from "./CodeFile.ts";
 export type { CodeFunction } from "./CodeFunction.ts";
 export type { CodeOrSystemType } from "./CodeOrSystemType.ts";
 export type { CodePropOrParam } from "./CodePropOrParam.ts";
+export type { CodeResourceDeclaration } from "./CodeResourceDeclaration.ts";
 export type { CodeType } from "./CodeType.ts";
 export type { SystemType } from "./SystemType.ts";
 export type { RestClassDeclaration, RestMethod, RestRoute, RestRouteDeclaration } from "./RestRoute.ts";

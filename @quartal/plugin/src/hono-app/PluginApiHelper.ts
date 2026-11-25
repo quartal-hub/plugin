@@ -25,6 +25,7 @@ import type {
   ExecuteFn,
   McpCatalog,
   McpPromptDescriptor,
+  McpResourceDescriptor,
   McpToolDescriptor,
   QuartalPluginContext,
   PluginAppConfig,
@@ -48,6 +49,7 @@ export class PluginApiHelper {
   private prebuiltTypes: unknown[] | null = null;
   private prebuiltContents: PluginInfo | null = null;
   private prebuiltMcpTools: McpToolDescriptor[] | null = null;
+  private prebuiltMcpResources: McpResourceDescriptor[] | null = null;
   /** Tool descriptors built from the code files (no `mcp-tools.json`), kept while the code files stay the same. */
   private builtMcpTools: { from: CodeFile[]; tools: McpToolDescriptor[] } | undefined;
   private prebuiltMcpPrompts: McpPromptDescriptor[] | null = null;
@@ -97,7 +99,7 @@ export class PluginApiHelper {
 
   /** In-memory MCP catalog derived from code files + configured widgets (feeds `contents.json`). */
   public getMcpCatalog(): McpCatalog {
-    return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
+    return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts, this.mcpResources);
   }
 
   /**
@@ -117,6 +119,11 @@ export class PluginApiHelper {
       this.builtMcpTools = { from: this.codeFiles, tools: buildMcpTools(this.codeFiles) };
     }
     return this.builtMcpTools.tools;
+  }
+
+  /** MCP resource descriptors loaded from `qrtl-plugin/mcp-resources.json`. Available after `init()`. */
+  public get mcpResources(): McpResourceDescriptor[] {
+    return this.prebuiltMcpResources ?? [];
   }
 
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
@@ -299,14 +306,104 @@ export class PluginApiHelper {
     input: Record<string, unknown>,
     authContext?: AuthContext,
   ): Promise<Record<string, unknown>> => {
+    const result = await this.invoke(
+      this.config.toolModules,
+      "Tool module",
+      "tools.registry.ts",
+      "toolModules",
+      fileName,
+      className,
+      methodName,
+      input,
+      authContext,
+    );
+
+    const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
+    return isObject ? (result as Record<string, unknown>) : { value: result ?? null };
+  };
+
+  /**
+   * Executes a prompt function, resolving the class from the injected prompt-module registry
+   * (`config.promptModules`, generated as `prompts.registry.ts`). Unlike {@link executeStrict}, the raw
+   * return value is preserved (a `string` or a `PromptResponse`). Failures throw — the MCP
+   * `prompts/get` handler turns them into protocol errors.
+   * @param fileName File name without extension (letters, numbers, underscores, dashes).
+   * @param className Class name within the file.
+   * @param methodName Method name (static first, then instance).
+   * @param input Prompt arguments (string-valued, per the MCP prompt spec).
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  executePrompt = async (
+    fileName: string,
+    className: string,
+    methodName: string,
+    input: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<PromptResult> => {
+    const result = await this.invoke(
+      this.config.promptModules,
+      "Prompt module",
+      "prompts.registry.ts",
+      "promptModules",
+      fileName,
+      className,
+      methodName,
+      input,
+      authContext,
+    );
+    return result as PromptResult;
+  };
+
+  /**
+   * Reads one of the plugin's own MCP resources: runs the resource method from the injected
+   * resource-module registry (`config.resourceModules`, generated as `resources.registry.ts`) with
+   * the URI template variables as its input. The raw return value is preserved (a string, bytes
+   * or a `{ text | blob, mimeType }` object). Failures throw.
+   * @param descriptor The resource.
+   * @param variables The URI template variables (empty for a fixed URI).
+   * @param authContext Authentication context carrier for the execute wrapper.
+   */
+  executeResource = async (
+    descriptor: McpResourceDescriptor,
+    variables: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<unknown> => {
+    return this.invoke(
+      this.config.resourceModules,
+      "Resource module",
+      "resources.registry.ts",
+      "resourceModules",
+      descriptor.fileName,
+      descriptor.className,
+      descriptor.methodName,
+      variables,
+      authContext,
+    );
+  };
+
+  /**
+   * Resolves `registry[fileName][className][methodName]` (static first, then an instance method)
+   * and calls it with the input and the call's context: through `config.execute` (the auth layer
+   * builds the signed-in user's context), or with `{ authenticated: false }` without one.
+   */
+  private async invoke(
+    registry: PluginAppConfig["toolModules"],
+    label: string,
+    registryFile: string,
+    configKey: string,
+    fileName: string,
+    className: string,
+    methodName: string,
+    input: Record<string, unknown>,
+    authContext?: AuthContext,
+  ): Promise<unknown> {
     const validatedFileName = PluginApiHelper.validateFileName(fileName);
-    const module = this.config.toolModules?.[validatedFileName] as Record<string, any> | undefined;
+    const module = registry?.[validatedFileName] as Record<string, any> | undefined;
     if (!module) {
       throw new Error(
-        `Tool module not found: "${fileName}". Ensure tools.registry.ts is generated and passed as config.toolModules.`,
+        `${label} not found: "${fileName}". Ensure ${registryFile} is generated and passed as config.${configKey}.`,
       );
     }
-
     const TargetClass = module[className];
     if (!TargetClass) {
       throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
@@ -331,72 +428,14 @@ export class PluginApiHelper {
     }
 
     const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>, ...args: unknown[]) => unknown;
-    let result: unknown;
     if (this.config.execute) {
-      result = await this.config.execute<unknown>(boundMethod, input, authContext);
-    } else {
-      // Without an auth layer the tool still gets a context of its own (for elicitation).
-      const ctx: QuartalPluginContext = { authenticated: false };
-      bindToolCallElicitation(ctx, authContext?.elicitation);
-      result = await boundMethod(input, ctx);
+      return await this.config.execute<unknown>(boundMethod, input, authContext);
     }
-
-    const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
-    return isObject ? (result as Record<string, unknown>) : { value: result ?? null };
-  };
-
-  /**
-   * Executes a prompt function, resolving the class from the injected prompt-module registry
-   * (`config.promptModules`, generated as `prompts.registry.ts`). Unlike {@link executeStrict}, the raw
-   * return value is preserved (a `string` or a `PromptResponse`). Failures throw — the MCP
-   * `prompts/get` handler turns them into protocol errors.
-   * @param fileName File name without extension (letters, numbers, underscores, dashes).
-   * @param className Class name within the file.
-   * @param methodName Method name (static first, then instance).
-   * @param input Prompt arguments (string-valued, per the MCP prompt spec).
-   * @param authContext Authentication context carrier for the execute wrapper.
-   */
-  executePrompt = async (
-    fileName: string,
-    className: string,
-    methodName: string,
-    input: Record<string, unknown>,
-    authContext?: AuthContext,
-  ): Promise<PromptResult> => {
-    const validatedFileName = PluginApiHelper.validateFileName(fileName);
-    const module = this.config.promptModules?.[validatedFileName] as Record<string, any> | undefined;
-    if (!module) {
-      throw new Error(
-        `Prompt module not found: "${fileName}". Ensure prompts.registry.ts is generated and passed as config.promptModules.`,
-      );
-    }
-    const TargetClass = module[className];
-    if (!TargetClass) {
-      throw new Error(`Class not found: "${className}" in file "${fileName}.ts"`);
-    }
-
-    // Resolve static vs instance and keep the correct `this` receiver (same rules as tools).
-    let targetMethod: (input: Record<string, unknown>) => unknown;
-    let thisArg: object;
-    const staticMethod = TargetClass[methodName];
-    if (staticMethod) {
-      targetMethod = staticMethod;
-      thisArg = TargetClass;
-    } else {
-      const instance = new TargetClass();
-      targetMethod = instance[methodName];
-      thisArg = instance;
-    }
-    if (typeof targetMethod !== "function") {
-      throw new Error(`Method not found or not a function: "${methodName}" in class "${className}" in file "${fileName}.ts"`);
-    }
-
-    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
-    const result = this.config.execute
-      ? await this.config.execute<unknown>(boundMethod, input, authContext)
-      : await boundMethod(input);
-    return result as PromptResult;
-  };
+    // Without an auth layer the method still gets a context of its own (for elicitation).
+    const ctx: QuartalPluginContext = { authenticated: false };
+    bindToolCallElicitation(ctx, authContext?.elicitation);
+    return await boundMethod(input, ctx);
+  }
 
   /**
    * Validates a file name (letters, numbers, underscores, dashes; no extension).
@@ -461,6 +500,8 @@ export class PluginApiHelper {
       (injected?.mcpTools ?? await readJson<{ tools?: McpToolDescriptor[] }>("mcp-tools.json"))?.tools ?? null;
     this.prebuiltMcpPrompts =
       (injected?.mcpPrompts ?? await readJson<{ prompts?: McpPromptDescriptor[] }>("mcp-prompts.json"))?.prompts ?? null;
+    this.prebuiltMcpResources =
+      (injected?.mcpResources ?? await readJson<{ resources?: McpResourceDescriptor[] }>("mcp-resources.json"))?.resources ?? null;
 
     this.zodCreator = new ZodBuilder(this.codeFiles);
     this.functionDefs = this.zodCreator.getZodsForAllFunctions();

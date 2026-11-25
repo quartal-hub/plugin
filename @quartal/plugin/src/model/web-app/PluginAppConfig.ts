@@ -62,6 +62,12 @@ export interface PluginAppConfig {
   promptModules?: ToolModuleRegistry;
 
   /**
+   * Static resource-module registry (from the generated `resources.registry.ts`). Required to read
+   * the plugin's own MCP resources (`src/resources/`).
+   */
+  resourceModules?: ToolModuleRegistry;
+
+  /**
    * Explicit widget entries advertised as MCP Apps UI resources. When set, runtime widget-page
    * discovery is skipped (used by tests / non-Astro hosts). The entries carry no HTML — each
    * `resources/read` renders the live widget page. When omitted, widgets are discovered from
