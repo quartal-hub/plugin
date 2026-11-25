@@ -1,4 +1,5 @@
 import type { McpToolAnnotations, McpToolVisibility } from "../mcp/McpTool.ts";
+import type { CodeElicitation } from "./CodeElicitation.ts";
 import type { CodePropOrParam } from "./CodePropOrParam.ts";
 import type { McpDeclaration } from "./McpDeclaration.ts";
 import type { RestRouteDeclaration } from "./RestRoute.ts";
@@ -25,6 +26,9 @@ export interface CodeFunction {
 
   /** MCP-side settings from the `@mcp` JSDoc tag (`@mcp hidden` keeps the method off the MCP server). */
   mcp?: McpDeclaration;
+
+  /** Forms the method asks for with `elicitForm<T>(ctx, "<key>", …)`. */
+  elicitations?: CodeElicitation[];
 
   /** Parameters of the function. */
   parameters: CodePropOrParam[];

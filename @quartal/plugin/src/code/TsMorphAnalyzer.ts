@@ -16,7 +16,8 @@ import {
   type TypeNode,
 } from "ts-morph";
 
-import type { CodeClass, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import type { CodeClass, CodeElicitation, CodeFile, CodeFunction, CodeOrSystemType, CodePropOrParam, CodeType, McpToolAnnotations, McpDeclaration, McpToolVisibility, RestClassDeclaration, RestRouteDeclaration } from "../model/index.ts";
+import { elicitationSchemaFromType } from "./elicitationSchemaFromType.ts";
 import { parseMcpTag } from "./parseMcpTag.ts";
 import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
 import { quoteStringLiteral } from "./parseStringLiteral.ts";
@@ -240,6 +241,8 @@ export class TsMorphAnalyzer {
     if (rest) fn.rest = rest;
     const mcp = mcpTag(method, `${className}.${name}`);
     if (mcp) fn.mcp = mcp;
+    const elicitations = elicitFormCalls(method, `${className}.${name}`);
+    if (elicitations.length) fn.elicitations = elicitations;
     return fn;
   }
 
@@ -686,4 +689,33 @@ function registerBestInfo(registry: Map<string, CodeType>, codeType: CodeType): 
   const score = (t: CodeType) => (t.enum?.length ?? 0) + t.properties.length;
   const existing = registry.get(codeType.name);
   if (!existing || score(codeType) > score(existing)) registry.set(codeType.name, codeType);
+}
+
+/**
+ * The forms a tool method asks for: every `elicitForm<T>(ctx, "<key>", …)` call in its body, with
+ * the MCP form schema built from `T`. A call without a type argument or with a non-literal key is
+ * skipped (it must pass `schema` itself).
+ * @param method The tool method.
+ * @param where `Class.method`, for error messages.
+ */
+function elicitFormCalls(method: MethodDeclaration, where: string): CodeElicitation[] {
+  const found = new Map<string, CodeElicitation>();
+  for (const call of method.getDescendantsOfKind(ts.SyntaxKind.CallExpression)) {
+    const callee = call.getExpression();
+    const calleeName = Node.isIdentifier(callee)
+      ? callee.getText()
+      : Node.isPropertyAccessExpression(callee) ? callee.getName() : undefined;
+    if (calleeName !== "elicitForm") continue;
+    const [typeArg] = call.getTypeArguments();
+    const keyArg = call.getArguments()[1];
+    if (!typeArg || !keyArg || !Node.isStringLiteral(keyArg)) continue;
+    const key = keyArg.getLiteralValue();
+    const schema = elicitationSchemaFromType(typeArg.getType(), typeArg, `${where} elicitForm "${key}"`);
+    const earlier = found.get(key);
+    if (earlier && JSON.stringify(earlier.schema) !== JSON.stringify(schema)) {
+      throw new Error(`${where}: elicitForm key "${key}" is used with two different form types.`);
+    }
+    found.set(key, { key, schema });
+  }
+  return [...found.values()];
 }

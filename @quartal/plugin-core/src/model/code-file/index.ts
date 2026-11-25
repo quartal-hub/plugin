@@ -1,5 +1,6 @@
 export type { CodeArrayType } from "./CodeArrayType.ts";
 export type { CodeClass } from "./CodeClass.ts";
+export type { CodeElicitation } from "./CodeElicitation.ts";
 export type { CodeFile } from "./CodeFile.ts";
 export type { CodeFunction } from "./CodeFunction.ts";
 export type { CodeOrSystemType } from "./CodeOrSystemType.ts";

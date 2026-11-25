@@ -25,6 +25,15 @@ export interface RegisterOpenApiRoutesOptions {
   ) => Response | void;
 }
 
+/** Body of a 428 answer: the questions (MCP `inputRequests`) a tool asks before it can finish. */
+const INPUT_REQUIRED_SCHEMA = z.object({
+  resultType: z.literal("input_required"),
+  inputRequests: z.record(z.string(), z.object({
+    method: z.literal("elicitation/create"),
+    params: z.record(z.string(), z.unknown()),
+  })),
+});
+
 function fileNameFromPath(filePath: string): string {
   const normalized = filePath.replace(/\\/g, "/");
   const last = normalized.split("/").pop() ?? "";
@@ -96,6 +105,17 @@ export function registerOpenApiRoutes(
           content: { "application/json": { schema: def.returns } },
           description: def.fn?.returns?.description ?? `Success response (${route.method})`,
         },
+        ...(def.fn?.elicitations?.length
+          ? {
+            428: {
+              content: { "application/json": { schema: INPUT_REQUIRED_SCHEMA } },
+              description:
+                "The tool asks the user something (sent only when the request has the `Qrtl-Elicitation: form` header). " +
+                "Retry the same request with the answers as base64url-encoded JSON in `Qrtl-Input-Responses`. " +
+                `Forms: ${def.fn.elicitations.map((e) => `\`${e.key}\``).join(", ")}.`,
+            },
+          }
+          : {}),
       },
       security,
     });

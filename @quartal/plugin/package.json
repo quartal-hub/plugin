@@ -29,6 +29,11 @@
       "import": "./dist/astro/catchAllRoute.js",
       "default": "./dist/astro/catchAllRoute.js"
     },
+    "./elicit": {
+      "types": "./dist/elicit/index.d.ts",
+      "import": "./dist/elicit/index.js",
+      "default": "./dist/elicit/index.js"
+    },
     "./hub": {
       "types": "./dist/hub/index.d.ts",
       "import": "./dist/hub/index.js",

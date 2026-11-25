@@ -23,6 +23,13 @@ export type {
   HubSecretInfo,
   HubSelectedCompany,
 } from "./hub/index.ts";
+export type {
+  ElicitationContext,
+  ElicitFormOptions,
+  ElicitFormResult,
+  ElicitUrlOptions,
+  ElicitUrlResult,
+} from "./elicit/index.ts";
 export { defineQrtlConfig, toQrtlAuthConfig } from "./QrtlConfig.ts";
 export type { QrtlAuthConfig, QrtlAuthMode, QrtlConfig, QrtlSiteConfig } from "./QrtlConfig.ts";
 export type {
@@ -71,6 +78,7 @@ export type {
   ClaudeColor,
   CodeArrayType,
   CodeClass,
+  CodeElicitation,
   CodeFile,
   CodeFunction,
   CodeOrSystemType,

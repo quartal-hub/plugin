@@ -1,19 +1,20 @@
-import { join } from "node:path";
 import { Hono, type MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import {
   createMcpHandler,
   INVALID_PARAMS,
+  inputRequired,
   McpServer,
   ProtocolError,
   ResourceTemplate,
+  type InputRequests,
   type McpHttpHandler,
 } from "@modelcontextprotocol/server";
 import { z } from "@hono/zod-openapi";
 
-import { buildMcpTools } from "../code/buildMcpTools.ts";
 import { resolveMcpServers, type ResolvedLocalMcpServer } from "../agent-plugin/resolveMcpServers.ts";
 import type {
+  ElicitationContext,
   PluginManifest,
   ExecuteFn,
   FetchWidgetHtml,
@@ -27,11 +28,11 @@ import type {
   ToolObjectSchema,
   WidgetEntry,
 } from "../model/index.ts";
-import { Helpers } from "../helpers/Helpers.ts";
 import type { FunctionZodDefinition } from "../code/ZodBuilder.ts";
 import type { PluginApiHelper } from "./PluginApiHelper.ts";
 import { buildMcpServerImplementation } from "./pluginIcon.ts";
 import { PluginSkillCatalog } from "./PluginSkillCatalog.ts";
+import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
 import {
   defaultFetchWidgetHtml,
   rewriteWidgetHtml,
@@ -58,6 +59,8 @@ interface RequestContextLike {
  */
 export class PluginMcpHelper {
   /** The REST mirrors of the MCP list results, served next to each server's protocol endpoint. */
+  /** The first protocol revision with input-required results (MRTR), which elicitation needs. */
+  private static readonly MRTR_PROTOCOL_VERSION = "2026-07-28";
   private static readonly LIST_FILES = ["tools.json", "prompts.json", "resources.json", "skills.json"] as const;
 
   private readonly manifest: PluginManifest;
@@ -99,8 +102,7 @@ export class PluginMcpHelper {
     if (!helper.codeFiles.length && !helper.mcpPrompts.length && !(await skills.get())) {
       return;
     }
-    const hubDir = join(baseDir, helper.qrtlPluginDir);
-    const toolEntries = await PluginMcpHelper.loadToolEntries(helper, hubDir);
+    const toolEntries = helper.getMcpTools();
     const mcpOptions = typeof config?.mcp === "object" ? config.mcp : undefined;
 
     const { local } = resolveMcpServers(helper.manifest!, mcpOptions);
@@ -147,17 +149,6 @@ export class PluginMcpHelper {
     app.route("/mcp", mcpRoot);
   }
 
-  private static async loadToolEntries(helper: PluginApiHelper, hubDir: string): Promise<McpToolDescriptor[]> {
-    const mcpJson = await Helpers.readIfExists(join(hubDir, "mcp-tools.json"));
-    if (mcpJson) {
-      const parsed = JSON.parse(mcpJson) as { tools?: McpToolDescriptor[] };
-      if (parsed.tools && parsed.tools.length > 0) {
-        return parsed.tools;
-      }
-    }
-    return buildMcpTools(helper.codeFiles);
-  }
-
   private constructor(
     apiHelper: PluginApiHelper,
     toolEntries: McpToolDescriptor[],
@@ -195,6 +186,29 @@ export class PluginMcpHelper {
     const proto = headers?.get("x-forwarded-proto")?.split(",")[0]?.trim()
       || (this.serverOrigin.startsWith("https:") ? "https" : "http");
     return `${proto}://${host}`;
+  }
+
+  /**
+   * The elicitation state of one `tools/call`: which modes the client declared, and the answers a
+   * retried call carries. Elicitation needs the 2026-07-28 revision (input-required results);
+   * a 2025-era client gets `undefined`, so `elicitForm` / `elicitUrl` resolve with their fallback.
+   * @param server The request's server (its negotiated version and client capabilities).
+   * @param ctx The request handler context (`inputResponses` of a retried request).
+   * @param schemas The tool's generated form schemas by key.
+   */
+  private elicitationFor(
+    server: McpServer["server"],
+    ctx: { mcpReq?: { inputResponses?: Record<string, unknown> } },
+    schemas: Record<string, Record<string, unknown>>,
+  ): ElicitationContext | undefined {
+    const version = server.getNegotiatedProtocolVersion() ?? "";
+    if (version < PluginMcpHelper.MRTR_PROTOCOL_VERSION) return undefined;
+    const declared = server.getClientCapabilities()?.elicitation as { form?: unknown; url?: unknown } | undefined;
+    if (!declared) return undefined;
+    // An empty `elicitation: {}` declares form mode.
+    const form = declared.form !== undefined || declared.url === undefined;
+    const url = declared.url !== undefined;
+    return { form, url, responses: ctx.mcpReq?.inputResponses ?? {}, schemas };
   }
 
   /** Headers of the per-request HTTP request as a plain record (for the execute/prompt auth context). */
@@ -403,7 +417,11 @@ export class PluginMcpHelper {
         }
 
         try {
-          const result = await this.execute(fileName, className, methodName, params, { headers });
+          const elicitation = this.elicitationFor(mcpServer, ctx, match.elicitations ?? {});
+          const result = await this.execute(fileName, className, methodName, params, {
+            headers,
+            ...(elicitation ? { elicitation } : {}),
+          });
           // `structuredContent` first, then the spec's backwards-compat serialized-JSON text block
           // ("a tool that returns structured content SHOULD also return the serialized JSON in a
           // TextContent block") — structured data leads when inspecting the raw result in MCPJam.
@@ -414,6 +432,11 @@ export class PluginMcpHelper {
         } catch (err) {
           if (err instanceof HTTPException) throw err;
           if (err instanceof ProtocolError) throw err;
+          // The tool asks the user something (MRTR, 2026-07-28): the client fulfils the requests and
+          // retries this tools/call with `inputResponses`.
+          if (err instanceof InputRequiredSignal) {
+            return inputRequired({ inputRequests: err.inputRequests as unknown as InputRequests });
+          }
           // Tool execution errors are reported inside the result with `isError: true` (MCP spec).
           // No `structuredContent`: it must conform to the tool's outputSchema, which an error
           // message does not.

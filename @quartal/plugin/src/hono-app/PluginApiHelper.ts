@@ -11,6 +11,9 @@ import { resolveRestRoutes } from "../code/resolveRestRoutes.ts";
 import { type FunctionZodDefinition, type FunctionZodList, ZodBuilder } from "../code/ZodBuilder.ts";
 import { Helpers } from "../helpers/Helpers.ts";
 import { pluginGenerator } from "../helpers/pluginGenerator.ts";
+import { InputRequiredSignal } from "../elicit/InputRequiredSignal.ts";
+import { ELICITATION_HEADER, INPUT_RESPONSES_HEADER, restElicitation } from "../elicit/restElicitation.ts";
+import { bindToolCallElicitation } from "../elicit/toolCallElicitation.ts";
 import { buildAgentSummaries, buildPluginInfo, buildSkillSummaries } from "./buildPluginInfo.ts";
 import { defaultValidationHook, registerOpenApiRoutes } from "./registerOpenApiRoutes.ts";
 import { registerIconRoutes } from "./iconRoutes.ts";
@@ -23,6 +26,7 @@ import type {
   McpCatalog,
   McpPromptDescriptor,
   McpToolDescriptor,
+  QuartalPluginContext,
   PluginAppConfig,
   PluginInfo,
   PromptResult,
@@ -44,6 +48,8 @@ export class PluginApiHelper {
   private prebuiltTypes: unknown[] | null = null;
   private prebuiltContents: PluginInfo | null = null;
   private prebuiltMcpTools: McpToolDescriptor[] | null = null;
+  /** Tool descriptors built from the code files (no `mcp-tools.json`), kept while the code files stay the same. */
+  private builtMcpTools: { from: CodeFile[]; tools: McpToolDescriptor[] } | undefined;
   private prebuiltMcpPrompts: McpPromptDescriptor[] | null = null;
   private widgetEntries: WidgetCatalogEntry[] = [];
   private baseDir: string;
@@ -94,9 +100,23 @@ export class PluginApiHelper {
     return buildMcpCatalog(this.codeFiles, this.widgetEntries, this.mcpPrompts);
   }
 
+  /**
+   * The generated elicitation form schemas of one tool method, by `elicitForm` key.
+   * @param className The tool class.
+   * @param methodName The tool method.
+   */
+  public getElicitationSchemas(className: string, methodName: string): Record<string, Record<string, unknown>> {
+    const tool = this.getMcpTools().find((t) => t.className === className && t.methodName === methodName);
+    return tool?.elicitations ?? {};
+  }
+
   /** MCP tool descriptors: the generated `mcp-tools.json`, or built from the code files. Available after `init()`. */
   public getMcpTools(): McpToolDescriptor[] {
-    return this.prebuiltMcpTools ?? buildMcpTools(this.codeFiles);
+    if (this.prebuiltMcpTools) return this.prebuiltMcpTools;
+    if (this.builtMcpTools?.from !== this.codeFiles) {
+      this.builtMcpTools = { from: this.codeFiles, tools: buildMcpTools(this.codeFiles) };
+    }
+    return this.builtMcpTools.tools;
   }
 
   /** MCP prompt descriptors loaded from `qrtl-plugin/mcp-prompts.json`. Available after `init()`. */
@@ -159,7 +179,14 @@ export class PluginApiHelper {
     const app = new OpenAPIHono();
     app.use(cors({
       origin: "*",
-      allowHeaders: ["Content-Type", "Authorization", "mcp-protocol-version", "mcp-session-id"],
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "mcp-protocol-version",
+        "mcp-session-id",
+        ELICITATION_HEADER,
+        INPUT_RESPONSES_HEADER,
+      ],
     }));
     const manifest = this.manifest!;
 
@@ -210,11 +237,21 @@ export class PluginApiHelper {
         // `HTTPException`s pass through so auth failures keep their HTTP semantics (e.g. 401 + WWW-Authenticate).
         let result: Record<string, unknown>;
         try {
+          const elicitation = restElicitation(
+            (name) => c.req.header(name),
+            this.getElicitationSchemas(className, methodName),
+          );
           result = await this.executeStrict(fileName, className, methodName, params, {
             headers: { Authorization: c.req.header("Authorization") ?? "" },
+            ...(elicitation ? { elicitation } : {}),
           });
         } catch (error: unknown) {
           if (error instanceof HTTPException) throw error;
+          // The tool asks the user something: 428 with the questions; the caller retries the same
+          // request with the answers in `Qrtl-Input-Responses`.
+          if (error instanceof InputRequiredSignal) {
+            return c.json({ resultType: "input_required", inputRequests: error.inputRequests }, 428);
+          }
           return c.json({ error: error instanceof Error ? error.message : "Unknown error" }, 500);
         }
         return c.json(result);
@@ -293,12 +330,15 @@ export class PluginApiHelper {
       );
     }
 
-    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>) => unknown;
+    const boundMethod = targetMethod.bind(thisArg) as (input: Record<string, unknown>, ...args: unknown[]) => unknown;
     let result: unknown;
     if (this.config.execute) {
       result = await this.config.execute<unknown>(boundMethod, input, authContext);
     } else {
-      result = await boundMethod(input);
+      // Without an auth layer the tool still gets a context of its own (for elicitation).
+      const ctx: QuartalPluginContext = { authenticated: false };
+      bindToolCallElicitation(ctx, authContext?.elicitation);
+      result = await boundMethod(input, ctx);
     }
 
     const isObject = typeof result === "object" && result !== null && !Array.isArray(result);
