@@ -1,9 +1,16 @@
 ---
-title: "Files in and out of tools"
+title: "Files in and out of tools (experimental)"
 description: "Receive uploaded files and offer downloads with the MCP files extension, or pass Quartal Files references between plugins."
-section: creating
-order: 1.7
+section: reference
+order: 5
 ---
+
+> **Experimental.** Quartal Files references, the MCP files extension and the APIs on this page
+> may change at any time, without a version marked as a breaking change.
+>
+> Quartal Files is a Quartal Hub service. Quartal Hub is now piloting with selected Advisors and
+> Enterprise customers in Finland. [Register at hub.quartal.com](https://hub.quartal.com/) for
+> early access.
 
 There are two ways for a tool to work with a user's files:
 
