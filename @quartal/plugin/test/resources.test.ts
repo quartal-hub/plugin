@@ -47,6 +47,30 @@ export class Policies {
   logo(): Uint8Array {
     return new Uint8Array();
   }
+
+  /**
+   * The expense limits.
+   * @uri policy://limits
+   */
+  async limits(): Promise<{ daily: number; categories: ExpenseCategory[] }> {
+    return { daily: 100, categories: ["meals"] };
+  }
+
+  /**
+   * Text or data, decided at run time.
+   * @uri policy://either
+   */
+  either(): string | { value: number } {
+    return "";
+  }
+
+  /**
+   * Content that sets its own type.
+   * @uri policy://own
+   */
+  own(): { text: string; mimeType: string } {
+    return { text: "", mimeType: "text/csv" };
+  }
 }
 `;
 
@@ -83,6 +107,16 @@ describe("buildMcpResources — @uri methods of src/resources/", () => {
       uri: "policy://expenses/{category}",
       template: true,
     });
+  });
+
+  it("infers the MIME type from the return type when @mimeType is missing", () => {
+    const mime = (name: string) => resources.find((r) => r.methodName === name)?.mimeType;
+    expect(mime("travel")).toBe("text/markdown");
+    expect(mime("expense")).toBe("text/plain");
+    expect(mime("logo")).toBe("image/png");
+    expect(mime("limits")).toBe("application/json");
+    expect(mime("either")).toBeUndefined();
+    expect(mime("own")).toBeUndefined();
   });
 
   it("analyzes classes under src/resources/ (the resources entry)", () => {
@@ -129,6 +163,15 @@ describe("plugin resources over MCP", () => {
       }
       logo() {
         return new Uint8Array([137, 80, 78, 71]);
+      }
+      limits() {
+        return Promise.resolve({ daily: 100, categories: ["meals"] });
+      }
+      either() {
+        return "";
+      }
+      own() {
+        return { text: "a,b", mimeType: "text/csv" };
       }
     }
     class Calculator {
@@ -177,7 +220,8 @@ describe("plugin resources over MCP", () => {
     await withClient(async (client) => {
       const list = await client.listResources();
       const own = list.resources.map((r) => r.uri).filter((uri) => uri.startsWith("policy://")).sort();
-      expect(own).toEqual(["policy://logo.png", "policy://travel"]);
+      expect(own).toEqual(["policy://either", "policy://limits", "policy://logo.png", "policy://own", "policy://travel"]);
+      expect(list.resources.find((r) => r.uri === "policy://limits")?.mimeType).toBe("application/json");
       const templates = await client.listResourceTemplates();
       expect(templates.resourceTemplates.map((t) => t.uriTemplate)).toContain("policy://expenses/{category}");
     });
@@ -195,6 +239,9 @@ describe("plugin resources over MCP", () => {
 
       const logo = await client.readResource({ uri: "policy://logo.png" });
       expect(logo.contents[0]).toMatchObject({ mimeType: "image/png", blob: Buffer.from([137, 80, 78, 71]).toString("base64") });
+
+      const limits = await client.readResource({ uri: "policy://limits" });
+      expect(limits.contents[0]).toMatchObject({ mimeType: "application/json", text: '{"daily":100,"categories":["meals"]}' });
     });
   });
 });

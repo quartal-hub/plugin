@@ -46,7 +46,7 @@ Every method of a class exported from `src/resources/mod.ts` is a resource:
 | Tag | Meaning |
 |---|---|
 | `@uri` | **Required.** The URI the resource is read at. Any scheme works (`policy://`, `price-list://`). |
-| `@mimeType` | The content type; default `text/plain` for text and `application/octet-stream` for bytes. |
+| `@mimeType` | The content type. Without it, the type follows from what the method returns (below). |
 | `@cache <duration> [public]` | How long clients may cache a read (`30s`, `5m`, `1h`). `public` lets a cache share it between users; the default is per user. |
 | `@summary` | The resource's display title. |
 
@@ -61,12 +61,18 @@ the URI as a string (`policy://expenses/meals` → `{ category: "meals" }`). Tem
 
 ## What a method returns
 
-| Return value | Served as |
-|---|---|
-| `string` | Text with the `@mimeType`. |
-| `Uint8Array` | A binary blob (base64 on the wire). |
-| `{ text, mimeType? }` or `{ blob, mimeType? }` | Text or bytes with their own MIME type. |
-| anything else | JSON text. |
+| Return value | Served as | Default MIME type |
+|---|---|---|
+| `string` | Text. | `text/plain` |
+| `Uint8Array` | A binary blob (base64 on the wire). | `application/octet-stream` |
+| `{ text, mimeType? }` or `{ blob, mimeType? }` | Text or bytes with their own MIME type. | `text/plain` / `application/octet-stream` |
+| anything else (an object, array, number or boolean) | JSON text. | `application/json` |
+
+The MIME type is also listed with the resource in `resources/list`, so a client knows what it
+reads before it reads it. A `@mimeType` tag overrides the default — for example `text/markdown`
+for a string, or `application/geo+json` for an object. When the return type does not settle it
+(`unknown`, or a union of a string and an object), the resource is listed without a MIME type and
+each read carries the type of the value it returned.
 
 Like tools, a resource method receives the call's context as its second parameter, so in a plugin
 with authentication it reads with the signed-in user's rights. The build fails when a method has no

@@ -20,7 +20,7 @@ export interface McpResourceDescriptor {
   title?: string;
   /** Description from the method's JSDoc. */
   description: string;
-  /** MIME type of the content (`@mimeType`). */
+  /** MIME type of the content (`@mimeType`, else inferred from the method's return type). */
   mimeType?: string;
   /** How long clients may cache a read, in milliseconds (`@cache`). */
   cacheTtlMs?: number;

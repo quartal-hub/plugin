@@ -8,7 +8,10 @@ export interface CodeResourceDeclaration {
    * properties of the method's input object (`policy://expenses/{category}`).
    */
   uri: string;
-  /** MIME type of the content (`@mimeType`); default `text/plain` for strings. */
+  /**
+   * MIME type of the content: `@mimeType`, else inferred from the return type (`text/plain` for a
+   * string, `application/octet-stream` for bytes, `application/json` for any other value).
+   */
   mimeType?: string;
   /** How long clients may cache a read, in milliseconds (`@cache 5m`). */
   cacheTtlMs?: number;

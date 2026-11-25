@@ -21,6 +21,7 @@ import { elicitationSchemaFromType } from "./elicitationSchemaFromType.ts";
 import { parseMcpTag } from "./parseMcpTag.ts";
 import { parseRestClassTag, parseRestTag } from "./parseRestTag.ts";
 import { quoteStringLiteral } from "./parseStringLiteral.ts";
+import { resourceMimeTypeOfType } from "./resourceMimeTypeOfType.ts";
 
 type ShapeMember = PropertySignature | PropertyDeclaration;
 type TypeDecl = InterfaceDeclaration | TypeAliasDeclaration | ClassDeclaration;
@@ -242,7 +243,11 @@ export class TsMorphAnalyzer {
     const mcp = mcpTag(method, `${className}.${name}`);
     if (mcp) fn.mcp = mcp;
     const resource = resourceTag(method, `${className}.${name}`);
-    if (resource) fn.resource = resource;
+    if (resource) {
+      // Without @mimeType, list the type the runtime serves the return value with.
+      const inferred = resource.mimeType ? undefined : resourceMimeTypeOfType(method.getReturnType());
+      fn.resource = inferred ? { ...resource, mimeType: inferred } : resource;
+    }
     const elicitations = elicitFormCalls(method, `${className}.${name}`);
     if (elicitations.length) fn.elicitations = elicitations;
     return fn;
