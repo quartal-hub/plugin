@@ -388,9 +388,10 @@ const KEYWORD_BY_KIND: Record<number, CodeOrSystemType> = {
 
 function toolsPath(absFile: string): string | null {
   const norm = absFile.replace(/\\/g, "/");
-  // Both plugin source folders share the analysis pipeline: `tools/` (MCP tools + REST) and
-  // `prompts/` (MCP prompts). Files under either are analyzed; everything else becomes imported types.
-  const m = norm.match(/\/(tools|prompts)\/(.+)$/);
+  // The plugin source folders share the analysis pipeline: `tools/` (MCP tools + REST), `prompts/`
+  // (MCP prompts) and `resources/` (MCP resources). Files under them are analyzed; everything else
+  // becomes imported types.
+  const m = norm.match(/\/(tools|prompts|resources)\/(.+)$/);
   return m ? `${m[1]}/${m[2]}` : null;
 }
 

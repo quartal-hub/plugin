@@ -85,6 +85,15 @@ describe("buildMcpResources — @uri methods of src/resources/", () => {
     });
   });
 
+  it("analyzes classes under src/resources/ (the resources entry)", () => {
+    const found = buildMcpResources(analyzeSource({
+      "/resources/Policies.ts": POLICIES_SOURCE,
+      "/resources/mod.ts": 'export * from "./Policies.ts";',
+      "/tools/mod.ts": 'export * from "../resources/Policies.ts";',
+    }));
+    expect(found.map((r) => r.uri)).toContain("policy://travel");
+  });
+
   it("fails the build for a method without @uri or a template variable the input lacks", () => {
     expect(() => buildMcpResources(analyzeSource({
       "/tools/Bad.ts": "export class Bad { /** No uri. */ read(): string { return \"\"; } }",
