@@ -3,11 +3,12 @@ import { serve } from "@hono/node-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Hono } from "hono";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import type { McpResourceDescriptor } from "@quartal/plugin-core";
 import { buildMcpResources } from "../src/code/buildMcpResources.ts";
 import { buildMcpTools } from "../src/code/buildMcpTools.ts";
 import { Helpers } from "../src/helpers/Helpers.ts";
 import { getAnonApp } from "../src/index.ts";
-import type { McpResourceDescriptor, QuartalPluginContext } from "../src/index.ts";
+import type { QuartalPluginContext } from "../src/index.ts";
 import { analyzeSource } from "./helpers/analyzeSource.ts";
 
 // The plugin's own MCP resources: methods of `src/resources/` classes with a `@uri` tag become
